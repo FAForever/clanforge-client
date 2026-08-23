@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<meta name="description" content="Browse active Forged Alliance Forever clans on Clanforge — search, filter by recruiting status, and find your squad.">
+<title>Browse Clans · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   DESIGN TOKENS
+   "Forged" theme: void-black steel panels, molten-orange accent.
+   Shared with the My Clan dashboard for a consistent platform feel.
+   ============================================================ */
+:root{
+  --bg-void:        #0a0d12;
+  --bg-panel:        #12161d;
+  --bg-panel-raised: #1a2029;
+  --bg-inset:        #0c0f14;
+
+  --border-steel:      #232b36;
+  --border-steel-soft: #1a212b;
+
+  --accent:        #f0791e;
+  --accent-bright: #ff9d4d;
+  --accent-dim:    #9a4e15;
+
+  --text-primary:   #eceef1;
+  --text-secondary: #949dac;
+  --text-tertiary:  #838c98;
+
+  --cut-lg: 16px;
+  --cut-sm: 8px;
+
+  --font-display: 'Chakra Petch', 'Arial Narrow', sans-serif;
+  --font-body:    'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Consolas', monospace;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after{ box-sizing:border-box; }
+h1,h2,h3,h4,p,ul{ margin:0; }
+ul{ list-style:none; padding:0; }
+img,svg{ display:block; }
+input,select,button,textarea{ font:inherit; color:inherit; }
+a{ color:inherit; }
+
+html{ -webkit-text-size-adjust:100%; }
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg-void);
+  color:var(--text-primary);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.5;
+  position:relative;
+}
+
+/* faint tactical grid, purely atmospheric */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(240,121,30,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(240,121,30,.05) 1px, transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 90%);
+          mask-image:radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 90%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.sr-only{
+  position:absolute; width:1px;height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
+  outline:2px solid var(--accent-bright);
+  outline-offset:2px;
+}
+
+.icon{ width:18px; height:18px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.icon-fill{ fill:currentColor; stroke:none; }
+
+/* ============================================================
+   SIGNATURE PANEL COMPONENT — angular "cut corner" chassis
+   ============================================================ */
+.panel{
+  position:relative;
+  background:var(--bg-panel);
+  border:1px solid var(--border-steel);
+  padding:22px;
+  clip-path:polygon(0 var(--cut-lg), var(--cut-lg) 0, 100% 0, 100% calc(100% - var(--cut-lg)), calc(100% - var(--cut-lg)) 100%, 0 100%);
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.35));
+  animation:rise-in .5s ease both;
+}
+.panel::before{
+  content:"";
+  position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, var(--accent), transparent 75%);
+}
+
+@keyframes rise-in{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce){
+  .panel{ animation:none; }
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,13,18,.9);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border-steel);
+}
+.topbar-inner{
+  position:relative;
+  max-width:1440px; margin:0 auto;
+  display:flex; align-items:center; gap:20px;
+  padding:12px 24px;
+}
+
+.brand{ display:flex; align-items:center; gap:9px; text-decoration:none; flex-shrink:0; }
+.brand-mark{ width:26px; height:26px; color:var(--accent); }
+.brand-word{ font-family:var(--font-display); font-weight:700; font-size:1.05rem; letter-spacing:.06em; white-space:nowrap; }
+
+.primary-nav{ display:flex; align-items:center; gap:4px; flex:1; min-width:0; }
+.nav-link{
+  font-family:var(--font-display); font-size:.87rem; font-weight:500; letter-spacing:.02em;
+  color:var(--text-secondary); text-decoration:none;
+  padding:8px 12px; border-radius:6px; position:relative;
+  transition:color .15s ease, background-color .15s ease;
+  white-space:nowrap;
+}
+.nav-link:hover{ color:var(--text-primary); background:var(--bg-panel-raised); }
+.nav-link.is-active{ color:var(--text-primary); }
+.nav-link.is-active::after{
+  content:""; position:absolute; left:12px; right:12px; bottom:1px; height:2px; background:var(--accent);
+}
+.nav-badge{
+  background:var(--accent); color:#1a0f05; font-family:var(--font-mono); font-weight:600;
+  font-size:.62rem; padding:1px 5px; border-radius:20px; margin-left:5px;
+}
+
+.nav-search{
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg-panel); border:1px solid var(--border-steel);
+  padding:8px 12px; margin-left:auto; width:200px; flex-shrink:1;
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
+}
+.nav-search .icon{ color:var(--text-tertiary); width:16px; height:16px; }
+.nav-search input{ background:none; border:none; outline:none; width:100%; font-size:.85rem; }
+.nav-search input::placeholder{ color:var(--text-tertiary); }
+
+.topbar-actions{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.popover-wrap{ position:relative; }
+
+.btn{
+  font-family:var(--font-display); font-weight:600; font-size:.85rem; letter-spacing:.02em;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 16px; border:none; cursor:pointer; white-space:nowrap;
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
+  transition:filter .15s ease, transform .1s ease;
+  text-decoration:none;
+}
+.btn:active{ transform:scale(.98); }
+.btn-primary{ background:var(--accent); color:#1a0f05; }
+.btn-primary:hover{ filter:brightness(1.12); }
+.btn-secondary{ background:var(--bg-panel-raised); color:var(--text-primary); border:1px solid var(--border-steel); }
+.btn-secondary:hover{ background:#212a35; }
+.btn-create{ padding:10px 16px; }
+
+.icon-btn{
+  width:38px; height:38px; flex-shrink:0;
+  display:grid; place-items:center;
+  background:var(--bg-panel); border:1px solid var(--border-steel); color:var(--text-secondary);
+  border-radius:8px; cursor:pointer; position:relative;
+  transition:color .15s ease, border-color .15s ease;
+}
+.icon-btn:hover{ color:var(--text-primary); border-color:var(--accent-dim); }
+.badge-dot{
+  position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 0 2px var(--bg-panel);
+}
+.avatar-btn{ padding:0; overflow:hidden; }
+
+.menu-toggle{ display:none; }
+.icon-close{ display:none; }
+.menu-toggle.is-open .icon-menu{ display:none; }
+.menu-toggle.is-open .icon-close{ display:block; }
+
+/* popovers */
+.popover{
+  display:none;
+  position:absolute; top:calc(100% + 10px); right:0;
+  width:280px; max-width:calc(100vw - 32px);
+  background:var(--bg-panel); border:1px solid var(--border-steel);
+  padding:16px; z-index:60;
+  clip-path:polygon(0 var(--cut-sm), var(--cut-sm) 0, 100% 0, 100% 100%, 0 100%);
+  filter:drop-shadow(0 14px 32px rgba(0,0,0,.5));
+}
+.popover.is-open{ display:block; }
+.popover-title{
+  font-family:var(--font-display); text-transform:uppercase; letter-spacing:.05em;
+  font-size:.76rem; color:var(--text-tertiary); margin-bottom:8px;
+}
+.notif-item{ padding:10px 0; border-top:1px solid var(--border-steel-soft); }
+.notif-item-link{ display:block; text-decoration:none; color:inherit; }
+.notif-item-link:hover .notif-text{ color:var(--accent-bright); }
+.notif-item:first-of-type{ border-top:none; padding-top:0; }
+.notif-text{ font-size:.82rem; line-height:1.45; margin-bottom:3px; }
+.notif-time{ font-size:.7rem; color:var(--text-tertiary); font-family:var(--font-mono); }
+
+.popover-user{
+  display:flex; align-items:center; gap:10px;
+  padding-bottom:14px; margin-bottom:8px; border-bottom:1px solid var(--border-steel-soft);
+}
+.popover-user-name{ font-weight:600; font-size:.88rem; }
+.popover-user-role{ font-size:.72rem; color:var(--text-tertiary); }
+.popover-link{
+  display:block; padding:9px 6px; text-decoration:none; color:var(--text-secondary);
+  font-size:.85rem; border-radius:6px;
+}
+.popover-link:hover{ background:var(--bg-panel-raised); color:var(--text-primary); }
+
+/* ============================================================
+   AVATARS
+   ============================================================ */
+.avatar{
+  border-radius:50%;
+  display:grid; place-items:center;
+  background:linear-gradient(160deg, var(--bg-panel-raised), var(--bg-inset));
+  border:1px solid var(--border-steel);
+  font-family:var(--font-mono); font-weight:600; color:var(--text-secondary);
+  flex-shrink:0;
+}
+.avatar-sm{ width:30px; height:30px; font-size:.65rem; }
+.avatar-md{ width:42px; height:42px; font-size:.8rem; }
+.avatar.is-owner{ border-color:var(--accent); color:var(--accent-bright); box-shadow:0 0 0 3px rgba(240,121,30,.12); }
+
+/* ============================================================
+   BROWSE HERO
+   ============================================================ */
+.browse-hero{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:40px 24px 8px;
+}
+.browse-title{
+  font-family:var(--font-display); font-size:2.1rem; font-weight:700; letter-spacing:.02em;
+  margin-bottom:10px;
+}
+.browse-subtitle{
+  color:var(--text-secondary); font-size:1rem; line-height:1.65;
+  max-width:560px; margin-bottom:28px;
+}
+.browse-stats{ display:flex; gap:32px; flex-wrap:wrap; }
+.browse-stats .stat-value{ display:block; font-family:var(--font-mono); font-weight:600; font-size:1.3rem; }
+.browse-stats .stat-label{ font-size:.68rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; }
+
+/* ============================================================
+   BROWSE CONTROLS
+   ============================================================ */
+.browse-controls{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:24px 24px 0;
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.clan-search{
+  flex:2 1 240px; display:flex; align-items:center; gap:8px;
+  background:var(--bg-inset); border:1px solid var(--border-steel); padding:9px 12px;
+}
+.clan-search .icon{ color:var(--text-tertiary); width:16px; height:16px; }
+.clan-search input{ background:none; border:none; outline:none; width:100%; font-size:.85rem; }
+.clan-search input::placeholder{ color:var(--text-tertiary); }
+
+.recruit-select, .sort-select{
+  flex:1 1 160px; min-width:132px;
+  background-color:var(--bg-inset); border:1px solid var(--border-steel); color:var(--text-primary);
+  font-size:.85rem; padding:0 32px 0 12px;
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23838c98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+
+/* ============================================================
+   CLAN GRID
+   ============================================================ */
+.browse-main{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:24px 24px 60px;
+}
+.clan-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;
+}
+.clan-card{ display:flex; flex-direction:column; }
+.clan-card.is-hidden{ display:none; }
+
+.clan-card-head{ display:flex; align-items:flex-start; gap:14px; margin-bottom:14px; }
+.clan-badge{
+  flex-shrink:0; width:58px; height:58px;
+  display:grid; place-items:center; text-align:center; padding:2px;
+  background:linear-gradient(160deg, var(--bg-panel-raised), var(--bg-inset));
+  border:1px solid var(--border-steel);
+  clip-path:polygon(0 10px,10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+  font-family:var(--font-display); font-weight:700; font-size:.78rem; letter-spacing:.02em; line-height:1.15;
+  color:var(--accent-bright);
+}
+.clan-card-name{
+  font-family:var(--font-display); font-size:1.05rem; font-weight:700; letter-spacing:.02em;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:2px;
+}
+.your-clan-tag{
+  font-family:var(--font-mono); font-size:.6rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-secondary); border:1px solid var(--border-steel);
+  padding:2px 6px; line-height:1.4;
+}
+.clan-card-tag{ color:var(--text-tertiary); font-family:var(--font-mono); font-size:.76rem; }
+.clan-card-desc{ color:var(--text-secondary); font-size:.85rem; line-height:1.6; margin-bottom:16px; flex:1; }
+
+.clan-stats{ display:flex; gap:20px; margin:0 0 18px; }
+.stat-value{ display:block; font-family:var(--font-mono); font-weight:600; font-size:1.05rem; }
+.stat-label{ font-size:.68rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; }
+
+.clan-card-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.recruit-badge{
+  font-family:var(--font-mono); font-size:.66rem; letter-spacing:.03em; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px;
+}
+.recruit-badge.is-open{ background:var(--accent); color:#1a0f05; }
+.recruit-badge.is-closed{ background:var(--bg-panel-raised); color:var(--text-tertiary); border:1px solid var(--border-steel); }
+
+.empty-state{ display:none; text-align:center; color:var(--text-tertiary); font-size:.85rem; padding:26px 0; }
+.empty-state.is-visible{ display:block; }
+.link-btn{ background:none; border:none; color:var(--accent-bright); cursor:pointer; font:inherit; text-decoration:underline; padding:0; }
+
+.showing-caption{ text-align:center; color:var(--text-tertiary); font-size:.8rem; margin-top:28px; }
+.showing-caption.is-hidden{ display:none; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* Tablet: collapse nav to menu, 2-col clan grid */
+@media (max-width:1160px){
+  .primary-nav{
+    display:none;
+    position:absolute; top:100%; left:0; right:0;
+    flex-direction:column; align-items:stretch; gap:4px;
+    background:var(--bg-panel); border-bottom:1px solid var(--border-steel);
+    padding:14px; box-shadow:0 14px 26px rgba(0,0,0,.4);
+  }
+  .primary-nav.is-open{ display:flex; }
+  .nav-search{ width:100%; order:-1; margin:0 0 8px 0; }
+  .menu-toggle{ display:grid; }
+
+  .clan-grid{ grid-template-columns:repeat(2, 1fr); }
+}
+
+/* Mobile: single column */
+@media (max-width:760px){
+  .topbar-inner{ padding:12px 16px; }
+  .browse-hero{ padding:32px 16px 8px; }
+  .browse-controls{ padding:20px 16px 0; }
+  .browse-main{ padding:20px 16px 48px; }
+  .browse-title{ font-size:1.7rem; }
+  .browse-stats{ gap:22px; }
+  .clan-grid{ grid-template-columns:1fr; }
+}
+
+@media (max-width:560px){
+  .btn-create .btn-label{ display:none; }
+  .btn-create{ padding:10px; }
+}
+
+@media (max-width:480px){
+  .panel{ padding:18px; }
+}
+
+@media (max-width:380px){
+  .brand-word{ display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ICON SPRITE — hand-drawn line icons, referenced via <use>
+     ============================================================ -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="icon-crest" viewBox="0 0 24 24">
+    <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
+</svg>
+
+<!-- ============================================================
+     TOP BAR
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="clanhome.html" aria-label="Clanforge home">
+      <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
+      <span class="brand-word">CLANFORGE</span>
+    </a>
+
+    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
+      <a class="nav-link is-active" href="browse-clans.html" aria-current="page">Browse Clans</a>
+      <a class="nav-link" href="clanhome.html">My Clan</a>
+      <a class="nav-link" href="invitations.html">Invitations<span class="nav-badge">3</span></a>
+      <div class="nav-search" role="search">
+        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+        <label class="sr-only" for="navClanSearch">Search clans</label>
+        <input type="search" id="navClanSearch" placeholder="Search clans…" autocomplete="off">
+      </div>
+    </nav>
+
+    <div class="topbar-actions">
+      <button type="button" class="btn btn-primary btn-create" aria-label="Create Clan">
+        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+        <span class="btn-label">Create Clan</span>
+      </button>
+
+      <div class="popover-wrap">
+        <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+          <span class="badge-dot" aria-hidden="true"></span>
+        </button>
+        <div class="popover" id="notifPanel">
+          <p class="popover-title">Notifications</p>
+          <div class="notif-item">
+            <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
+            <span class="notif-time">1h ago</span>
+          </div>
+          <a class="notif-item notif-item-link" href="invitations.html">
+            <p class="notif-text">3 new applications are waiting for review.</p>
+            <span class="notif-time">5h ago</span>
+          </a>
+          <div class="notif-item">
+            <p class="notif-text">Clan Ladder Night was added to the events calendar.</p>
+            <span class="notif-time">1d ago</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-wrap">
+        <button type="button" class="icon-btn avatar-btn" id="avatarBtn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar avatar-sm is-owner">W9</span>
+        </button>
+        <div class="popover" id="avatarPanel">
+          <div class="popover-user">
+            <span class="avatar avatar-md is-owner">W9</span>
+            <div>
+              <p class="popover-user-name">Warhawk_09</p>
+              <p class="popover-user-role">Leader · Iron Vanguard</p>
+            </div>
+          </div>
+          <a class="popover-link" href="#">My Profile</a>
+          <a class="popover-link" href="#">Account Settings</a>
+          <a class="popover-link" href="#">Sign Out</a>
+        </div>
+      </div>
+
+      <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
+        <svg class="icon icon-menu" aria-hidden="true"><use href="#icon-menu"></use></svg>
+        <svg class="icon icon-close" aria-hidden="true"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     BROWSE HERO
+     ============================================================ -->
+<section class="browse-hero">
+  <h1 class="browse-title">Browse Clans</h1>
+  <p class="browse-subtitle">Explore active Forged Alliance Forever clans, filter by recruiting status, and find the squad that fits your playstyle.</p>
+  <div class="browse-stats">
+    <div class="stat"><span class="stat-value">128</span><span class="stat-label">Clans</span></div>
+    <div class="stat"><span class="stat-value">3,600+</span><span class="stat-label">Commanders</span></div>
+    <div class="stat"><span class="stat-value">34</span><span class="stat-label">Recruiting Now</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SEARCH / FILTER / SORT CONTROLS
+     ============================================================ -->
+<section class="browse-controls">
+  <div class="clan-search" role="search">
+    <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+    <label class="sr-only" for="browseSearch">Search clans by name or tag</label>
+    <input type="search" id="browseSearch" placeholder="Search by clan name or tag…" autocomplete="off">
+  </div>
+  <select class="recruit-select" id="recruitFilter" aria-label="Filter by recruiting status">
+    <option value="all">All Clans</option>
+    <option value="open">Recruiting</option>
+    <option value="closed">Not Recruiting</option>
+  </select>
+  <select class="sort-select" id="sortSelect" aria-label="Sort clans">
+    <option value="rank">Sort: Top Rank</option>
+    <option value="members">Sort: Most Members</option>
+    <option value="name">Sort: Name A–Z</option>
+  </select>
+</section>
+
+<!-- ============================================================
+     CLAN GRID
+     ============================================================ -->
+<main class="browse-main">
+  <div class="clan-grid" id="clanGrid">
+
+    <article class="panel clan-card" data-name="steel requiem stlr" data-recruiting="closed" data-members="51" data-rank="1">
+      <div class="clan-card-head">
+        <div class="clan-badge">STLR</div>
+        <div>
+          <p class="clan-card-name">Steel Requiem</p>
+          <p class="clan-card-tag">[STLR] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Three-time tournament champions. Invite-only roster of top-100 ladder veterans.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">51</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#1</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-closed">Not Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="crimson wolves crmw" data-recruiting="closed" data-members="68" data-rank="2">
+      <div class="clan-card-head">
+        <div class="clan-badge">CRMW</div>
+        <div>
+          <p class="clan-card-name">Crimson Wolves</p>
+          <p class="clan-card-tag">[CRMW] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Competitive 1v1 and 2v2 specialists. Trials required before any invite.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">68</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#2</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-closed">Not Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="frostbyte legion fbl" data-recruiting="open" data-members="89" data-rank="4">
+      <div class="clan-card-head">
+        <div class="clan-badge">FBL</div>
+        <div>
+          <p class="clan-card-name">Frostbyte Legion</p>
+          <p class="clan-card-tag">[FBL] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">One of the largest active communities on FAF. Casual and ladder both welcome.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">89</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#4</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-open">Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="iron vanguard ivg" data-recruiting="open" data-members="42" data-rank="7">
+      <div class="clan-card-head">
+        <div class="clan-badge">IVG</div>
+        <div>
+          <p class="clan-card-name">Iron Vanguard <span class="your-clan-tag">Your Clan</span></p>
+          <p class="clan-card-tag">[IVG] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Elite ladder squad running nightly 4v4s, team nights, and Seraphim co-op runs. EU/NA hours.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">42</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#7</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-open">Recruiting</span>
+        <a href="clanhome.html" class="btn btn-primary">Go to My Clan</a>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="meridian guard mrg" data-recruiting="closed" data-members="46" data-rank="9">
+      <div class="clan-card-head">
+        <div class="clan-badge">MRG</div>
+        <div>
+          <p class="clan-card-name">Meridian Guard</p>
+          <p class="clan-card-tag">[MRG] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Structured officer corps with scheduled scrims and a strict conduct code.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">46</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#9</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-closed">Not Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="obsidian fleet obs" data-recruiting="open" data-members="34" data-rank="12">
+      <div class="clan-card-head">
+        <div class="clan-badge">OBS</div>
+        <div>
+          <p class="clan-card-name">Obsidian Fleet</p>
+          <p class="clan-card-tag">[OBS] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Naval and air-focused theorycrafters. Weekly build-order workshops.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">34</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#12</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-open">Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="void marchers void" data-recruiting="open" data-members="27" data-rank="19">
+      <div class="clan-card-head">
+        <div class="clan-badge">VOID</div>
+        <div>
+          <p class="clan-card-name">Void Marchers</p>
+          <p class="clan-card-tag">[VOID] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Late-night EU/NA crossover squad. Custom games and skirmish nights.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">27</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#19</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-open">Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="ember company embr" data-recruiting="open" data-members="19" data-rank="34">
+      <div class="clan-card-head">
+        <div class="clan-badge">EMBR</div>
+        <div>
+          <p class="clan-card-name">Ember Company</p>
+          <p class="clan-card-tag">[EMBR] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Small, friendly, and new-player focused. We teach macro from scratch.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">19</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#34</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-open">Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="ashfall battalion ash" data-recruiting="open" data-members="15" data-rank="41">
+      <div class="clan-card-head">
+        <div class="clan-badge">ASH</div>
+        <div>
+          <p class="clan-card-name">Ashfall Battalion</p>
+          <p class="clan-card-tag">[ASH] · Forged Alliance Forever</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Newly founded and building our roster. Apply if you love a comeback story.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">15</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#41</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <span class="recruit-badge is-open">Recruiting</span>
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="empty-state" id="emptyState">No clans match your search. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></p>
+  <p class="showing-caption" id="showingCaption">Showing <span id="visibleCount">9</span> of 128 clans</p>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---- mobile nav toggle ---- */
+  var menuToggle = document.getElementById('menuToggle');
+  var primaryNav = document.getElementById('primaryNav');
+
+  function closeNav(){
+    primaryNav.classList.remove('is-open');
+    menuToggle.classList.remove('is-open');
+    menuToggle.setAttribute('aria-expanded','false');
+  }
+  menuToggle.addEventListener('click', function(){
+    var isOpen = primaryNav.classList.toggle('is-open');
+    menuToggle.classList.toggle('is-open', isOpen);
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  primaryNav.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', function(e){
+      if(link.getAttribute('href') === '#'){ e.preventDefault(); }
+      closeNav();
+    });
+  });
+
+  /* ---- popovers (notifications / account) ---- */
+  function setupPopover(btnId, panelId){
+    var btn = document.getElementById(btnId);
+    var panel = document.getElementById(panelId);
+    if(!btn || !panel) return;
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var willOpen = !panel.classList.contains('is-open');
+      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
+      document.querySelectorAll('.icon-btn[aria-expanded="true"]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
+      if(willOpen){
+        panel.classList.add('is-open');
+        btn.setAttribute('aria-expanded','true');
+      }
+    });
+  }
+  setupPopover('notifBtn','notifPanel');
+  setupPopover('avatarBtn','avatarPanel');
+
+  document.addEventListener('click', function(e){
+    document.querySelectorAll('.popover.is-open').forEach(function(p){
+      if(!p.parentElement.contains(e.target)){
+        p.classList.remove('is-open');
+        var btn = p.parentElement.querySelector('.icon-btn');
+        if(btn) btn.setAttribute('aria-expanded','false');
+      }
+    });
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
+      closeNav();
+    }
+  });
+
+  /* ---- clan directory: search + recruiting filter + sort ---- */
+  var browseSearch = document.getElementById('browseSearch');
+  var recruitFilter = document.getElementById('recruitFilter');
+  var sortSelect = document.getElementById('sortSelect');
+  var clanGrid = document.getElementById('clanGrid');
+  var browseEmptyState = document.getElementById('emptyState');
+  var showingCaption = document.getElementById('showingCaption');
+  var visibleCountEl = document.getElementById('visibleCount');
+  var clearBrowseBtn = document.getElementById('clearFilters');
+
+  if(browseSearch && clanGrid){
+    var clanCards = Array.prototype.slice.call(clanGrid.querySelectorAll('.clan-card'));
+
+    function sortCards(){
+      var sortVal = sortSelect.value;
+      clanCards.sort(function(a, b){
+        if(sortVal === 'members'){
+          return parseInt(b.getAttribute('data-members'), 10) - parseInt(a.getAttribute('data-members'), 10);
+        }
+        if(sortVal === 'name'){
+          return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+        }
+        return parseInt(a.getAttribute('data-rank'), 10) - parseInt(b.getAttribute('data-rank'), 10);
+      });
+      clanCards.forEach(function(card){ clanGrid.appendChild(card); });
+    }
+
+    function applyBrowseFilter(){
+      var q = browseSearch.value.trim().toLowerCase();
+      var recruiting = recruitFilter.value;
+      var totalVisible = 0;
+
+      sortCards();
+
+      clanCards.forEach(function(card){
+        var name = card.getAttribute('data-name');
+        var rec = card.getAttribute('data-recruiting');
+        var matches = (!q || name.indexOf(q) !== -1) && (recruiting === 'all' || rec === recruiting);
+        card.classList.toggle('is-hidden', !matches);
+        if(matches) totalVisible++;
+      });
+
+      browseEmptyState.classList.toggle('is-visible', totalVisible === 0);
+      if(showingCaption) showingCaption.classList.toggle('is-hidden', totalVisible === 0);
+      if(visibleCountEl) visibleCountEl.textContent = totalVisible;
+    }
+
+    browseSearch.addEventListener('input', applyBrowseFilter);
+    recruitFilter.addEventListener('change', applyBrowseFilter);
+    sortSelect.addEventListener('change', applyBrowseFilter);
+    if(clearBrowseBtn){
+      clearBrowseBtn.addEventListener('click', function(){
+        browseSearch.value = '';
+        recruitFilter.value = 'all';
+        applyBrowseFilter();
+        browseSearch.focus();
+      });
+    }
+
+    applyBrowseFilter();
+  }
+
+})();
+</script>
+</body>
+</html>

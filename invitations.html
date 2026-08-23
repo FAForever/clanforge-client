@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<meta name="description" content="Manage clan invitations on Clanforge — review applications to join Iron Vanguard and track invites you've sent.">
+<title>Invitations · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   DESIGN TOKENS
+   "Forged" theme: void-black steel panels, molten-orange accent.
+   Shared with the rest of Clanforge for a consistent platform feel.
+   ============================================================ */
+:root{
+  --bg-void:        #0a0d12;
+  --bg-panel:        #12161d;
+  --bg-panel-raised: #1a2029;
+  --bg-inset:        #0c0f14;
+
+  --border-steel:      #232b36;
+  --border-steel-soft: #1a212b;
+
+  --accent:        #f0791e;
+  --accent-bright: #ff9d4d;
+  --accent-dim:    #9a4e15;
+
+  --text-primary:   #eceef1;
+  --text-secondary: #949dac;
+  --text-tertiary:  #838c98;
+
+  --cut-lg: 16px;
+  --cut-sm: 8px;
+
+  --font-display: 'Chakra Petch', 'Arial Narrow', sans-serif;
+  --font-body:    'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Consolas', monospace;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after{ box-sizing:border-box; }
+h1,h2,h3,h4,p,ul{ margin:0; }
+ul{ list-style:none; padding:0; }
+img,svg{ display:block; }
+input,select,button,textarea{ font:inherit; color:inherit; }
+a{ color:inherit; }
+
+html{ -webkit-text-size-adjust:100%; }
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg-void);
+  color:var(--text-primary);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.5;
+  position:relative;
+}
+
+/* faint tactical grid, purely atmospheric */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(240,121,30,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(240,121,30,.05) 1px, transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 90%);
+          mask-image:radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 90%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.sr-only{
+  position:absolute; width:1px;height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
+  outline:2px solid var(--accent-bright);
+  outline-offset:2px;
+}
+
+.icon{ width:18px; height:18px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.icon-fill{ fill:currentColor; stroke:none; }
+
+/* ============================================================
+   SIGNATURE PANEL COMPONENT — angular "cut corner" chassis
+   ============================================================ */
+.panel{
+  position:relative;
+  background:var(--bg-panel);
+  border:1px solid var(--border-steel);
+  padding:22px;
+  clip-path:polygon(0 var(--cut-lg), var(--cut-lg) 0, 100% 0, 100% calc(100% - var(--cut-lg)), calc(100% - var(--cut-lg)) 100%, 0 100%);
+  filter:drop-shadow(0 10px 26px rgba(0,0,0,.35));
+  animation:rise-in .5s ease both;
+}
+.panel::before{
+  content:"";
+  position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, var(--accent), transparent 75%);
+}
+.panel-title{
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--font-display);
+  font-size:.95rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+  margin-bottom:16px;
+}
+.panel-title .icon{ color:var(--accent); width:19px; height:19px; }
+.panel-subtitle-text{ color:var(--text-tertiary); font-size:.82rem; line-height:1.5; margin:-10px 0 18px; }
+
+@keyframes rise-in{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce){
+  .panel{ animation:none; }
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,13,18,.9);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border-steel);
+}
+.topbar-inner{
+  position:relative;
+  max-width:1440px; margin:0 auto;
+  display:flex; align-items:center; gap:20px;
+  padding:12px 24px;
+}
+
+.brand{ display:flex; align-items:center; gap:9px; text-decoration:none; flex-shrink:0; }
+.brand-mark{ width:26px; height:26px; color:var(--accent); }
+.brand-word{ font-family:var(--font-display); font-weight:700; font-size:1.05rem; letter-spacing:.06em; white-space:nowrap; }
+
+.primary-nav{ display:flex; align-items:center; gap:4px; flex:1; min-width:0; }
+.nav-link{
+  font-family:var(--font-display); font-size:.87rem; font-weight:500; letter-spacing:.02em;
+  color:var(--text-secondary); text-decoration:none;
+  padding:8px 12px; border-radius:6px; position:relative;
+  transition:color .15s ease, background-color .15s ease;
+  white-space:nowrap;
+}
+.nav-link:hover{ color:var(--text-primary); background:var(--bg-panel-raised); }
+.nav-link.is-active{ color:var(--text-primary); }
+.nav-link.is-active::after{
+  content:""; position:absolute; left:12px; right:12px; bottom:1px; height:2px; background:var(--accent);
+}
+.nav-badge{
+  background:var(--accent); color:#1a0f05; font-family:var(--font-mono); font-weight:600;
+  font-size:.62rem; padding:1px 5px; border-radius:20px; margin-left:5px;
+}
+
+.nav-search{
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg-panel); border:1px solid var(--border-steel);
+  padding:8px 12px; margin-left:auto; width:200px; flex-shrink:1;
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
+}
+.nav-search .icon{ color:var(--text-tertiary); width:16px; height:16px; }
+.nav-search input{ background:none; border:none; outline:none; width:100%; font-size:.85rem; }
+.nav-search input::placeholder{ color:var(--text-tertiary); }
+
+.topbar-actions{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.popover-wrap{ position:relative; }
+
+.btn{
+  font-family:var(--font-display); font-weight:600; font-size:.85rem; letter-spacing:.02em;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 16px; border:none; cursor:pointer; white-space:nowrap;
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
+  transition:filter .15s ease, transform .1s ease;
+  text-decoration:none;
+}
+.btn:active{ transform:scale(.98); }
+.btn-primary{ background:var(--accent); color:#1a0f05; }
+.btn-primary:hover{ filter:brightness(1.12); }
+.btn-secondary{ background:var(--bg-panel-raised); color:var(--text-primary); border:1px solid var(--border-steel); }
+.btn-secondary:hover{ background:#212a35; }
+.btn-block{ width:100%; }
+.btn-create{ padding:10px 16px; }
+
+.icon-btn{
+  width:38px; height:38px; flex-shrink:0;
+  display:grid; place-items:center;
+  background:var(--bg-panel); border:1px solid var(--border-steel); color:var(--text-secondary);
+  border-radius:8px; cursor:pointer; position:relative;
+  transition:color .15s ease, border-color .15s ease;
+}
+.icon-btn:hover{ color:var(--text-primary); border-color:var(--accent-dim); }
+.badge-dot{
+  position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 0 2px var(--bg-panel);
+}
+.avatar-btn{ padding:0; overflow:hidden; }
+
+.menu-toggle{ display:none; }
+.icon-close{ display:none; }
+.menu-toggle.is-open .icon-menu{ display:none; }
+.menu-toggle.is-open .icon-close{ display:block; }
+
+/* popovers */
+.popover{
+  display:none;
+  position:absolute; top:calc(100% + 10px); right:0;
+  width:280px; max-width:calc(100vw - 32px);
+  background:var(--bg-panel); border:1px solid var(--border-steel);
+  padding:16px; z-index:60;
+  clip-path:polygon(0 var(--cut-sm), var(--cut-sm) 0, 100% 0, 100% 100%, 0 100%);
+  filter:drop-shadow(0 14px 32px rgba(0,0,0,.5));
+}
+.popover.is-open{ display:block; }
+.popover-title{
+  font-family:var(--font-display); text-transform:uppercase; letter-spacing:.05em;
+  font-size:.76rem; color:var(--text-tertiary); margin-bottom:8px;
+}
+.notif-item{ padding:10px 0; border-top:1px solid var(--border-steel-soft); }
+.notif-item:first-of-type{ border-top:none; padding-top:0; }
+.notif-item-link{ display:block; text-decoration:none; color:inherit; }
+.notif-item-link:hover .notif-text{ color:var(--accent-bright); }
+.notif-text{ font-size:.82rem; line-height:1.45; margin-bottom:3px; }
+.notif-time{ font-size:.7rem; color:var(--text-tertiary); font-family:var(--font-mono); }
+
+.popover-user{
+  display:flex; align-items:center; gap:10px;
+  padding-bottom:14px; margin-bottom:8px; border-bottom:1px solid var(--border-steel-soft);
+}
+.popover-user-name{ font-weight:600; font-size:.88rem; }
+.popover-user-role{ font-size:.72rem; color:var(--text-tertiary); }
+.popover-link{
+  display:block; padding:9px 6px; text-decoration:none; color:var(--text-secondary);
+  font-size:.85rem; border-radius:6px;
+}
+.popover-link:hover{ background:var(--bg-panel-raised); color:var(--text-primary); }
+
+/* ============================================================
+   AVATARS
+   ============================================================ */
+.avatar{
+  border-radius:50%;
+  display:grid; place-items:center;
+  background:linear-gradient(160deg, var(--bg-panel-raised), var(--bg-inset));
+  border:1px solid var(--border-steel);
+  font-family:var(--font-mono); font-weight:600; color:var(--text-secondary);
+  flex-shrink:0;
+}
+.avatar-sm{ width:30px; height:30px; font-size:.65rem; }
+.avatar-md{ width:42px; height:42px; font-size:.8rem; }
+.avatar.is-owner{ border-color:var(--accent); color:var(--accent-bright); box-shadow:0 0 0 3px rgba(240,121,30,.12); }
+
+/* ============================================================
+   INVITATIONS HERO
+   ============================================================ */
+.invites-hero{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:40px 24px 8px;
+}
+.invites-title{
+  font-family:var(--font-display); font-size:2.1rem; font-weight:700; letter-spacing:.02em;
+  margin-bottom:10px;
+}
+.invites-subtitle{
+  color:var(--text-secondary); font-size:1rem; line-height:1.65;
+  max-width:580px; margin-bottom:28px;
+}
+.invites-stats{ display:flex; gap:32px; flex-wrap:wrap; }
+.invites-stats .stat-value{ display:block; font-family:var(--font-mono); font-weight:600; font-size:1.3rem; }
+.invites-stats .stat-label{ font-size:.68rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; }
+
+/* ============================================================
+   INVITATIONS LAYOUT
+   ============================================================ */
+.invites-layout{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:24px 24px 60px;
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:20px;
+  align-items:start;
+}
+.invites-side{ display:flex; flex-direction:column; gap:20px; }
+.mini-panel{ padding:18px; }
+
+/* ============================================================
+   INVITE ROWS (applications + sent invites)
+   ============================================================ */
+.invite-row{
+  display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;
+  padding:14px 2px; border-top:1px solid var(--border-steel-soft);
+  transition:opacity .2s ease, transform .2s ease;
+}
+.invite-row:first-child{ border-top:none; padding-top:0; }
+.invite-row.is-removing{ opacity:0; transform:translateX(10px); pointer-events:none; }
+@media (prefers-reduced-motion:reduce){
+  .invite-row{ transition:none; }
+}
+.invite-row-info{ flex:1 1 200px; min-width:0; }
+.invite-row-name{ font-weight:600; font-size:.92rem; margin-bottom:3px; }
+.invite-row-note{ font-size:.82rem; color:var(--text-secondary); line-height:1.5; margin-bottom:5px; font-style:italic; }
+.invite-row-meta{ font-size:.72rem; color:var(--text-tertiary); font-family:var(--font-mono); }
+.invite-row-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; margin-left:auto; }
+
+.invite-status{
+  font-family:var(--font-mono); font-size:.64rem; letter-spacing:.03em; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px; white-space:nowrap;
+}
+.invite-status.is-pending{ background:transparent; color:var(--accent-bright); border:1px solid var(--accent-dim); }
+.invite-status.is-declined{ background:var(--bg-panel-raised); color:var(--text-tertiary); border:1px solid var(--border-steel); }
+
+.empty-state{ display:none; text-align:center; color:var(--text-tertiary); font-size:.85rem; padding:26px 0; }
+.empty-state.is-visible{ display:block; }
+.link-btn{ background:none; border:none; color:var(--accent-bright); cursor:pointer; font:inherit; text-decoration:underline; padding:0; white-space:nowrap; }
+
+/* ============================================================
+   SEND INVITE FORM
+   ============================================================ */
+.invite-form{ display:flex; flex-direction:column; gap:10px; }
+.invite-form input, .invite-form select{
+  background-color:var(--bg-inset); border:1px solid var(--border-steel); color:var(--text-primary);
+  font-size:.85rem; padding:9px 12px; width:100%;
+}
+.invite-form input::placeholder{ color:var(--text-tertiary); }
+.invite-form select{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  padding-right:32px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23838c98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+.invite-form-row{ display:flex; gap:10px; }
+.invite-form-row select{ flex:1; min-width:0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* Tablet: collapse nav to menu, stack invites layout to one column */
+@media (max-width:1160px){
+  .primary-nav{
+    display:none;
+    position:absolute; top:100%; left:0; right:0;
+    flex-direction:column; align-items:stretch; gap:4px;
+    background:var(--bg-panel); border-bottom:1px solid var(--border-steel);
+    padding:14px; box-shadow:0 14px 26px rgba(0,0,0,.4);
+  }
+  .primary-nav.is-open{ display:flex; }
+  .nav-search{ width:100%; order:-1; margin:0 0 8px 0; }
+  .menu-toggle{ display:grid; }
+
+  .invites-layout{ grid-template-columns:1fr; }
+  .invites-side{ flex-direction:row; flex-wrap:wrap; }
+  .invites-side .panel{ flex:1 1 300px; }
+}
+
+/* Mobile: single column */
+@media (max-width:760px){
+  .topbar-inner{ padding:12px 16px; }
+  .invites-hero{ padding:32px 16px 8px; }
+  .invites-layout{ padding:20px 16px 48px; }
+  .invites-title{ font-size:1.7rem; }
+  .invites-stats{ gap:22px; }
+  .invites-side{ flex-direction:column; flex-wrap:nowrap; }
+  .invites-side .panel{ flex:none; }
+}
+
+@media (max-width:560px){
+  .btn-create .btn-label{ display:none; }
+  .btn-create{ padding:10px; }
+}
+
+@media (max-width:480px){
+  .panel{ padding:18px; }
+  .invite-row-actions{ width:100%; justify-content:flex-end; margin-left:0; margin-top:8px; }
+}
+
+@media (max-width:380px){
+  .brand-word{ display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ICON SPRITE — hand-drawn line icons, referenced via <use>
+     ============================================================ -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="icon-crest" viewBox="0 0 24 24">
+    <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
+</svg>
+
+<!-- ============================================================
+     TOP BAR
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="clanhome.html" aria-label="Clanforge home">
+      <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
+      <span class="brand-word">CLANFORGE</span>
+    </a>
+
+    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
+      <a class="nav-link" href="browse-clans.html">Browse Clans</a>
+      <a class="nav-link" href="clanhome.html">My Clan</a>
+      <a class="nav-link is-active" href="invitations.html" aria-current="page">Invitations<span class="nav-badge">3</span></a>
+      <div class="nav-search" role="search">
+        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+        <label class="sr-only" for="navClanSearch">Search clans</label>
+        <input type="search" id="navClanSearch" placeholder="Search clans…" autocomplete="off">
+      </div>
+    </nav>
+
+    <div class="topbar-actions">
+      <button type="button" class="btn btn-primary btn-create" aria-label="Create Clan">
+        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+        <span class="btn-label">Create Clan</span>
+      </button>
+
+      <div class="popover-wrap">
+        <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+          <span class="badge-dot" aria-hidden="true"></span>
+        </button>
+        <div class="popover" id="notifPanel">
+          <p class="popover-title">Notifications</p>
+          <a class="notif-item notif-item-link" href="invitations.html">
+            <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
+            <span class="notif-time">1h ago</span>
+          </a>
+          <a class="notif-item notif-item-link" href="invitations.html">
+            <p class="notif-text">3 new applications are waiting for review.</p>
+            <span class="notif-time">5h ago</span>
+          </a>
+          <div class="notif-item">
+            <p class="notif-text">Clan Ladder Night was added to the events calendar.</p>
+            <span class="notif-time">1d ago</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-wrap">
+        <button type="button" class="icon-btn avatar-btn" id="avatarBtn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar avatar-sm is-owner">W9</span>
+        </button>
+        <div class="popover" id="avatarPanel">
+          <div class="popover-user">
+            <span class="avatar avatar-md is-owner">W9</span>
+            <div>
+              <p class="popover-user-name">Warhawk_09</p>
+              <p class="popover-user-role">Leader · Iron Vanguard</p>
+            </div>
+          </div>
+          <a class="popover-link" href="#">My Profile</a>
+          <a class="popover-link" href="#">Account Settings</a>
+          <a class="popover-link" href="#">Sign Out</a>
+        </div>
+      </div>
+
+      <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
+        <svg class="icon icon-menu" aria-hidden="true"><use href="#icon-menu"></use></svg>
+        <svg class="icon icon-close" aria-hidden="true"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     INVITATIONS HERO
+     ============================================================ -->
+<section class="invites-hero">
+  <h1 class="invites-title">Invitations</h1>
+  <p class="invites-subtitle">Review applications from players who want to join Iron Vanguard, and keep track of invites you've sent out.</p>
+  <div class="invites-stats">
+    <div class="stat"><span class="stat-value" id="pendingCount">3</span><span class="stat-label">Pending Applications</span></div>
+    <div class="stat"><span class="stat-value" id="sentCount">3</span><span class="stat-label">Invites Sent</span></div>
+    <div class="stat"><span class="stat-value" id="joinedCount">12</span><span class="stat-label">Joined This Season</span></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MAIN LAYOUT
+     ============================================================ -->
+<main class="invites-layout">
+
+  <section class="panel invites-main" aria-label="Applications to join">
+    <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>Applications to Join</p>
+    <p class="panel-subtitle-text">Players who've asked to join Iron Vanguard. Review their note and respond.</p>
+
+    <div class="invite-list" id="applicationsList">
+      <div class="invite-row">
+        <span class="avatar avatar-md">FN</span>
+        <div class="invite-row-info">
+          <p class="invite-row-name">Falcon_Nine</p>
+          <p class="invite-row-note">"Diamond league player, looking for an active ladder squad. Free most evenings EU time."</p>
+          <p class="invite-row-meta">Applied 2d ago</p>
+        </div>
+        <div class="invite-row-actions">
+          <button type="button" class="btn btn-primary accept-btn">Accept</button>
+          <button type="button" class="btn btn-secondary decline-btn">Decline</button>
+        </div>
+      </div>
+      <div class="invite-row">
+        <span class="avatar avatar-md">WA</span>
+        <div class="invite-row-info">
+          <p class="invite-row-name">Wraith_Ander</p>
+          <p class="invite-row-note">"Returning FAF player after a long break, previously ran co-op with [FBL]. Happy to start as a recruit."</p>
+          <p class="invite-row-meta">Applied 1d ago</p>
+        </div>
+        <div class="invite-row-actions">
+          <button type="button" class="btn btn-primary accept-btn">Accept</button>
+          <button type="button" class="btn btn-secondary decline-btn">Decline</button>
+        </div>
+      </div>
+      <div class="invite-row">
+        <span class="avatar avatar-md">ST</span>
+        <div class="invite-row-info">
+          <p class="invite-row-name">Starlance</p>
+          <p class="invite-row-note">"New to competitive FAF but very active — just want to learn from a good group."</p>
+          <p class="invite-row-meta">Applied 5h ago</p>
+        </div>
+        <div class="invite-row-actions">
+          <button type="button" class="btn btn-primary accept-btn">Accept</button>
+          <button type="button" class="btn btn-secondary decline-btn">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="empty-state" id="applicationsEmpty">No pending applications right now.</p>
+  </section>
+
+  <aside class="invites-side">
+    <div class="panel mini-panel">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>Send an Invite</p>
+      <form class="invite-form" id="inviteForm">
+        <label class="sr-only" for="inviteUsername">Player username</label>
+        <input type="text" id="inviteUsername" placeholder="Player username…" autocomplete="off">
+        <div class="invite-form-row">
+          <label class="sr-only" for="inviteRole">Invite as</label>
+          <select id="inviteRole" aria-label="Invite as role">
+            <option value="soldier">Invite as Soldier</option>
+            <option value="officer">Invite as Officer</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Send Invite</button>
+      </form>
+    </div>
+
+    <div class="panel mini-panel">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>Invites Sent</p>
+      <div class="invite-list" id="sentList">
+        <div class="invite-row">
+          <span class="avatar avatar-md">NR</span>
+          <div class="invite-row-info">
+            <p class="invite-row-name">Nightreach</p>
+            <p class="invite-row-meta">Invited as Soldier · Sent 3d ago</p>
+          </div>
+          <div class="invite-row-actions">
+            <span class="invite-status is-pending">Pending</span>
+            <button type="button" class="link-btn cancel-btn">Cancel</button>
+          </div>
+        </div>
+        <div class="invite-row">
+          <span class="avatar avatar-md">KO</span>
+          <div class="invite-row-info">
+            <p class="invite-row-name">Korrath</p>
+            <p class="invite-row-meta">Invited as Officer · Sent 6d ago</p>
+          </div>
+          <div class="invite-row-actions">
+            <span class="invite-status is-pending">Pending</span>
+            <button type="button" class="link-btn cancel-btn">Cancel</button>
+          </div>
+        </div>
+        <div class="invite-row">
+          <span class="avatar avatar-md">ZV</span>
+          <div class="invite-row-info">
+            <p class="invite-row-name">Zephyr_Vale</p>
+            <p class="invite-row-meta">Invited as Soldier · Sent 2w ago</p>
+          </div>
+          <div class="invite-row-actions">
+            <span class="invite-status is-declined">Declined</span>
+          </div>
+        </div>
+      </div>
+      <p class="empty-state" id="sentEmpty">You haven't sent any invites yet.</p>
+    </div>
+  </aside>
+
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---- mobile nav toggle ---- */
+  var menuToggle = document.getElementById('menuToggle');
+  var primaryNav = document.getElementById('primaryNav');
+
+  function closeNav(){
+    primaryNav.classList.remove('is-open');
+    menuToggle.classList.remove('is-open');
+    menuToggle.setAttribute('aria-expanded','false');
+  }
+  menuToggle.addEventListener('click', function(){
+    var isOpen = primaryNav.classList.toggle('is-open');
+    menuToggle.classList.toggle('is-open', isOpen);
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  primaryNav.querySelectorAll('a').forEach(function(link){
+    link.addEventListener('click', function(e){
+      if(link.getAttribute('href') === '#'){ e.preventDefault(); }
+      closeNav();
+    });
+  });
+
+  /* ---- popovers (notifications / account) ---- */
+  function setupPopover(btnId, panelId){
+    var btn = document.getElementById(btnId);
+    var panel = document.getElementById(panelId);
+    if(!btn || !panel) return;
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var willOpen = !panel.classList.contains('is-open');
+      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
+      document.querySelectorAll('.icon-btn[aria-expanded="true"]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
+      if(willOpen){
+        panel.classList.add('is-open');
+        btn.setAttribute('aria-expanded','true');
+      }
+    });
+  }
+  setupPopover('notifBtn','notifPanel');
+  setupPopover('avatarBtn','avatarPanel');
+
+  document.addEventListener('click', function(e){
+    document.querySelectorAll('.popover.is-open').forEach(function(p){
+      if(!p.parentElement.contains(e.target)){
+        p.classList.remove('is-open');
+        var btn = p.parentElement.querySelector('.icon-btn');
+        if(btn) btn.setAttribute('aria-expanded','false');
+      }
+    });
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
+      closeNav();
+    }
+  });
+
+  /* ---- invitations: applications, sent invites, send form ---- */
+  var applicationsList = document.getElementById('applicationsList');
+  var sentList = document.getElementById('sentList');
+  var applicationsEmpty = document.getElementById('applicationsEmpty');
+  var sentEmpty = document.getElementById('sentEmpty');
+  var pendingCountEl = document.getElementById('pendingCount');
+  var sentCountEl = document.getElementById('sentCount');
+  var joinedCountEl = document.getElementById('joinedCount');
+  var inviteForm = document.getElementById('inviteForm');
+  var inviteUsername = document.getElementById('inviteUsername');
+  var inviteRole = document.getElementById('inviteRole');
+
+  function initials(name){
+    var clean = name.replace(/[^a-zA-Z0-9]/g, ' ').trim();
+    var parts = clean.split(/\s+/).filter(Boolean);
+    if(parts.length >= 2){ return (parts[0][0] + parts[1][0]).toUpperCase(); }
+    return (clean.slice(0,2) || '??').toUpperCase();
+  }
+
+  function updateApplicationsUI(){
+    var count = applicationsList.querySelectorAll('.invite-row').length;
+    if(pendingCountEl) pendingCountEl.textContent = count;
+    if(applicationsEmpty) applicationsEmpty.classList.toggle('is-visible', count === 0);
+  }
+  function updateSentUI(){
+    var count = sentList.querySelectorAll('.invite-row').length;
+    if(sentCountEl) sentCountEl.textContent = count;
+    if(sentEmpty) sentEmpty.classList.toggle('is-visible', count === 0);
+  }
+
+  function removeRow(row, after){
+    row.classList.add('is-removing');
+    window.setTimeout(function(){
+      row.remove();
+      if(after) after();
+    }, 200);
+  }
+
+  if(applicationsList){
+    applicationsList.addEventListener('click', function(e){
+      var acceptBtn = e.target.closest('.accept-btn');
+      var declineBtn = e.target.closest('.decline-btn');
+      if(!acceptBtn && !declineBtn) return;
+      var row = e.target.closest('.invite-row');
+      if(!row) return;
+      var isAccept = !!acceptBtn;
+      removeRow(row, function(){
+        updateApplicationsUI();
+        if(isAccept && joinedCountEl){
+          joinedCountEl.textContent = String(parseInt(joinedCountEl.textContent, 10) + 1);
+        }
+      });
+    });
+  }
+
+  if(sentList){
+    sentList.addEventListener('click', function(e){
+      var cancelBtn = e.target.closest('.cancel-btn');
+      if(!cancelBtn) return;
+      var row = e.target.closest('.invite-row');
+      if(!row) return;
+      removeRow(row, updateSentUI);
+    });
+  }
+
+  if(inviteForm){
+    inviteForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      var name = inviteUsername.value.trim();
+      if(!name){ inviteUsername.focus(); return; }
+      var roleLabel = inviteRole.value === 'officer' ? 'Officer' : 'Soldier';
+
+      var row = document.createElement('div');
+      row.className = 'invite-row';
+      row.innerHTML =
+        '<span class="avatar avatar-md"></span>' +
+        '<div class="invite-row-info">' +
+          '<p class="invite-row-name"></p>' +
+          '<p class="invite-row-meta"></p>' +
+        '</div>' +
+        '<div class="invite-row-actions">' +
+          '<span class="invite-status is-pending">Pending</span>' +
+          '<button type="button" class="link-btn cancel-btn">Cancel</button>' +
+        '</div>';
+      row.querySelector('.avatar').textContent = initials(name);
+      row.querySelector('.invite-row-name').textContent = name;
+      row.querySelector('.invite-row-meta').textContent = 'Invited as ' + roleLabel + ' · Sent just now';
+
+      sentList.insertBefore(row, sentList.firstChild);
+      updateSentUI();
+
+      inviteUsername.value = '';
+      inviteRole.value = 'soldier';
+      inviteUsername.focus();
+    });
+  }
+
+  updateApplicationsUI();
+  updateSentUI();
+
+})();
+</script>
+</body>
+</html>
