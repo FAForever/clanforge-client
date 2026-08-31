@@ -1,0 +1,32 @@
+# Local development database.
+#
+#   docker compose up -d       start Postgres with the schema already applied
+#   docker compose down        stop it (data is kept)
+#   docker compose down -v     stop it and delete all data
+#
+# Works the same on Windows, macOS and Linux, so nobody needs a local
+# Postgres install. Credentials below are development-only defaults and are
+# deliberately overridable - do not put real credentials in this file or in
+# application.properties, override them with a .env file instead.
+services:
+  db:
+    image: postgres:16
+    container_name: faf-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-clanadmin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-clan_management}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # applied automatically the first time the database is created
+      - ./db/V1__initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - faf-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clanadmin} -d ${POSTGRES_DB:-clan_management}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  faf-db-data:

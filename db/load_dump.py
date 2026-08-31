@@ -1,12 +1,21 @@
 import collections
 import os
 import re
+import shlex
 import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-PSQL = os.path.join(HERE, "pg", "pgsql", "bin", "psql.exe")
+# psql invocation and connection are configurable so this runs anywhere:
+# a bundled Postgres on Windows, a system psql on macOS/Linux, or a container.
+#   PSQL_CMD="docker exec -i faf-db psql"   PGPORT=5432   python load_dump.py
+_DEFAULT_PSQL = os.path.join(HERE, "pg", "pgsql", "bin",
+                             "psql.exe" if os.name == "nt" else "psql")
+PSQL_CMD = shlex.split(os.environ.get("PSQL_CMD", "")) or [_DEFAULT_PSQL]
+PGHOST = os.environ.get("PGHOST", "127.0.0.1")
+PGPORT = os.environ.get("PGPORT", "5433")
+PGUSER = os.environ.get("PGUSER", "clanadmin")
 DB = "clan_management"
 SOURCE = "faf-2023-dump"
 
@@ -215,10 +224,10 @@ def check_parser(m):
 
 
 def psql(sql, fetch=False):
-    cmd = [PSQL, "-h", "127.0.0.1", "-p", "5433", "-U", "clanadmin", "-d", DB,
+    cmd = PSQL_CMD + ["-h", PGHOST, "-p", PGPORT, "-U", PGUSER, "-d", DB,
            "-v", "ON_ERROR_STOP=1", "-q"]
     cmd += (["-t", "-A", "-c", sql] if fetch else ["-c", sql])
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf8", errors="replace")
     if r.returncode != 0:
         raise SystemExit(f"psql failed:\n{r.stderr[:2000]}")
     return r.stdout.strip()
@@ -227,7 +236,7 @@ def psql(sql, fetch=False):
 def copy_in(table, columns, rows):
     if not rows:
         return 0
-    cmd = [PSQL, "-h", "127.0.0.1", "-p", "5433", "-U", "clanadmin", "-d", DB,
+    cmd = PSQL_CMD + ["-h", PGHOST, "-p", PGPORT, "-U", PGUSER, "-d", DB,
            "-v", "ON_ERROR_STOP=1", "-q",
            "-c", f"COPY {table} ({','.join(columns)}) FROM STDIN"]
     buf = []
@@ -242,7 +251,7 @@ def copy_in(table, columns, rows):
                 s = s.replace("\n", "\\n").replace("\r", "\\r")
                 fields.append(s)
         buf.append("\t".join(fields))
-    r = subprocess.run(cmd, input="\n".join(buf) + "\n", capture_output=True, text=True)
+    r = subprocess.run(cmd, input="\n".join(buf) + "\n", capture_output=True, text=True, encoding="utf8", errors="replace")
     if r.returncode != 0:
         raise SystemExit(f"COPY into {table} failed:\n{r.stderr[:2000]}")
     return len(rows)
