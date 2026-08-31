@@ -1,0 +1,91 @@
+package com.faforever.clan_management.service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import com.faforever.clan_management.entity.Clan;
+import com.faforever.clan_management.repository.ClanMembershipRepository;
+import com.faforever.clan_management.repository.ClanMembershipRepository.ClanMemberCount;
+import com.faforever.clan_management.repository.ClanRepository;
+
+/**
+ * Read access to clans for anonymous and signed-in users.
+ *
+ * Visibility is enforced here rather than in the controller, so every route that
+ * reaches clan data goes through the same rule.
+ */
+@Service
+public class ClanService {
+
+    static final String PUBLIC = "PUBLIC";
+
+    private final ClanRepository clanRepository;
+    private final ClanMembershipRepository membershipRepository;
+
+    public ClanService(ClanRepository clanRepository, ClanMembershipRepository membershipRepository) {
+        this.clanRepository = clanRepository;
+        this.membershipRepository = membershipRepository;
+    }
+
+    public Page<Clan> findPublicClans(Pageable pageable) {
+        return clanRepository.findByVisibilityAndDeletedAtIsNull(PUBLIC, pageable);
+    }
+
+    /**
+     * A page of public clans with their active member counts.
+     *
+     * Two queries regardless of page size: one for the clans, one for the counts
+     * of exactly those clans.
+     */
+    public Page<ClanCard> findPublicClanCards(Pageable pageable) {
+        Page<Clan> clans = findPublicClans(pageable);
+
+        List<Long> ids = clans.getContent().stream().map(Clan::getId).toList();
+        Map<Long, Long> counts = ids.isEmpty()
+                ? Map.of()
+                : membershipRepository.countActiveMembersByClanIds(ids).stream()
+                    .collect(Collectors.toMap(ClanMemberCount::getClanId,
+                                              ClanMemberCount::getMemberCount));
+
+        return clans.map(clan -> new ClanCard(clan, counts.getOrDefault(clan.getId(), 0L)));
+    }
+
+    /**
+     * Look up a clan that the caller is allowed to see.
+     *
+     * Returns empty for a private clan as well as for one that does not exist,
+     * so the two are indistinguishable from outside. Answering 403 for private
+     * and 404 for missing would let anyone walk /clans/1, /clans/2, ... and map
+     * exactly which private clans exist and how many there are. Hiding
+     * existence is the deliberate choice here, the same reason a private
+     * repository on GitHub returns 404 rather than 403.
+     */
+    public Optional<Clan> findVisibleClan(Long id) {
+        return clanRepository.findByIdAndVisibilityAndDeletedAtIsNull(id, PUBLIC);
+    }
+
+    public long countPublicClans() {
+        return clanRepository.countByVisibilityAndDeletedAtIsNull(PUBLIC);
+    }
+
+    public long countRecruitingClans() {
+        return clanRepository.countByVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(PUBLIC);
+    }
+
+    public long countCommanders() {
+        return membershipRepository.count();
+    }
+
+    public long countActiveMembers(Long clanId) {
+        return membershipRepository.countActiveMembersByClanIds(List.of(clanId)).stream()
+                .findFirst()
+                .map(ClanMemberCount::getMemberCount)
+                .orElse(0L);
+    }
+}
