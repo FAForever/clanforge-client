@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${clan.name}">Clan</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="page">
+    <p><a th:href="@{/clans}">Back to clans</a></p>
+
+    <h1>
+        <span class="tag" th:text="${clan.tag}">TAG</span>
+        <span th:text="${clan.name}">Clan name</span>
+    </h1>
+
+    <p th:if="${clan.description}" th:text="${clan.description}">Description</p>
+    <p th:unless="${clan.description}" class="muted">No description.</p>
+
+    <dl class="facts">
+        <dt>Owner</dt>
+        <dd th:text="${clan.owner != null ? clan.owner.displayName : 'unknown'}">owner</dd>
+        <dt>Created</dt>
+        <dd th:text="${#temporals.format(clan.createdAt, 'd MMMM yyyy')}">date</dd>
+        <dt>Membership</dt>
+        <dd th:text="${clan.requiresInvitation} ? 'Invitation only' : 'Open'">Open</dd>
+    </dl>
+</main>
+</body>
+</html>

@@ -25,9 +25,12 @@ public class SecurityConfig {
     private static final String CSP =
             "default-src 'self'; "
           + "script-src 'self'; "
-          + "style-src 'self'; "
+          // the clan pages use Google Fonts: the stylesheet comes from
+          // fonts.googleapis.com and the font files from fonts.gstatic.com.
+          // Named explicitly rather than opening style-src up to 'unsafe-inline'.
+          + "style-src 'self' https://fonts.googleapis.com; "
           + "img-src 'self' data:; "
-          + "font-src 'self'; "
+          + "font-src 'self' https://fonts.gstatic.com; "
           + "connect-src 'self'; "
           + "object-src 'none'; "
           + "frame-ancestors 'none'; "
@@ -42,6 +45,9 @@ public class SecurityConfig {
             // ERROR dispatches too - so denying it turns every anonymous 404 into an
             // access-denied response and hides the real status.
             .requestMatchers("/", "/error", "/clans", "/clans/**").permitAll()
+            // static assets must be reachable anonymously or the public clan
+            // pages render without their stylesheet
+            .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
             .anyRequest().authenticated()
         );
 

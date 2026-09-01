@@ -1,0 +1,62 @@
+:root {
+    --ink: #1b1f24;
+    --muted: #6a737d;
+    --line: #e1e4e8;
+    --accent: #1f6feb;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: #fff;
+    line-height: 1.5;
+}
+
+.page {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+}
+
+h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+
+.muted { color: var(--muted); }
+
+a { color: var(--accent); }
+
+table.clans {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+table.clans th,
+table.clans td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+}
+
+table.clans th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+}
+
+.pager {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1.5rem;
+}
+
+.facts { display: grid; grid-template-columns: 8rem 1fr; gap: 0.25rem 1rem; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }

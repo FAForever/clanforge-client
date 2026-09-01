@@ -5,7 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.faforever.clan_management.service.ClanService;
+
+import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -25,12 +31,22 @@ class SecurityConfigTest {
     @Autowired
     private MockMvc mockMvc;
 
+    // ClanController is now part of the web layer, so the slice needs its
+    // collaborator. These tests are about routing and headers, not clan data.
+    @MockitoBean
+    private ClanService clanService;
+
     @Test
     @DisplayName("anonymous users may reach the public clan routes")
     void publicRoutesArePermitted() throws Exception {
-        // 404, not a redirect to login: the route is permitted, there is simply
-        // no controller behind it yet. This test will keep passing once there is.
-        mockMvc.perform(get("/clans")).andExpect(status().isNotFound());
+        // 200, not a redirect to login. The point of this test is that anonymous
+        // callers are not bounced to the login page, whatever the route returns.
+        org.mockito.BDDMockito.given(clanService.findPublicClanCards(org.mockito.ArgumentMatchers.any()))
+                .willReturn(Page.empty());
+        mockMvc.perform(get("/clans")).andExpect(status().isOk());
+
+        // an unknown clan is a 404 for anonymous callers, still not a login redirect
+        org.mockito.BDDMockito.given(clanService.findVisibleClan(1L)).willReturn(Optional.empty());
         mockMvc.perform(get("/clans/1")).andExpect(status().isNotFound());
     }
 
