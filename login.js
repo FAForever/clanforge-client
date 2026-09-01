@@ -4,11 +4,13 @@ const registerLink = document.querySelector(".register-link");
 const btnPopup = document.querySelector(".btn-login");
 const iconClose = document.querySelector(".icon-close");
 
-registerLink.addEventListener("click", () => {
+registerLink.addEventListener("click", (e) => {
+  e.preventDefault();
   wrapper.classList.add("active");
 });
 
-loginLink.addEventListener("click", () => {
+loginLink.addEventListener("click", (e) => {
+  e.preventDefault();
   wrapper.classList.remove("active");
 });
 
@@ -18,4 +20,5 @@ btnPopup.addEventListener("click", () => {
 
 iconClose.addEventListener("click", () => {
   wrapper.classList.remove("active-popup");
+  wrapper.classList.remove("active");
 });
