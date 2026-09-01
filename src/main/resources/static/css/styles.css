@@ -277,6 +277,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   font-size:.85rem; border-radius:6px;
 }
 .popover-link:hover{ background:var(--bg-panel-raised); color:var(--text-primary); }
+.logout-form{ margin:0; }
+.popover-link-button{
+  width:100%; border:0; background:none; text-align:left; cursor:pointer;
+  font:inherit;
+}
+.svg-sprite{ display:none; }
 
 /* ============================================================
    AVATARS

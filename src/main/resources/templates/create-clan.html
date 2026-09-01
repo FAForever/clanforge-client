@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,14 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/css/styles.css" th:href="@{/css/styles.css}">
 </head>
 <body>
 
 <!-- ============================================================
      ICON SPRITE — hand-drawn line icons, referenced via <use>
      ============================================================ -->
-<svg style="display:none" aria-hidden="true">
+<svg class="svg-sprite" aria-hidden="true">
   <symbol id="icon-crest" viewBox="0 0 24 24">
     <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
     <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
@@ -36,15 +36,15 @@
      ============================================================ -->
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="clanhome.html" aria-label="Clanforge home">
+    <a class="brand" href="/clanhome" th:href="@{/clanhome}" aria-label="Clanforge home">
       <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
       <span class="brand-word">CLANFORGE</span>
     </a>
 
     <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link" href="browse-clans.html">Browse Clans</a>
-      <a class="nav-link" href="clanhome.html">My Clan</a>
-      <a class="nav-link" href="invitations.html">Invitations<span class="nav-badge">3</span></a>
+      <a class="nav-link" href="/clans" th:href="@{/clans}">Browse Clans</a>
+      <a class="nav-link" href="/clanhome" th:href="@{/clanhome}">My Clan</a>
+      <a class="nav-link" href="/invitations" th:href="@{/invitations}">Invitations<span class="nav-badge">3</span></a>
       <div class="nav-search" role="search">
         <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
         <label class="sr-only" for="navClanSearch">Search clans</label>
@@ -53,7 +53,7 @@
     </nav>
 
     <div class="topbar-actions">
-      <a href="create-clan.html" class="btn btn-primary btn-create" aria-label="Create Clan">
+      <a href="/create-clan" th:href="@{/create-clan}" class="btn btn-primary btn-create" aria-label="Create Clan">
         <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
         <span class="btn-label">Create Clan</span>
       </a>
@@ -65,11 +65,11 @@
         </button>
         <div class="popover" id="notifPanel">
           <p class="popover-title">Notifications</p>
-          <a class="notif-item notif-item-link" href="invitations.html">
+          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
             <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
             <span class="notif-time">1h ago</span>
           </a>
-          <a class="notif-item notif-item-link" href="invitations.html">
+          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
             <p class="notif-text">3 new applications are waiting for review.</p>
             <span class="notif-time">5h ago</span>
           </a>
@@ -93,8 +93,10 @@
             </div>
           </div>
           <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="settings.html">Account Settings</a>
-          <a class="popover-link" href="#">Sign Out</a>
+          <a class="popover-link" href="/settings" th:href="@{/settings}">Account Settings</a>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
+          </form>
         </div>
       </div>
 
@@ -178,7 +180,7 @@
 
       <div class="form-actions">
         <button type="button" class="btn btn-primary" id="createClanBtn">Create Clan</button>
-        <a href="clanhome.html" class="btn btn-secondary">Cancel</a>
+        <a href="/clanhome" th:href="@{/clanhome}" class="btn btn-secondary">Cancel</a>
       </div>
     </div>
 
@@ -212,193 +214,11 @@
       <div class="success-icon"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg></div>
       <h2 class="success-title">Clan Created!</h2>
       <p class="success-text" id="successText">Your clan is live. Head to My Clan to start building your roster.</p>
-      <a href="clanhome.html" class="btn btn-primary">Go to My Clan</a>
+      <a href="/clanhome" th:href="@{/clanhome}" class="btn btn-primary">Go to My Clan</a>
     </div>
   </div>
 </main>
 
-<script>
-(function(){
-  'use strict';
-
-  /* ---- mobile nav toggle ---- */
-  var menuToggle = document.getElementById('menuToggle');
-  var primaryNav = document.getElementById('primaryNav');
-
-  function closeNav(){
-    primaryNav.classList.remove('is-open');
-    menuToggle.classList.remove('is-open');
-    menuToggle.setAttribute('aria-expanded','false');
-  }
-  menuToggle.addEventListener('click', function(){
-    var isOpen = primaryNav.classList.toggle('is-open');
-    menuToggle.classList.toggle('is-open', isOpen);
-    menuToggle.setAttribute('aria-expanded', String(isOpen));
-  });
-  primaryNav.querySelectorAll('a').forEach(function(link){
-    link.addEventListener('click', function(e){
-      if(link.getAttribute('href') === '#'){ e.preventDefault(); }
-      closeNav();
-    });
-  });
-
-  /* ---- popovers (notifications / account) ---- */
-  function setupPopover(btnId, panelId){
-    var btn = document.getElementById(btnId);
-    var panel = document.getElementById(panelId);
-    if(!btn || !panel) return;
-    btn.addEventListener('click', function(e){
-      e.stopPropagation();
-      var willOpen = !panel.classList.contains('is-open');
-      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
-      document.querySelectorAll('.icon-btn[aria-expanded="true"]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
-      if(willOpen){
-        panel.classList.add('is-open');
-        btn.setAttribute('aria-expanded','true');
-      }
-    });
-  }
-  setupPopover('notifBtn','notifPanel');
-  setupPopover('avatarBtn','avatarPanel');
-
-  document.addEventListener('click', function(e){
-    document.querySelectorAll('.popover.is-open').forEach(function(p){
-      if(!p.parentElement.contains(e.target)){
-        p.classList.remove('is-open');
-        var btn = p.parentElement.querySelector('.icon-btn');
-        if(btn) btn.setAttribute('aria-expanded','false');
-      }
-    });
-  });
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){
-      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
-      closeNav();
-    }
-  });
-
-  /* ---- live preview ---- */
-  var nameInput = document.getElementById('clanName');
-  var tagInput = document.getElementById('clanTag');
-  var descInput = document.getElementById('clanDesc');
-  var publicToggle = document.getElementById('publicToggle');
-
-  var previewBadgeText = document.getElementById('previewBadgeText');
-  var previewBadgeImg = document.getElementById('previewBadgeImg');
-  var previewName = document.getElementById('previewName');
-  var previewTag = document.getElementById('previewTag');
-  var previewDesc = document.getElementById('previewDesc');
-  var previewStatus = document.getElementById('previewStatus');
-
-  function updatePreview(){
-    var name = nameInput.value.trim();
-    var tag = tagInput.value.trim().toUpperCase();
-    var desc = descInput.value.trim();
-
-    previewName.textContent = name || 'Your Clan Name';
-    previewTag.textContent = '[' + (tag || 'TAG') + ']';
-    previewBadgeText.textContent = tag || 'TAG';
-    previewDesc.textContent = desc || 'Your clan description will appear here.';
-
-    var isPublic = publicToggle.checked;
-    previewStatus.textContent = isPublic ? 'Public' : 'Private';
-    previewStatus.classList.toggle('is-public', isPublic);
-    previewStatus.classList.toggle('is-private', !isPublic);
-  }
-
-  [nameInput, descInput].forEach(function(el){
-    el.addEventListener('input', updatePreview);
-  });
-  publicToggle.addEventListener('change', updatePreview);
-
-  /* ---- clan tag: exactly 3 alphanumeric characters ---- */
-  var tagField = document.getElementById('clanTagField');
-  var tagHint = document.getElementById('clanTagHint');
-  var TAG_HINT_DEFAULT = 'Exactly 3 letters or numbers. Shown in brackets, like [IVG].';
-  var TAG_HINT_ERROR = 'Clan tag must be exactly 3 letters or numbers.';
-
-  function clearTagError(){
-    tagField.classList.remove('has-error');
-    tagHint.textContent = TAG_HINT_DEFAULT;
-    tagHint.classList.remove('is-error');
-  }
-  function validateTag(){
-    if(tagInput.value.trim().length !== 3){
-      tagField.classList.add('has-error');
-      tagHint.textContent = TAG_HINT_ERROR;
-      tagHint.classList.add('is-error');
-      return false;
-    }
-    clearTagError();
-    return true;
-  }
-  tagInput.addEventListener('input', function(){
-    var cleaned = tagInput.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3);
-    if(cleaned !== tagInput.value){ tagInput.value = cleaned; }
-    clearTagError();
-    updatePreview();
-  });
-  tagInput.addEventListener('blur', validateTag);
-
-  updatePreview();
-
-  /* ---- clan image upload ---- */
-  var imageInput = document.getElementById('clanImageInput');
-  var imagePreviewImg = document.getElementById('imagePreviewImg');
-  var imagePreviewText = document.getElementById('imagePreviewText');
-  var removeImageBtn = document.getElementById('removeImageBtn');
-  var uploadedImageDataUrl = null;
-
-  function applyImagePreview(){
-    var hasImage = !!uploadedImageDataUrl;
-    imagePreviewImg.hidden = !hasImage;
-    imagePreviewText.hidden = hasImage;
-    previewBadgeImg.hidden = !hasImage;
-    previewBadgeText.hidden = hasImage;
-    removeImageBtn.hidden = !hasImage;
-    if(hasImage){
-      imagePreviewImg.src = uploadedImageDataUrl;
-      previewBadgeImg.src = uploadedImageDataUrl;
-    }
-  }
-
-  imageInput.addEventListener('change', function(){
-    var file = imageInput.files && imageInput.files[0];
-    if(!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e){
-      uploadedImageDataUrl = e.target.result;
-      applyImagePreview();
-    };
-    reader.readAsDataURL(file);
-  });
-
-  removeImageBtn.addEventListener('click', function(){
-    uploadedImageDataUrl = null;
-    imageInput.value = '';
-    applyImagePreview();
-  });
-
-  /* ---- create clan submission ---- */
-  var createBtn = document.getElementById('createClanBtn');
-  var formView = document.getElementById('createFormView');
-  var successView = document.getElementById('createSuccessView');
-  var successText = document.getElementById('successText');
-
-  createBtn.addEventListener('click', function(){
-    var name = nameInput.value.trim();
-
-    if(!name){ nameInput.focus(); return; }
-    if(!validateTag()){ tagInput.focus(); return; }
-
-    var tag = tagInput.value.trim().toUpperCase();
-    successText.textContent = '"' + name + ' [' + tag + ']" is live. Head to My Clan to start building your roster.';
-    formView.hidden = true;
-    successView.hidden = false;
-    successView.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-})();
-</script>
+<script src="/js/create-clan.js" th:src="@{/js/create-clan.js}"></script>
 </body>
 </html>

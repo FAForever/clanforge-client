@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,14 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/css/styles.css" th:href="@{/css/styles.css}">
 </head>
 <body>
 
 <!-- ============================================================
      ICON SPRITE — hand-drawn line icons, referenced via <use>
      ============================================================ -->
-<svg style="display:none" aria-hidden="true">
+<svg class="svg-sprite" aria-hidden="true">
   <symbol id="icon-crest" viewBox="0 0 24 24">
     <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
     <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
@@ -39,15 +39,15 @@
      ============================================================ -->
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="clanhome.html" aria-label="Clanforge home">
+    <a class="brand" href="/clanhome" th:href="@{/clanhome}" aria-label="Clanforge home">
       <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
       <span class="brand-word">CLANFORGE</span>
     </a>
 
     <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link" href="browse-clans.html">Browse Clans</a>
-      <a class="nav-link is-active" href="clanhome.html" aria-current="page">My Clan</a>
-      <a class="nav-link" href="invitations.html">Invitations<span class="nav-badge">3</span></a>
+      <a class="nav-link" href="/clans" th:href="@{/clans}">Browse Clans</a>
+      <a class="nav-link is-active" href="/clanhome" th:href="@{/clanhome}" aria-current="page">My Clan</a>
+      <a class="nav-link" href="/invitations" th:href="@{/invitations}">Invitations<span class="nav-badge">3</span></a>
       <div class="nav-search" role="search">
         <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
         <label class="sr-only" for="clanSearch">Search clans</label>
@@ -56,7 +56,7 @@
     </nav>
 
     <div class="topbar-actions">
-      <a href="create-clan.html" class="btn btn-primary btn-create" aria-label="Create Clan">
+      <a href="/create-clan" th:href="@{/create-clan}" class="btn btn-primary btn-create" aria-label="Create Clan">
         <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
         <span class="btn-label">Create Clan</span>
       </a>
@@ -72,7 +72,7 @@
             <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
             <span class="notif-time">1h ago</span>
           </div>
-          <a class="notif-item notif-item-link" href="invitations.html">
+          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
             <p class="notif-text">3 new applications are waiting for review.</p>
             <span class="notif-time">5h ago</span>
           </a>
@@ -96,8 +96,10 @@
             </div>
           </div>
           <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="settings.html">Account Settings</a>
-          <a class="popover-link" href="#">Sign Out</a>
+          <a class="popover-link" href="/settings" th:href="@{/settings}">Account Settings</a>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
+          </form>
         </div>
       </div>
 
@@ -137,7 +139,7 @@
     </div>
     <p class="clan-desc">Elite ladder squad running nightly 4v4s, team nights, and weekly co-op runs. EU/NA hours — all skill levels welcome to apply.</p>
 
-    <a href="invitations.html" class="btn btn-secondary btn-block">
+    <a href="/invitations" th:href="@{/invitations}" class="btn btn-secondary btn-block">
       <svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>
       Manage Invites
     </a>
@@ -199,11 +201,11 @@
   <aside class="side-stack">
     <div class="panel mini-panel">
       <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Clan Management</p>
-      <a class="mgmt-link" href="settings.html">
+      <a class="mgmt-link" href="/settings" th:href="@{/settings}">
         <div><p class="mgmt-link-title">General Settings</p><p class="mgmt-link-desc">Edit info, image, and details</p></div>
         <svg class="icon" aria-hidden="true"><use href="#icon-chevron-right"></use></svg>
       </a>
-      <a class="mgmt-link" href="invitations.html">
+      <a class="mgmt-link" href="/invitations" th:href="@{/invitations}">
         <div><p class="mgmt-link-title">Members &amp; Invitations</p><p class="mgmt-link-desc">Roles, permissions, pending requests</p></div>
         <svg class="icon" aria-hidden="true"><use href="#icon-chevron-right"></use></svg>
       </a>
@@ -212,7 +214,7 @@
     <div class="panel mini-panel">
       <div class="panel-header">
         <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>Message of the Day</p>
-        <a class="panel-header-action" href="settings.html#motd-section" aria-label="Edit message of the day">
+        <a class="panel-header-action" href="/settings#motd-section" th:href="@{/settings#motd-section}" aria-label="Edit message of the day">
           <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>
         </a>
       </div>
@@ -223,7 +225,7 @@
     <div class="panel mini-panel">
       <div class="panel-header">
         <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg>Upcoming Events</p>
-        <a class="panel-header-action" href="settings.html#events-section" aria-label="Manage clan events">
+        <a class="panel-header-action" href="/settings#events-section" th:href="@{/settings#events-section}" aria-label="Manage clan events">
           <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>
         </a>
       </div>
@@ -241,106 +243,6 @@
 </main>
 
 
-<script>
-(function(){
-  'use strict';
-
-  /* ---- mobile nav toggle ---- */
-  var menuToggle = document.getElementById('menuToggle');
-  var primaryNav = document.getElementById('primaryNav');
-
-  function closeNav(){
-    primaryNav.classList.remove('is-open');
-    menuToggle.classList.remove('is-open');
-    menuToggle.setAttribute('aria-expanded','false');
-  }
-  menuToggle.addEventListener('click', function(){
-    var isOpen = primaryNav.classList.toggle('is-open');
-    menuToggle.classList.toggle('is-open', isOpen);
-    menuToggle.setAttribute('aria-expanded', String(isOpen));
-  });
-  primaryNav.querySelectorAll('a').forEach(function(link){
-    link.addEventListener('click', function(e){
-      if(link.getAttribute('href') === '#'){ e.preventDefault(); }
-      closeNav();
-    });
-  });
-
-  /* ---- popovers (notifications / account) ---- */
-  function setupPopover(btnId, panelId){
-    var btn = document.getElementById(btnId);
-    var panel = document.getElementById(panelId);
-    if(!btn || !panel) return;
-    btn.addEventListener('click', function(e){
-      e.stopPropagation();
-      var willOpen = !panel.classList.contains('is-open');
-      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
-      document.querySelectorAll('.icon-btn[aria-expanded="true"]').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
-      if(willOpen){
-        panel.classList.add('is-open');
-        btn.setAttribute('aria-expanded','true');
-      }
-    });
-  }
-  setupPopover('notifBtn','notifPanel');
-  setupPopover('avatarBtn','avatarPanel');
-
-  document.addEventListener('click', function(e){
-    document.querySelectorAll('.popover.is-open').forEach(function(p){
-      if(!p.parentElement.contains(e.target)){
-        p.classList.remove('is-open');
-        var btn = p.parentElement.querySelector('.icon-btn');
-        if(btn) btn.setAttribute('aria-expanded','false');
-      }
-    });
-  });
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){
-      document.querySelectorAll('.popover.is-open').forEach(function(p){ p.classList.remove('is-open'); });
-      closeNav();
-    }
-  });
-
-  /* ---- roster search + role filter ---- */
-  var searchInput = document.getElementById('memberSearch');
-  var roleFilter = document.getElementById('roleFilter');
-  var clearBtn = document.getElementById('clearFilters');
-  var emptyState = document.getElementById('emptyState');
-  var rows = Array.prototype.slice.call(document.querySelectorAll('.member-row'));
-  var rosterGroup = document.querySelector('.roster-group');
-  var memberCountEl = document.querySelector('.js-member-count');
-
-  function applyFilter(){
-    var q = searchInput.value.trim().toLowerCase();
-    var role = roleFilter.value;
-    var totalVisible = 0;
-
-    rows.forEach(function(row){
-      var name = row.getAttribute('data-name');
-      var rrole = row.getAttribute('data-role');
-      var matches = (!q || name.indexOf(q) !== -1) && (role === 'all' || rrole === role);
-      row.classList.toggle('is-hidden', !matches);
-      if(matches) totalVisible++;
-    });
-
-    if(rosterGroup) rosterGroup.classList.toggle('is-hidden', totalVisible === 0);
-    if(memberCountEl) memberCountEl.textContent = totalVisible;
-
-    emptyState.classList.toggle('is-visible', totalVisible === 0);
-  }
-
-  searchInput.addEventListener('input', applyFilter);
-  roleFilter.addEventListener('change', applyFilter);
-  clearBtn.addEventListener('click', function(){
-    searchInput.value = '';
-    roleFilter.value = 'all';
-    applyFilter();
-    searchInput.focus();
-  });
-
-  applyFilter(); // sync counts with actual markup on load
-
-})();
-</script>
+<script src="/js/clanhome.js" th:src="@{/js/clanhome.js}"></script>
 </body>
 </html>
