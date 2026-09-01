@@ -9,385 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-
-/* ============================================================
-   DESIGN TOKENS
-   "Forged" theme: void-black steel panels, molten-orange accent.
-   Shared with the rest of Clanforge for a consistent platform feel.
-   ============================================================ */
-:root{
-  --bg-void:        #0a0d12;
-  --bg-panel:        #12161d;
-  --bg-panel-raised: #1a2029;
-  --bg-inset:        #0c0f14;
-
-  --border-steel:      #232b36;
-  --border-steel-soft: #1a212b;
-
-  --accent:        #f0791e;
-  --accent-bright: #ff9d4d;
-  --accent-dim:    #9a4e15;
-
-  --text-primary:   #eceef1;
-  --text-secondary: #949dac;
-  --text-tertiary:  #838c98;
-
-  --cut-lg: 16px;
-  --cut-sm: 8px;
-
-  --font-display: 'Chakra Petch', 'Arial Narrow', sans-serif;
-  --font-body:    'IBM Plex Sans', 'Segoe UI', sans-serif;
-  --font-mono:    'IBM Plex Mono', 'Consolas', monospace;
-}
-
-/* ============================================================
-   RESET & BASE
-   ============================================================ */
-*,*::before,*::after{ box-sizing:border-box; }
-h1,h2,h3,h4,p,ul{ margin:0; }
-ul{ list-style:none; padding:0; }
-img,svg{ display:block; }
-input,select,button,textarea{ font:inherit; color:inherit; }
-a{ color:inherit; }
-
-html{ -webkit-text-size-adjust:100%; }
-body{
-  margin:0;
-  min-height:100vh;
-  background:var(--bg-void);
-  color:var(--text-primary);
-  font-family:var(--font-body);
-  font-size:15px;
-  line-height:1.5;
-  position:relative;
-}
-
-/* faint tactical grid, purely atmospheric */
-body::before{
-  content:"";
-  position:fixed; inset:0;
-  background-image:
-    linear-gradient(rgba(240,121,30,.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(240,121,30,.05) 1px, transparent 1px);
-  background-size:46px 46px;
-  -webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 90%);
-          mask-image:radial-gradient(ellipse 80% 55% at 50% 0%, #000 35%, transparent 90%);
-  pointer-events:none;
-  z-index:0;
-}
-
-.sr-only{
-  position:absolute; width:1px;height:1px;
-  padding:0; margin:-1px; overflow:hidden;
-  clip:rect(0,0,0,0); white-space:nowrap; border:0;
-}
-
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
-  outline:2px solid var(--accent-bright);
-  outline-offset:2px;
-}
-
-.icon{ width:18px; height:18px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.icon-fill{ fill:currentColor; stroke:none; }
-
-/* ============================================================
-   SIGNATURE PANEL COMPONENT — angular "cut corner" chassis
-   ============================================================ */
-.panel{
-  position:relative;
-  background:var(--bg-panel);
-  border:1px solid var(--border-steel);
-  padding:22px;
-  clip-path:polygon(0 var(--cut-lg), var(--cut-lg) 0, 100% 0, 100% calc(100% - var(--cut-lg)), calc(100% - var(--cut-lg)) 100%, 0 100%);
-  filter:drop-shadow(0 10px 26px rgba(0,0,0,.35));
-  animation:rise-in .5s ease both;
-}
-.panel::before{
-  content:"";
-  position:absolute; top:0; left:0; right:0; height:3px;
-  background:linear-gradient(90deg, var(--accent), transparent 75%);
-}
-.panel-title{
-  display:flex; align-items:center; gap:8px;
-  font-family:var(--font-display);
-  font-size:.95rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
-  margin-bottom:16px;
-}
-.panel-title .icon{ color:var(--accent); width:19px; height:19px; }
-.panel-subtitle-text{ color:var(--text-tertiary); font-size:.82rem; line-height:1.5; margin:-10px 0 18px; }
-
-@keyframes rise-in{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
-@media (prefers-reduced-motion:reduce){
-  .panel{ animation:none; }
-}
-
-/* ============================================================
-   TOP BAR
-   ============================================================ */
-.topbar{
-  position:sticky; top:0; z-index:50;
-  background:rgba(10,13,18,.9);
-  -webkit-backdrop-filter:blur(10px);
-  backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--border-steel);
-}
-.topbar-inner{
-  position:relative;
-  max-width:1440px; margin:0 auto;
-  display:flex; align-items:center; gap:20px;
-  padding:12px 24px;
-}
-
-.brand{ display:flex; align-items:center; gap:9px; text-decoration:none; flex-shrink:0; }
-.brand-mark{ width:26px; height:26px; color:var(--accent); }
-.brand-word{ font-family:var(--font-display); font-weight:700; font-size:1.05rem; letter-spacing:.06em; white-space:nowrap; }
-
-.primary-nav{ display:flex; align-items:center; gap:4px; flex:1; min-width:0; }
-.nav-link{
-  font-family:var(--font-display); font-size:.87rem; font-weight:500; letter-spacing:.02em;
-  color:var(--text-secondary); text-decoration:none;
-  padding:8px 12px; border-radius:6px; position:relative;
-  transition:color .15s ease, background-color .15s ease;
-  white-space:nowrap;
-}
-.nav-link:hover{ color:var(--text-primary); background:var(--bg-panel-raised); }
-.nav-link.is-active{ color:var(--text-primary); }
-.nav-link.is-active::after{
-  content:""; position:absolute; left:12px; right:12px; bottom:1px; height:2px; background:var(--accent);
-}
-.nav-badge{
-  background:var(--accent); color:#1a0f05; font-family:var(--font-mono); font-weight:600;
-  font-size:.62rem; padding:1px 5px; border-radius:20px; margin-left:5px;
-}
-
-.nav-search{
-  display:flex; align-items:center; gap:8px;
-  background:var(--bg-panel); border:1px solid var(--border-steel);
-  padding:8px 12px; margin-left:auto; width:200px; flex-shrink:1;
-  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
-}
-.nav-search .icon{ color:var(--text-tertiary); width:16px; height:16px; }
-.nav-search input{ background:none; border:none; outline:none; width:100%; font-size:.85rem; }
-.nav-search input::placeholder{ color:var(--text-tertiary); }
-
-.topbar-actions{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
-.popover-wrap{ position:relative; }
-
-.btn{
-  font-family:var(--font-display); font-weight:600; font-size:.85rem; letter-spacing:.02em;
-  display:inline-flex; align-items:center; justify-content:center; gap:6px;
-  padding:10px 16px; border:none; cursor:pointer; white-space:nowrap;
-  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
-  transition:filter .15s ease, transform .1s ease;
-  text-decoration:none;
-}
-.btn:active{ transform:scale(.98); }
-.btn-primary{ background:var(--accent); color:#1a0f05; }
-.btn-primary:hover{ filter:brightness(1.12); }
-.btn-secondary{ background:var(--bg-panel-raised); color:var(--text-primary); border:1px solid var(--border-steel); }
-.btn-secondary:hover{ background:#212a35; }
-.btn-block{ width:100%; }
-.btn-create{ padding:10px 16px; }
-
-.icon-btn{
-  width:38px; height:38px; flex-shrink:0;
-  display:grid; place-items:center;
-  background:var(--bg-panel); border:1px solid var(--border-steel); color:var(--text-secondary);
-  border-radius:8px; cursor:pointer; position:relative;
-  transition:color .15s ease, border-color .15s ease;
-}
-.icon-btn:hover{ color:var(--text-primary); border-color:var(--accent-dim); }
-.badge-dot{
-  position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%;
-  background:var(--accent); box-shadow:0 0 0 2px var(--bg-panel);
-}
-.avatar-btn{ padding:0; overflow:hidden; }
-
-.menu-toggle{ display:none; }
-.icon-close{ display:none; }
-.menu-toggle.is-open .icon-menu{ display:none; }
-.menu-toggle.is-open .icon-close{ display:block; }
-
-/* popovers */
-.popover{
-  display:none;
-  position:absolute; top:calc(100% + 10px); right:0;
-  width:280px; max-width:calc(100vw - 32px);
-  background:var(--bg-panel); border:1px solid var(--border-steel);
-  padding:16px; z-index:60;
-  clip-path:polygon(0 var(--cut-sm), var(--cut-sm) 0, 100% 0, 100% 100%, 0 100%);
-  filter:drop-shadow(0 14px 32px rgba(0,0,0,.5));
-}
-.popover.is-open{ display:block; }
-.popover-title{
-  font-family:var(--font-display); text-transform:uppercase; letter-spacing:.05em;
-  font-size:.76rem; color:var(--text-tertiary); margin-bottom:8px;
-}
-.notif-item{ padding:10px 0; border-top:1px solid var(--border-steel-soft); }
-.notif-item:first-of-type{ border-top:none; padding-top:0; }
-.notif-item-link{ display:block; text-decoration:none; color:inherit; }
-.notif-item-link:hover .notif-text{ color:var(--accent-bright); }
-.notif-text{ font-size:.82rem; line-height:1.45; margin-bottom:3px; }
-.notif-time{ font-size:.7rem; color:var(--text-tertiary); font-family:var(--font-mono); }
-
-.popover-user{
-  display:flex; align-items:center; gap:10px;
-  padding-bottom:14px; margin-bottom:8px; border-bottom:1px solid var(--border-steel-soft);
-}
-.popover-user-name{ font-weight:600; font-size:.88rem; }
-.popover-user-role{ font-size:.72rem; color:var(--text-tertiary); }
-.popover-link{
-  display:block; padding:9px 6px; text-decoration:none; color:var(--text-secondary);
-  font-size:.85rem; border-radius:6px;
-}
-.popover-link:hover{ background:var(--bg-panel-raised); color:var(--text-primary); }
-
-/* ============================================================
-   AVATARS
-   ============================================================ */
-.avatar{
-  border-radius:50%;
-  display:grid; place-items:center;
-  background:linear-gradient(160deg, var(--bg-panel-raised), var(--bg-inset));
-  border:1px solid var(--border-steel);
-  font-family:var(--font-mono); font-weight:600; color:var(--text-secondary);
-  flex-shrink:0;
-}
-.avatar-sm{ width:30px; height:30px; font-size:.65rem; }
-.avatar-md{ width:42px; height:42px; font-size:.8rem; }
-.avatar.is-owner{ border-color:var(--accent); color:var(--accent-bright); box-shadow:0 0 0 3px rgba(240,121,30,.12); }
-
-/* ============================================================
-   INVITATIONS HERO
-   ============================================================ */
-.invites-hero{
-  position:relative; z-index:1;
-  max-width:1440px; margin:0 auto;
-  padding:40px 24px 8px;
-}
-.invites-title{
-  font-family:var(--font-display); font-size:2.1rem; font-weight:700; letter-spacing:.02em;
-  margin-bottom:10px;
-}
-.invites-subtitle{
-  color:var(--text-secondary); font-size:1rem; line-height:1.65;
-  max-width:580px; margin-bottom:28px;
-}
-.invites-stats{ display:flex; gap:32px; flex-wrap:wrap; }
-.invites-stats .stat-value{ display:block; font-family:var(--font-mono); font-weight:600; font-size:1.3rem; }
-.invites-stats .stat-label{ font-size:.68rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; }
-
-/* ============================================================
-   INVITATIONS LAYOUT
-   ============================================================ */
-.invites-layout{
-  position:relative; z-index:1;
-  max-width:1440px; margin:0 auto;
-  padding:24px 24px 60px;
-  display:grid;
-  grid-template-columns:1fr 320px;
-  gap:20px;
-  align-items:start;
-}
-.invites-side{ display:flex; flex-direction:column; gap:20px; }
-.mini-panel{ padding:18px; }
-
-/* ============================================================
-   INVITE ROWS (applications + sent invites)
-   ============================================================ */
-.invite-row{
-  display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;
-  padding:14px 2px; border-top:1px solid var(--border-steel-soft);
-  transition:opacity .2s ease, transform .2s ease;
-}
-.invite-row:first-child{ border-top:none; padding-top:0; }
-.invite-row.is-removing{ opacity:0; transform:translateX(10px); pointer-events:none; }
-@media (prefers-reduced-motion:reduce){
-  .invite-row{ transition:none; }
-}
-.invite-row-info{ flex:1 1 200px; min-width:0; }
-.invite-row-name{ font-weight:600; font-size:.92rem; margin-bottom:3px; }
-.invite-row-note{ font-size:.82rem; color:var(--text-secondary); line-height:1.5; margin-bottom:5px; font-style:italic; }
-.invite-row-meta{ font-size:.72rem; color:var(--text-tertiary); font-family:var(--font-mono); }
-.invite-row-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; margin-left:auto; }
-
-.invite-status{
-  font-family:var(--font-mono); font-size:.64rem; letter-spacing:.03em; text-transform:uppercase;
-  padding:4px 10px; border-radius:20px; white-space:nowrap;
-}
-.invite-status.is-pending{ background:transparent; color:var(--accent-bright); border:1px solid var(--accent-dim); }
-.invite-status.is-declined{ background:var(--bg-panel-raised); color:var(--text-tertiary); border:1px solid var(--border-steel); }
-
-.empty-state{ display:none; text-align:center; color:var(--text-tertiary); font-size:.85rem; padding:26px 0; }
-.empty-state.is-visible{ display:block; }
-.link-btn{ background:none; border:none; color:var(--accent-bright); cursor:pointer; font:inherit; text-decoration:underline; padding:0; white-space:nowrap; }
-
-/* ============================================================
-   SEND INVITE FORM
-   ============================================================ */
-.invite-form{ display:flex; flex-direction:column; gap:10px; }
-.invite-form input, .invite-form select{
-  background-color:var(--bg-inset); border:1px solid var(--border-steel); color:var(--text-primary);
-  font-size:.85rem; padding:9px 12px; width:100%;
-}
-.invite-form input::placeholder{ color:var(--text-tertiary); }
-.invite-form select{
-  appearance:none; -webkit-appearance:none; -moz-appearance:none;
-  padding-right:32px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23838c98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat:no-repeat; background-position:right 10px center;
-}
-.invite-form-row{ display:flex; gap:10px; }
-.invite-form-row select{ flex:1; min-width:0; }
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-/* Tablet: collapse nav to menu, stack invites layout to one column */
-@media (max-width:1160px){
-  .primary-nav{
-    display:none;
-    position:absolute; top:100%; left:0; right:0;
-    flex-direction:column; align-items:stretch; gap:4px;
-    background:var(--bg-panel); border-bottom:1px solid var(--border-steel);
-    padding:14px; box-shadow:0 14px 26px rgba(0,0,0,.4);
-  }
-  .primary-nav.is-open{ display:flex; }
-  .nav-search{ width:100%; order:-1; margin:0 0 8px 0; }
-  .menu-toggle{ display:grid; }
-
-  .invites-layout{ grid-template-columns:1fr; }
-  .invites-side{ flex-direction:row; flex-wrap:wrap; }
-  .invites-side .panel{ flex:1 1 300px; }
-}
-
-/* Mobile: single column */
-@media (max-width:760px){
-  .topbar-inner{ padding:12px 16px; }
-  .invites-hero{ padding:32px 16px 8px; }
-  .invites-layout{ padding:20px 16px 48px; }
-  .invites-title{ font-size:1.7rem; }
-  .invites-stats{ gap:22px; }
-  .invites-side{ flex-direction:column; flex-wrap:nowrap; }
-  .invites-side .panel{ flex:none; }
-}
-
-@media (max-width:560px){
-  .btn-create .btn-label{ display:none; }
-  .btn-create{ padding:10px; }
-}
-
-@media (max-width:480px){
-  .panel{ padding:18px; }
-  .invite-row-actions{ width:100%; justify-content:flex-end; margin-left:0; margin-top:8px; }
-}
-
-@media (max-width:380px){
-  .brand-word{ display:none; }
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -429,10 +51,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     </nav>
 
     <div class="topbar-actions">
-      <button type="button" class="btn btn-primary btn-create" aria-label="Create Clan">
+      <a href="create-clan.html" class="btn btn-primary btn-create" aria-label="Create Clan">
         <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
         <span class="btn-label">Create Clan</span>
-      </button>
+      </a>
 
       <div class="popover-wrap">
         <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
@@ -469,7 +91,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
             </div>
           </div>
           <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="#">Account Settings</a>
+          <a class="popover-link" href="settings.html">Account Settings</a>
           <a class="popover-link" href="#">Sign Out</a>
         </div>
       </div>
@@ -521,7 +143,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
         <span class="avatar avatar-md">WA</span>
         <div class="invite-row-info">
           <p class="invite-row-name">Wraith_Ander</p>
-          <p class="invite-row-note">"Returning FAF player after a long break, previously ran co-op with [FBL]. Happy to start as a recruit."</p>
+          <p class="invite-row-note">"Returning player after a long break, previously ran co-op with [FBL]. Happy to start as a recruit."</p>
           <p class="invite-row-meta">Applied 1d ago</p>
         </div>
         <div class="invite-row-actions">
@@ -533,7 +155,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
         <span class="avatar avatar-md">ST</span>
         <div class="invite-row-info">
           <p class="invite-row-name">Starlance</p>
-          <p class="invite-row-note">"New to competitive FAF but very active — just want to learn from a good group."</p>
+          <p class="invite-row-note">"New to competitive play but very active — just want to learn from a good group."</p>
           <p class="invite-row-meta">Applied 5h ago</p>
         </div>
         <div class="invite-row-actions">
