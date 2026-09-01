@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0d12">
-<meta name="description" content="Clanforge — a clan command dashboard for managing your roster, events, and clan info.">
-<title>Iron Vanguard [IVG] · Clanforge</title>
+<meta name="description" content="Browse public clans on Clanforge — search, sort by rank, and find your squad.">
+<title>Browse Clans · Clanforge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,14 +24,8 @@
   <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
   <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
   <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
-  <symbol id="icon-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12M19.07 19.07l-2.12-2.12M7.05 7.05L4.93 4.93"/></symbol>
-  <symbol id="icon-message" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5Z"/></symbol>
-  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></symbol>
-  <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></symbol>
   <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
   <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
-  <symbol id="icon-chevron-right" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></symbol>
-  <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
 </svg>
 
 <!-- ============================================================
@@ -45,13 +39,13 @@
     </a>
 
     <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link" href="browse-clans.html">Browse Clans</a>
-      <a class="nav-link is-active" href="clanhome.html" aria-current="page">My Clan</a>
+      <a class="nav-link is-active" href="browse-clans.html" aria-current="page">Browse Clans</a>
+      <a class="nav-link" href="clanhome.html">My Clan</a>
       <a class="nav-link" href="invitations.html">Invitations<span class="nav-badge">3</span></a>
       <div class="nav-search" role="search">
         <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
-        <label class="sr-only" for="clanSearch">Search clans</label>
-        <input type="search" id="clanSearch" placeholder="Search clans…" autocomplete="off">
+        <label class="sr-only" for="navClanSearch">Search clans</label>
+        <input type="search" id="navClanSearch" placeholder="Search clans…" autocomplete="off">
       </div>
     </nav>
 
@@ -110,136 +104,153 @@
 </header>
 
 <!-- ============================================================
-     MAIN LAYOUT
+     BROWSE HERO
      ============================================================ -->
-<main class="layout">
+<section class="browse-hero">
+  <h1 class="browse-title">Browse Clans</h1>
+  <p class="browse-subtitle">Explore public clans, sort by rank or size, and find the squad that fits your playstyle.</p>
+  <div class="browse-stats">
+    <div class="stat"><span class="stat-value">128</span><span class="stat-label">Clans</span></div>
+    <div class="stat"><span class="stat-value">3,600+</span><span class="stat-label">Players</span></div>
+    <div class="stat"><span class="stat-value">9</span><span class="stat-label">New This Week</span></div>
+  </div>
+</section>
 
-  <!-- CLAN IDENTITY -->
-  <aside class="panel clan-id">
-    <div class="clan-crest">
-      <svg class="icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
-    </div>
-    <h1 class="clan-name">IRON VANGUARD</h1>
-    <p class="clan-tag">[IVG]</p>
+<!-- ============================================================
+     SEARCH / SORT CONTROLS
+     ============================================================ -->
+<section class="browse-controls">
+  <div class="clan-search" role="search">
+    <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+    <label class="sr-only" for="browseSearch">Search clans by name or tag</label>
+    <input type="search" id="browseSearch" placeholder="Search by clan name or tag…" autocomplete="off">
+  </div>
+  <select class="sort-select" id="sortSelect" aria-label="Sort clans">
+    <option value="rank">Sort: Top Rank</option>
+    <option value="members">Sort: Most Members</option>
+    <option value="name">Sort: Name A–Z</option>
+  </select>
+</section>
 
-    <div class="id-block">
-      <p class="id-label">Leader</p>
-      <div class="founder-row">
-        <span class="avatar avatar-md is-owner">W9</span>
-        <span class="founder-name">Warhawk_09</span>
+<!-- ============================================================
+     CLAN GRID
+     ============================================================ -->
+<main class="browse-main">
+  <div class="clan-grid" id="clanGrid">
+
+    <article class="panel clan-card" data-name="frostbyte legion fbl" data-members="89" data-rank="4">
+      <div class="clan-card-head">
+        <div class="clan-badge">FBL</div>
+        <div>
+          <p class="clan-card-name">Frostbyte Legion</p>
+          <p class="clan-card-tag">[FBL]</p>
+        </div>
       </div>
-    </div>
-
-    <p class="id-label">Clan Info</p>
-    <div class="clan-stats">
-      <div class="stat"><span class="stat-value">42</span><span class="stat-label">Members</span></div>
-      <div class="stat"><span class="stat-value">#7</span><span class="stat-label">Ladder Rank</span></div>
-    </div>
-    <p class="clan-desc">Elite ladder squad running nightly 4v4s, team nights, and weekly co-op runs. EU/NA hours — all skill levels welcome to apply.</p>
-
-    <a href="invitations.html" class="btn btn-secondary btn-block">
-      <svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>
-      Manage Invites
-    </a>
-  </aside>
-
-  <!-- ROSTER -->
-  <section class="panel roster" aria-label="Clan roster">
-    <div class="roster-controls">
-      <div class="member-search" role="search">
-        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
-        <label class="sr-only" for="memberSearch">Search members</label>
-        <input type="search" id="memberSearch" placeholder="Search members…" autocomplete="off">
+      <p class="clan-card-desc">One of the largest active clans on the platform. Casual and ladder both welcome.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">89</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#4</span><span class="stat-label">Ladder Rank</span></div>
       </div>
-      <select class="role-filter" id="roleFilter" aria-label="Filter members by role">
-        <option value="all">All Roles</option>
-        <option value="officer">Officer</option>
-        <option value="soldier">Soldier</option>
-      </select>
-    </div>
-
-    <div class="roster-group">
-      <p class="group-heading">Members — <span class="js-member-count">7</span></p>
-      <ul>
-        <li class="member-row" data-name="ionblade" data-role="officer">
-          <span class="avatar avatar-md">IB</span>
-          <div><p class="member-name">IonBlade</p><p class="member-role">Officer</p></div>
-        </li>
-        <li class="member-row" data-name="nebula_prime" data-role="officer">
-          <span class="avatar avatar-md">NP</span>
-          <div><p class="member-name">Nebula_Prime</p><p class="member-role">Officer</p></div>
-        </li>
-        <li class="member-row" data-name="shadowstrike" data-role="soldier">
-          <span class="avatar avatar-md">SS</span>
-          <div><p class="member-name">ShadowStrike</p><p class="member-role">Soldier</p></div>
-        </li>
-        <li class="member-row" data-name="vantage" data-role="soldier">
-          <span class="avatar avatar-md">VA</span>
-          <div><p class="member-name">Vantage</p><p class="member-role">Soldier</p></div>
-        </li>
-        <li class="member-row" data-name="commanderzeta" data-role="soldier">
-          <span class="avatar avatar-md">CZ</span>
-          <div><p class="member-name">CommanderZeta</p><p class="member-role">Soldier</p></div>
-        </li>
-        <li class="member-row" data-name="solstice" data-role="soldier">
-          <span class="avatar avatar-md">SO</span>
-          <div><p class="member-name">Solstice</p><p class="member-role">Soldier</p></div>
-        </li>
-        <li class="member-row" data-name="ghostfire" data-role="soldier">
-          <span class="avatar avatar-md">GF</span>
-          <div><p class="member-name">Ghostfire</p><p class="member-role">Soldier</p></div>
-        </li>
-      </ul>
-    </div>
-
-    <p class="empty-state" id="emptyState">No members match your search. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></p>
-  </section>
-
-  <!-- SIDE PANELS -->
-  <aside class="side-stack">
-    <div class="panel mini-panel">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Clan Management</p>
-      <a class="mgmt-link" href="settings.html">
-        <div><p class="mgmt-link-title">General Settings</p><p class="mgmt-link-desc">Edit info, image, and details</p></div>
-        <svg class="icon" aria-hidden="true"><use href="#icon-chevron-right"></use></svg>
-      </a>
-      <a class="mgmt-link" href="invitations.html">
-        <div><p class="mgmt-link-title">Members &amp; Invitations</p><p class="mgmt-link-desc">Roles, permissions, pending requests</p></div>
-        <svg class="icon" aria-hidden="true"><use href="#icon-chevron-right"></use></svg>
-      </a>
-    </div>
-
-    <div class="panel mini-panel">
-      <div class="panel-header">
-        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>Message of the Day</p>
-        <a class="panel-header-action" href="settings.html#motd-section" aria-label="Edit message of the day">
-          <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>
-        </a>
+      <div class="clan-card-foot">
+        <button type="button" class="btn btn-secondary">View Clan</button>
       </div>
-      <p class="motd-text">"Season 24 ladder finals are this weekend — full squad needed for the 4v4 bracket Saturday. Check #events on Discord for the lineup."</p>
-      <p class="motd-meta">Posted by Warhawk_09 · Editable by permitted roles</p>
-    </div>
+    </article>
 
-    <div class="panel mini-panel">
-      <div class="panel-header">
-        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg>Upcoming Events</p>
-        <a class="panel-header-action" href="settings.html#events-section" aria-label="Manage clan events">
-          <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>
-        </a>
+    <article class="panel clan-card" data-name="iron vanguard ivg" data-members="42" data-rank="7">
+      <div class="clan-card-head">
+        <div class="clan-badge">IVG</div>
+        <div>
+          <p class="clan-card-name">Iron Vanguard <span class="your-clan-tag">Your Clan</span></p>
+          <p class="clan-card-tag">[IVG]</p>
+        </div>
       </div>
-      <div class="event-row">
-        <div class="event-date"><span class="day">28</span><span class="mon">Aug</span></div>
-        <div><p class="event-title">Clan Ladder Night</p><p class="event-time">8:00 PM UTC · Fri</p></div>
+      <p class="clan-card-desc">Elite ladder squad running nightly 4v4s, team nights, and weekly co-op runs. EU/NA hours.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">42</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#7</span><span class="stat-label">Ladder Rank</span></div>
       </div>
-      <div class="event-row">
-        <div class="event-date"><span class="day">31</span><span class="mon">Aug</span></div>
-        <div><p class="event-title">Co-op Night</p><p class="event-time">6:00 PM UTC · Mon</p></div>
+      <div class="clan-card-foot">
+        <a href="clanhome.html" class="btn btn-primary">Go to My Clan</a>
       </div>
-    </div>
-  </aside>
+    </article>
 
+    <article class="panel clan-card" data-name="obsidian fleet obs" data-members="34" data-rank="12">
+      <div class="clan-card-head">
+        <div class="clan-badge">OBS</div>
+        <div>
+          <p class="clan-card-name">Obsidian Fleet</p>
+          <p class="clan-card-tag">[OBS]</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Naval and air-focused theorycrafters. Weekly build-order workshops.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">34</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#12</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="void marchers vmr" data-members="27" data-rank="19">
+      <div class="clan-card-head">
+        <div class="clan-badge">VMR</div>
+        <div>
+          <p class="clan-card-name">Void Marchers</p>
+          <p class="clan-card-tag">[VMR]</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Late-night EU/NA crossover squad. Custom games and skirmish nights.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">27</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#19</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="ember company emb" data-members="19" data-rank="34">
+      <div class="clan-card-head">
+        <div class="clan-badge">EMB</div>
+        <div>
+          <p class="clan-card-name">Ember Company</p>
+          <p class="clan-card-tag">[EMB]</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Small, friendly, and new-player focused. We teach macro from scratch.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">19</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#34</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+    <article class="panel clan-card" data-name="ashfall battalion ash" data-members="15" data-rank="41">
+      <div class="clan-card-head">
+        <div class="clan-badge">ASH</div>
+        <div>
+          <p class="clan-card-name">Ashfall Battalion</p>
+          <p class="clan-card-tag">[ASH]</p>
+        </div>
+      </div>
+      <p class="clan-card-desc">Newly founded and building our roster. Apply if you love a comeback story.</p>
+      <div class="clan-stats">
+        <div class="stat"><span class="stat-value">15</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value">#41</span><span class="stat-label">Ladder Rank</span></div>
+      </div>
+      <div class="clan-card-foot">
+        <button type="button" class="btn btn-secondary">View Clan</button>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="empty-state" id="emptyState">No clans match your search. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></p>
+  <p class="showing-caption" id="showingCaption">Showing <span id="visibleCount">6</span> of 128 clans</p>
 </main>
-
 
 <script>
 (function(){
@@ -301,44 +312,62 @@
     }
   });
 
-  /* ---- roster search + role filter ---- */
-  var searchInput = document.getElementById('memberSearch');
-  var roleFilter = document.getElementById('roleFilter');
-  var clearBtn = document.getElementById('clearFilters');
-  var emptyState = document.getElementById('emptyState');
-  var rows = Array.prototype.slice.call(document.querySelectorAll('.member-row'));
-  var rosterGroup = document.querySelector('.roster-group');
-  var memberCountEl = document.querySelector('.js-member-count');
+  /* ---- clan directory: search + sort ---- */
+  var browseSearch = document.getElementById('browseSearch');
+  var sortSelect = document.getElementById('sortSelect');
+  var clanGrid = document.getElementById('clanGrid');
+  var browseEmptyState = document.getElementById('emptyState');
+  var showingCaption = document.getElementById('showingCaption');
+  var visibleCountEl = document.getElementById('visibleCount');
+  var clearBrowseBtn = document.getElementById('clearFilters');
 
-  function applyFilter(){
-    var q = searchInput.value.trim().toLowerCase();
-    var role = roleFilter.value;
-    var totalVisible = 0;
+  if(browseSearch && clanGrid){
+    var clanCards = Array.prototype.slice.call(clanGrid.querySelectorAll('.clan-card'));
 
-    rows.forEach(function(row){
-      var name = row.getAttribute('data-name');
-      var rrole = row.getAttribute('data-role');
-      var matches = (!q || name.indexOf(q) !== -1) && (role === 'all' || rrole === role);
-      row.classList.toggle('is-hidden', !matches);
-      if(matches) totalVisible++;
-    });
+    function sortCards(){
+      var sortVal = sortSelect.value;
+      clanCards.sort(function(a, b){
+        if(sortVal === 'members'){
+          return parseInt(b.getAttribute('data-members'), 10) - parseInt(a.getAttribute('data-members'), 10);
+        }
+        if(sortVal === 'name'){
+          return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+        }
+        return parseInt(a.getAttribute('data-rank'), 10) - parseInt(b.getAttribute('data-rank'), 10);
+      });
+      clanCards.forEach(function(card){ clanGrid.appendChild(card); });
+    }
 
-    if(rosterGroup) rosterGroup.classList.toggle('is-hidden', totalVisible === 0);
-    if(memberCountEl) memberCountEl.textContent = totalVisible;
+    function applyBrowseFilter(){
+      var q = browseSearch.value.trim().toLowerCase();
+      var totalVisible = 0;
 
-    emptyState.classList.toggle('is-visible', totalVisible === 0);
+      sortCards();
+
+      clanCards.forEach(function(card){
+        var name = card.getAttribute('data-name');
+        var matches = !q || name.indexOf(q) !== -1;
+        card.classList.toggle('is-hidden', !matches);
+        if(matches) totalVisible++;
+      });
+
+      browseEmptyState.classList.toggle('is-visible', totalVisible === 0);
+      if(showingCaption) showingCaption.classList.toggle('is-hidden', totalVisible === 0);
+      if(visibleCountEl) visibleCountEl.textContent = totalVisible;
+    }
+
+    browseSearch.addEventListener('input', applyBrowseFilter);
+    sortSelect.addEventListener('change', applyBrowseFilter);
+    if(clearBrowseBtn){
+      clearBrowseBtn.addEventListener('click', function(){
+        browseSearch.value = '';
+        applyBrowseFilter();
+        browseSearch.focus();
+      });
+    }
+
+    applyBrowseFilter();
   }
-
-  searchInput.addEventListener('input', applyFilter);
-  roleFilter.addEventListener('change', applyFilter);
-  clearBtn.addEventListener('click', function(){
-    searchInput.value = '';
-    roleFilter.value = 'all';
-    applyFilter();
-    searchInput.focus();
-  });
-
-  applyFilter(); // sync counts with actual markup on load
 
 })();
 </script>
