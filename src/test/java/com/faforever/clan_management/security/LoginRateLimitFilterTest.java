@@ -1,4 +1,4 @@
-package com.faforever.clan_management;
+package com.faforever.clan_management.security;
 
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,6 +74,29 @@ class LoginRateLimitFilterTest {
             browse.setServletPath("/clans");
             browse.setRemoteAddr("10.0.0.3");
             assertThat(send(browse).getStatus()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    @DisplayName("a successful sign-in clears that address's attempt history")
+    void successfulLoginClearsTheCounter() throws Exception {
+        // Four wrong guesses, then a correct one. SecurityConfig calls forget()
+        // on success, so the budget resets and the next MAX_ATTEMPTS all get
+        // through. Without this, someone who knows their password spends the
+        // same quota as someone guessing, and the sixth sign-in in a minute from
+        // one address is refused.
+        for (int i = 0; i < LoginRateLimitFilter.MAX_ATTEMPTS - 1; i++) {
+            assertThat(send(loginAttempt("10.0.0.5")).getStatus()).isEqualTo(200);
+        }
+
+        MockHttpServletRequest correctPassword = loginAttempt("10.0.0.5");
+        assertThat(send(correctPassword).getStatus()).isEqualTo(200);
+        filter.forget(correctPassword);
+
+        for (int i = 1; i <= LoginRateLimitFilter.MAX_ATTEMPTS; i++) {
+            assertThat(send(loginAttempt("10.0.0.5")).getStatus())
+                    .as("attempt %d after a successful sign-in", i)
+                    .isEqualTo(200);
         }
     }
 
