@@ -44,10 +44,10 @@ public class SecurityConfig {
             // ERROR dispatch, and since Spring Security 6 the filter chain applies to
             // ERROR dispatches too - so denying it turns every anonymous 404 into an
             // access-denied response and hides the real status.
-            .requestMatchers("/", "/error", "/clans", "/clans/**").permitAll()
+            .requestMatchers("/", "/login", "/error", "/clans", "/clans/**").permitAll()
             // static assets must be reachable anonymously or the public clan
             // pages render without their stylesheet
-            .requestMatchers("/css/**", "/js/**", "/favicon.ico").permitAll()
+            .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
             .anyRequest().authenticated()
         );
 
@@ -64,7 +64,15 @@ public class SecurityConfig {
 
         // Temporary form login for testing the access-control flow. Replaced by
         // OIDC (ORY Hydra) once that is wired up.
-        http.formLogin(form -> form.permitAll());
+        http.formLogin(form -> form
+            .loginPage("/login")
+            .defaultSuccessUrl("/clans", true)
+            .failureUrl("/login?error")
+            .permitAll());
+
+        http.logout(logout -> logout
+            .logoutSuccessUrl("/login?logout")
+            .permitAll());
 
         // Registered inside Spring Security's own chain rather than as a @Component,
         // so it runs before login processing. A plain @Component filter is registered

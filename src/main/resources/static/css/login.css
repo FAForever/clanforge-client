@@ -22,7 +22,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: url('https://cdn.mos.cms.futurecdn.net/SKQPz7sLXUsj32FcsJpva8.png') no-repeat;
+  background: url('/images/login-background.png') no-repeat;
   background-size: cover;
   background-position: center;
 }
@@ -217,6 +217,16 @@ body {
 .wrapper .icon-close i {
   pointer-events: none;
 }
+
+.form-message {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-message-error { color: #8b1e1e; }
+.form-message-success { color: #14532d; }
 
 
 /* =========================

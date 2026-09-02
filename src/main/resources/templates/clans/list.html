@@ -33,15 +33,15 @@
      ============================================================ -->
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="clanhome.html" aria-label="Clanforge home">
+    <a class="brand" href="/clanhome" th:href="@{/clanhome}" aria-label="Clanforge home">
       <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
       <span class="brand-word">CLANFORGE</span>
     </a>
 
     <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link is-active" href="browse-clans.html" aria-current="page">Browse Clans</a>
-      <a class="nav-link" href="clanhome.html">My Clan</a>
-      <a class="nav-link" href="invitations.html">Invitations<span class="nav-badge">3</span></a>
+      <a class="nav-link is-active" href="/clans" th:href="@{/clans}" aria-current="page">Browse Clans</a>
+      <a class="nav-link" href="/clanhome" th:href="@{/clanhome}">My Clan</a>
+      <a class="nav-link" href="/invitations" th:href="@{/invitations}">Invitations<span class="nav-badge">3</span></a>
       <div class="nav-search" role="search">
         <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
         <label class="sr-only" for="navClanSearch">Search clans</label>
@@ -50,10 +50,10 @@
     </nav>
 
     <div class="topbar-actions">
-      <button type="button" class="btn btn-primary btn-create" aria-label="Create Clan">
+      <a class="btn btn-primary btn-create" href="/create-clan" th:href="@{/create-clan}" aria-label="Create Clan">
         <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
         <span class="btn-label">Create Clan</span>
-      </button>
+      </a>
 
       <div class="popover-wrap">
         <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
@@ -66,7 +66,7 @@
             <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
             <span class="notif-time">1h ago</span>
           </div>
-          <a class="notif-item notif-item-link" href="invitations.html">
+          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
             <p class="notif-text">3 new applications are waiting for review.</p>
             <span class="notif-time">5h ago</span>
           </a>
@@ -90,8 +90,10 @@
             </div>
           </div>
           <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="#">Account Settings</a>
-          <a class="popover-link" href="#">Sign Out</a>
+          <a class="popover-link" href="/settings" th:href="@{/settings}">Account Settings</a>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
+          </form>
         </div>
       </div>
 
