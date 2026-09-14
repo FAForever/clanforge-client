@@ -1,8 +1,9 @@
 # Local development database.
 #
-#   docker compose up -d       start an empty Postgres
-#   docker compose down        stop it (data is kept)
-#   docker compose down -v     stop it and delete all data
+#   docker compose up -d                        start an empty Postgres
+#   docker compose --profile app up --build -d  start Postgres and the app on 8080
+#   docker compose down                         stop it (data is kept)
+#   docker compose down -v                      stop it and delete all data
 #
 # Works the same on Windows, macOS and Linux, so nobody needs a local
 # Postgres install. Credentials below are development-only defaults and are
@@ -15,6 +16,7 @@
 # tolerate a database it had never migrated. Flyway owns it now, so the app
 # creates the schema on its first start and there is one place a table can
 # come from. Volumes created before this change are unaffected.
+
 services:
   db:
     image: postgres:16
@@ -36,6 +38,7 @@ services:
   app:
     build: .
     container_name: faf-app
+    profiles: ["app"]
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +46,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-clan_management}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-clanadmin}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
-      SPRING_PROFILES_ACTIVE: dev
+      # dev switches on the in-memory admin account, so this default is for demos only
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
     ports:
       - "8080:8080"
 
