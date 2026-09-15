@@ -49,7 +49,7 @@ Then open http://localhost:8080/clans.
 To stop the containers:
 
 ```bash
-docker compose down
+docker compose --profile app down
 ```
 
 The container starts empty and the application creates the schema on its first
