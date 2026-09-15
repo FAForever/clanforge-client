@@ -1,0 +1,115 @@
+# ORY Hydra for local OIDC development. Opt in, it is not part of the normal
+# two-container setup:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.hydra.yml up -d
+#
+# Hydra is an OAuth2/OIDC server only: it has no user database and no login
+# page. It redirects to a separate login and consent application, and the one
+# used here is ORY's published reference implementation, which accepts any
+# email with the password "foobar". That is fine for development and a demo;
+# a real deployment needs a login provider backed by actual accounts.
+services:
+  # Hydra keeps its own state. Deliberately a separate database from the
+  # application's: Flyway owns that one and should not share with a service
+  # that runs its own migrations.
+  hydra-db:
+    image: postgres:16
+    container_name: hydra-db
+    environment:
+      POSTGRES_USER: hydra
+      POSTGRES_PASSWORD: hydra-dev-password
+      POSTGRES_DB: hydra
+    volumes:
+      - hydra-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hydra -d hydra"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  hydra-migrate:
+    image: oryd/hydra:v2.2.0
+    container_name: hydra-migrate
+    command: migrate sql -e --yes
+    environment:
+      DSN: postgres://hydra:hydra-dev-password@hydra-db:5432/hydra?sslmode=disable
+    depends_on:
+      hydra-db:
+        condition: service_healthy
+    restart: on-failure
+
+  hydra:
+    image: oryd/hydra:v2.2.0
+    container_name: hydra
+    # --dev serves over plain HTTP. Never use it outside local development.
+    command: serve all --dev
+    environment:
+      DSN: postgres://hydra:hydra-dev-password@hydra-db:5432/hydra?sslmode=disable
+      SECRETS_SYSTEM: dev-only-system-secret-change-me
+      URLS_SELF_ISSUER: http://localhost:4444
+      URLS_LOGIN: http://localhost:3000/login
+      URLS_CONSENT: http://localhost:3000/consent
+      URLS_LOGOUT: http://localhost:3000/logout
+      LOG_LEVEL: info
+    ports:
+      - "4444:4444"   # public: authorisation, token, discovery
+      - "4445:4445"   # admin: client registration, introspection
+    depends_on:
+      hydra-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ORY's reference login and consent app. Any email, password "foobar".
+  consent:
+    image: oryd/hydra-login-consent-node:v2.2.0
+    container_name: hydra-consent
+    environment:
+      HYDRA_ADMIN_URL: http://hydra:4445
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - hydra
+    restart: unless-stopped
+
+
+  # One-shot setup so the stack is usable straight after `up`. Two jobs:
+  #
+  # 1. Register the application as an OAuth2 client. Without this there is no
+  #    client for Spring to authenticate as and the whole flow 404s.
+  #
+  # 2. Warm the JWKS endpoint. Hydra generates its token-signing key pair
+  #    lazily on the first request, which takes a couple of seconds. Spring
+  #    fetches the JWKS to verify the ID token immediately after the token
+  #    exchange, and its HTTP client gives up before Hydra finishes, so the
+  #    very first login fails and bounces back to the login page. Asking for
+  #    the keys once here means the first real login finds them cached.
+  hydra-init:
+    image: curlimages/curl:8.11.1
+    container_name: hydra-init
+    depends_on:
+      - hydra
+    restart: on-failure
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        until curl -sf http://hydra:4444/health/ready > /dev/null; do
+          echo "waiting for hydra..."; sleep 2;
+        done
+        echo "registering oauth2 client"
+        curl -sf -X POST http://hydra:4445/admin/clients           -H "Content-Type: application/json"           -d '{"client_id":"clan-management",
+               "client_name":"FAForever Clan Management",
+               "client_secret":"dev-client-secret",
+               "grant_types":["authorization_code","refresh_token"],
+               "response_types":["code"],
+               "redirect_uris":["http://localhost:8080/login/oauth2/code/hydra"],
+               "post_logout_redirect_uris":["http://localhost:8080/"],
+               "scope":"openid offline_access",
+               "token_endpoint_auth_method":"client_secret_basic",
+               "skip_consent":true}' > /dev/null 2>&1           && echo "client registered" || echo "client already exists, continuing"
+        echo "warming the jwks endpoint (hydra generates keys on first use)"
+        curl -s -o /dev/null -m 60 http://hydra:4444/.well-known/jwks.json
+        echo "hydra is ready"
+
+volumes:
+  hydra-db-data:
