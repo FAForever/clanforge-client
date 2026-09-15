@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/* the icon sprite every page references with use, one copy instead of six */-->
+<svg th:fragment="icons" class="svg-sprite" aria-hidden="true">
+  <symbol id="icon-crest" viewBox="0 0 24 24">
+    <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="icon-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12M19.07 19.07l-2.12-2.12M7.05 7.05L4.93 4.93"/></symbol>
+  <symbol id="icon-message" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5Z"/></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></symbol>
+  <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
+  <symbol id="icon-chevron-right" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></symbol>
+  <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></symbol>
+  <symbol id="icon-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15 L16 10 L5 20"/></symbol>
+  <symbol id="icon-warning" viewBox="0 0 24 24">
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+</svg>
+
+<!--/* the top bar, active names the current page: browse, home, invitations or settings. me is null for anonymous readers */-->
+<header th:fragment="topbar(active)" class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" th:href="@{/clans}" aria-label="Clanforge home">
+      <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
+      <span class="brand-word">CLANFORGE</span>
+    </a>
+
+    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
+      <a class="nav-link" th:classappend="${active == 'browse'} ? 'is-active'" th:attr="aria-current=${active == 'browse'} ? 'page' : null" th:href="@{/clans}">Browse Clans</a>
+      <a class="nav-link" th:classappend="${active == 'home'} ? 'is-active'" th:attr="aria-current=${active == 'home'} ? 'page' : null" th:href="@{/clanhome}">My Clan</a>
+      <a class="nav-link" th:classappend="${active == 'invitations'} ? 'is-active'" th:attr="aria-current=${active == 'invitations'} ? 'page' : null" th:href="@{/invitations}">Invitations<span class="nav-badge" th:if="${me != null and me.pendingInvitations > 0}" th:text="${me.pendingInvitations}">0</span></a>
+      <form class="nav-search" role="search" th:action="@{/clans}" method="get">
+        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+        <label class="sr-only" for="navClanSearch">Search clans</label>
+        <input type="search" id="navClanSearch" name="q" placeholder="Search clans…" autocomplete="off">
+      </form>
+    </nav>
+
+    <div class="topbar-actions">
+      <a th:if="${me != null and !me.inClan}" th:href="@{/create-clan}" class="btn btn-primary btn-create" aria-label="Create Clan">
+        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+        <span class="btn-label">Create Clan</span>
+      </a>
+
+      <!--/* the bell reads the history table: the latest happenings in your clan, plus invites waiting for you */-->
+      <div class="popover-wrap" th:if="${me != null}">
+        <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
+          <span class="badge-dot" th:if="${me.pendingInvitations > 0}" aria-hidden="true"></span>
+        </button>
+        <div class="popover" id="notifPanel">
+          <p class="popover-title">Notifications</p>
+          <a class="notif-item notif-item-link" th:if="${me.pendingInvitations > 0}" th:href="@{/invitations}">
+            <p class="notif-text" th:text="${me.pendingInvitations} + (${me.pendingInvitations == 1} ? ' invitation is' : ' invitations are') + ' waiting for you.'">invites</p>
+            <span class="notif-time">now</span>
+          </a>
+          <a class="notif-item notif-item-link" th:each="n : ${me.notices}" th:href="@{${n.link}}">
+            <p class="notif-text" th:text="${n.text}">text</p>
+            <span class="notif-time" th:text="${n.when}">1h ago</span>
+          </a>
+          <p class="notif-text" th:if="${me.pendingInvitations == 0 and #lists.isEmpty(me.notices)}">Nothing new yet.</p>
+        </div>
+      </div>
+
+      <div class="popover-wrap" th:if="${me != null}">
+        <button type="button" class="icon-btn avatar-btn" id="avatarBtn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar avatar-sm" th:classappend="${me.owner} ? 'is-owner'" th:text="${me.initials}">??</span>
+        </button>
+        <div class="popover" id="avatarPanel">
+          <div class="popover-user">
+            <span class="avatar avatar-md" th:classappend="${me.owner} ? 'is-owner'" th:text="${me.initials}">??</span>
+            <div>
+              <p class="popover-user-name" th:text="${me.user.displayName}">name</p>
+              <p class="popover-user-role" th:if="${me.inClan}" th:text="${me.roleLabel + ' · ' + me.clanName}">role</p>
+              <p class="popover-user-role" th:unless="${me.inClan}">Not in a clan</p>
+            </div>
+          </div>
+          <a class="popover-link" th:href="@{/clanhome}">My Clan</a>
+          <a class="popover-link" th:href="@{/invitations}">Invitations</a>
+          <a class="popover-link" th:href="@{/settings}">Account Settings</a>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
+          </form>
+        </div>
+      </div>
+
+      <a th:if="${me == null}" th:href="@{/login}" class="btn btn-primary">Sign In</a>
+
+      <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
+        <svg class="icon icon-menu" aria-hidden="true"><use href="#icon-menu"></use></svg>
+        <svg class="icon icon-close" aria-hidden="true"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!--/* flash messages after a redirect: notice for something that worked, error for something refused */-->
+<div th:fragment="flash" th:remove="tag">
+  <p class="flash flash-notice" th:if="${notice}" th:text="${notice}">notice</p>
+  <p class="flash flash-error" th:if="${error}" th:text="${error}">error</p>
+</div>
+
+</body>
+</html>

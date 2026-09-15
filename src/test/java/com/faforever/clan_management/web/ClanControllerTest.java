@@ -26,8 +26,12 @@ import com.faforever.clan_management.security.SecurityConfig;
 import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.service.ClanCard;
 import com.faforever.clan_management.service.ClanService;
+import com.faforever.clan_management.service.AppUserService;
+import com.faforever.clan_management.service.ClanManagementService;
+import com.faforever.clan_management.service.MembershipService;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -44,6 +48,17 @@ class ClanControllerTest {
 
     @MockitoBean
     private ClanService clanService;
+
+    // the roster and the signed-in person on the detail page, and the
+    // top bar on every page, come from these two
+    @MockitoBean
+    private MembershipService membershipService;
+
+    @MockitoBean
+    private AppUserService appUserService;
+
+    @MockitoBean
+    private ClanManagementService clanManagementService;
 
     /**
      * Clan has a protected constructor and no setters, which is correct for a
@@ -65,7 +80,7 @@ class ClanControllerTest {
     void listIsPublic() throws Exception {
         Page<Clan> page = new PageImpl<>(
                 List.of(clan(1L, "FAF Developers", "DEV")), PageRequest.of(0, 20), 1);
-        given(clanService.findPublicClanCards(any(Pageable.class))).willReturn(page.map(c -> new ClanCard(c, 7L)));
+        given(clanService.searchPublicClanCards(anyString(), anyString(), anyString(), any(Pageable.class))).willReturn(page.map(c -> new ClanCard(c, 7L)));
 
         mockMvc.perform(get("/clans"))
                 .andExpect(status().isOk())
@@ -103,7 +118,7 @@ class ClanControllerTest {
         // test fails if someone switches it to th:utext.
         Page<Clan> page = new PageImpl<>(
                 List.of(clan(1L, "<script>alert(1)</script>", "XSS")), PageRequest.of(0, 20), 1);
-        given(clanService.findPublicClanCards(any(Pageable.class))).willReturn(page.map(c -> new ClanCard(c, 7L)));
+        given(clanService.searchPublicClanCards(anyString(), anyString(), anyString(), any(Pageable.class))).willReturn(page.map(c -> new ClanCard(c, 7L)));
 
         mockMvc.perform(get("/clans"))
                 .andExpect(status().isOk())
@@ -115,14 +130,14 @@ class ClanControllerTest {
     @Test
     @DisplayName("an absurd page number is clamped instead of hitting the database")
     void pageNumberIsClamped() throws Exception {
-        given(clanService.findPublicClanCards(any(Pageable.class)))
+        given(clanService.searchPublicClanCards(anyString(), anyString(), anyString(), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(), PageRequest.of(10_000, 20), 0));
 
         mockMvc.perform(get("/clans").param("page", "999999999"))
                 .andExpect(status().isOk());
 
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        Mockito.verify(clanService).findPublicClanCards(captor.capture());
+        Mockito.verify(clanService).searchPublicClanCards(anyString(), anyString(), anyString(), captor.capture());
         Assertions.assertThat(captor.getValue().getPageNumber()).isLessThanOrEqualTo(10_000);
     }
 }

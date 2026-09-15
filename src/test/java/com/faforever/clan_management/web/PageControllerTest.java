@@ -6,11 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.faforever.clan_management.security.SecurityConfig;
+import com.faforever.clan_management.service.AppUserService;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,6 +28,10 @@ class PageControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    // every page's top bar asks this for the signed-in person
+    @MockitoBean
+    private AppUserService appUserService;
 
     @Test
     @DisplayName("the landing page renders without opening the login popup")
@@ -66,23 +71,5 @@ class PageControllerTest {
                         .param("password", "admin"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/clans"));
-    }
-
-    @Test
-    @WithMockUser
-    @DisplayName("authenticated users can render every migrated management template")
-    void authenticatedUsersCanOpenMigratedPages() throws Exception {
-        mockMvc.perform(get("/clanhome"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("clanhome"));
-        mockMvc.perform(get("/create-clan"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("create-clan"));
-        mockMvc.perform(get("/invitations"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("invitations"));
-        mockMvc.perform(get("/settings"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("settings"));
     }
 }

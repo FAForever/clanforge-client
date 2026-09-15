@@ -44,8 +44,27 @@ public class ClanService {
      * of exactly those clans.
      */
     public Page<ClanCard> findPublicClanCards(Pageable pageable) {
-        Page<Clan> clans = findPublicClans(pageable);
+        return withCounts(findPublicClans(pageable));
+    }
 
+    /**
+     * The browse page's search, run in the database rather than over the one
+     * page the browser holds. q matches name or tag, case-insensitive;
+     * recruiting is "open", "closed" or anything else for both; sort is
+     * "members" for most members first, otherwise the Pageable's own sort.
+     */
+    public Page<ClanCard> searchPublicClanCards(String q, String recruiting, String sort, Pageable pageable) {
+        String pattern = "%" + escapeLike(q == null ? "" : q.trim().toLowerCase()) + "%";
+        Boolean requiresInvitation = "open".equals(recruiting) ? Boolean.FALSE
+                : "closed".equals(recruiting) ? Boolean.TRUE
+                : null;
+        Page<Clan> clans = "members".equals(sort)
+                ? clanRepository.searchVisibleByMembers(PUBLIC, pattern, requiresInvitation, pageable)
+                : clanRepository.searchVisible(PUBLIC, pattern, requiresInvitation, pageable);
+        return withCounts(clans);
+    }
+
+    private Page<ClanCard> withCounts(Page<Clan> clans) {
         List<Long> ids = clans.getContent().stream().map(Clan::getId).toList();
         Map<Long, Long> counts = ids.isEmpty()
                 ? Map.of()
@@ -54,6 +73,12 @@ public class ClanService {
                                               ClanMemberCount::getMemberCount));
 
         return clans.map(clan -> new ClanCard(clan, counts.getOrDefault(clan.getId(), 0L)));
+    }
+
+    // A typed % or _ would otherwise act as a wildcard. ! is the escape
+    // character the repository queries declare.
+    static String escapeLike(String s) {
+        return s.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
     /**

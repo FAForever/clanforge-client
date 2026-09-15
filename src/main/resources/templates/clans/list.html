@@ -13,97 +13,8 @@
 </head>
 <body>
 
-<!-- ============================================================
-     ICON SPRITE — hand-drawn line icons, referenced via <use>
-     ============================================================ -->
-<svg class="svg-sprite" aria-hidden="true">
-  <symbol id="icon-crest" viewBox="0 0 24 24">
-    <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-    <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
-  </symbol>
-  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
-  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
-  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
-  <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
-  <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
-</svg>
-
-<!-- ============================================================
-     TOP BAR
-     ============================================================ -->
-<header class="topbar">
-  <div class="topbar-inner">
-    <a class="brand" href="/clanhome" th:href="@{/clanhome}" aria-label="Clanforge home">
-      <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
-      <span class="brand-word">CLANFORGE</span>
-    </a>
-
-    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link is-active" href="/clans" th:href="@{/clans}" aria-current="page">Browse Clans</a>
-      <a class="nav-link" href="/clanhome" th:href="@{/clanhome}">My Clan</a>
-      <a class="nav-link" href="/invitations" th:href="@{/invitations}">Invitations<span class="nav-badge">3</span></a>
-      <div class="nav-search" role="search">
-        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
-        <label class="sr-only" for="navClanSearch">Search clans</label>
-        <input type="search" id="navClanSearch" placeholder="Search clans…" autocomplete="off">
-      </div>
-    </nav>
-
-    <div class="topbar-actions">
-      <a class="btn btn-primary btn-create" href="/create-clan" th:href="@{/create-clan}" aria-label="Create Clan">
-        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
-        <span class="btn-label">Create Clan</span>
-      </a>
-
-      <div class="popover-wrap">
-        <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
-          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
-          <span class="badge-dot" aria-hidden="true"></span>
-        </button>
-        <div class="popover" id="notifPanel">
-          <p class="popover-title">Notifications</p>
-          <div class="notif-item">
-            <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
-            <span class="notif-time">1h ago</span>
-          </div>
-          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
-            <p class="notif-text">3 new applications are waiting for review.</p>
-            <span class="notif-time">5h ago</span>
-          </a>
-          <div class="notif-item">
-            <p class="notif-text">Clan Ladder Night was added to the events calendar.</p>
-            <span class="notif-time">1d ago</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="popover-wrap">
-        <button type="button" class="icon-btn avatar-btn" id="avatarBtn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
-          <span class="avatar avatar-sm is-owner">W9</span>
-        </button>
-        <div class="popover" id="avatarPanel">
-          <div class="popover-user">
-            <span class="avatar avatar-md is-owner">W9</span>
-            <div>
-              <p class="popover-user-name">Warhawk_09</p>
-              <p class="popover-user-role">Leader · Iron Vanguard</p>
-            </div>
-          </div>
-          <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="/settings" th:href="@{/settings}">Account Settings</a>
-          <form class="logout-form" th:action="@{/logout}" method="post">
-            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
-          </form>
-        </div>
-      </div>
-
-      <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
-        <svg class="icon icon-menu" aria-hidden="true"><use href="#icon-menu"></use></svg>
-        <svg class="icon icon-close" aria-hidden="true"><use href="#icon-close"></use></svg>
-      </button>
-    </div>
-  </div>
-</header>
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('browse')}"></header>
 
 <!-- ============================================================
      BROWSE HERO
@@ -121,40 +32,41 @@
 <!-- ============================================================
      SEARCH / FILTER / SORT CONTROLS
      ============================================================ -->
-<section class="browse-controls">
+<!--/* a get form, so the search runs over every clan in the database rather than the twenty on this page */-->
+<form class="browse-controls" th:action="@{/clans}" method="get">
   <div class="clan-search" role="search">
     <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
     <label class="sr-only" for="browseSearch">Search clans by name or tag</label>
-    <input type="search" id="browseSearch" placeholder="Search by clan name or tag…" autocomplete="off">
+    <input type="search" id="browseSearch" name="q" th:value="${q}" placeholder="Search by clan name or tag…" autocomplete="off">
   </div>
-  <select class="recruit-select" id="recruitFilter" aria-label="Filter by recruiting status">
-    <option value="all">All Clans</option>
-    <option value="open">Recruiting</option>
-    <option value="closed">Not Recruiting</option>
+  <select class="recruit-select" id="recruitFilter" name="recruiting" aria-label="Filter by recruiting status">
+    <option value="all" th:selected="${recruiting == 'all'}">All Clans</option>
+    <option value="open" th:selected="${recruiting == 'open'}">Recruiting</option>
+    <option value="closed" th:selected="${recruiting == 'closed'}">Not Recruiting</option>
   </select>
-  <select class="sort-select" id="sortSelect" aria-label="Sort clans">
-    <option value="rank">Sort: Top Rank</option>
-    <option value="members">Sort: Most Members</option>
-    <option value="name">Sort: Name A–Z</option>
+  <select class="sort-select" id="sortSelect" name="sort" aria-label="Sort clans">
+    <option value="name" th:selected="${sort == 'name'}">Sort: Name A to Z</option>
+    <option value="members" th:selected="${sort == 'members'}">Sort: Most Members</option>
   </select>
-</section>
+  <button type="submit" class="btn btn-secondary">Search</button>
+</form>
 
 <!-- ============================================================
      CLAN GRID
      ============================================================ -->
 <main class="browse-main">
+  <div th:replace="~{fragments/topbar :: flash}"></div>
   <div class="clan-grid" id="clanGrid">
 
-    <article class="panel clan-card"
-             th:each="card : ${clans}"
-             th:attr="data-name=${#strings.toLowerCase(card.clan.name + ' ' + card.clan.tag)},
-                      data-recruiting=${card.clan.requiresInvitation ? 'closed' : 'open'},
-                      data-members=${card.memberCount}">
+    <article class="panel clan-card" th:each="card : ${clans}">
       <div class="clan-card-head">
-        <div class="clan-badge" th:text="${card.clan.tag}">TAG</div>
+        <div class="clan-badge">
+          <img th:if="${card.clan.hasLogo}" th:src="@{/clans/{id}/logo(id=${card.clan.id},v=${card.clan.logoUpdatedAt.toEpochSecond()})}" alt="">
+          <span th:unless="${card.clan.hasLogo}" th:text="${card.clan.tag}">TAG</span>
+        </div>
         <div>
           <p class="clan-card-name" th:text="${card.clan.name}">Clan name</p>
-          <p class="clan-card-tag" th:text="'[' + ${card.clan.tag} + '] &middot; Forged Alliance Forever'">[TAG]</p>
+          <p class="clan-card-tag" th:text="'[' + ${card.clan.tag} + '] · ' + (${card.clan.region != null} ? ${card.clan.region} : 'Forged Alliance Forever')">[TAG]</p>
         </div>
       </div>
       <p class="clan-card-desc"
@@ -179,18 +91,18 @@
 
   </div>
 
-  <p class="empty-state" id="emptyState">No clans match your search. <button type="button" class="link-btn" id="clearFilters">Clear filters</button></p>
-  <p class="showing-caption" id="showingCaption">
-    Showing <span id="visibleCount" th:text="${#lists.size(clans)}">0</span>
+  <p class="empty-state is-visible" th:if="${#lists.isEmpty(clans)}">No clans match your search. <a class="link-btn" th:href="@{/clans}">Clear search</a></p>
+  <p class="showing-caption" th:unless="${#lists.isEmpty(clans)}">
+    Showing <span th:text="${#lists.size(clans)}">0</span>
     of <span th:text="${totalClans}">0</span> clans
     &middot; page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
   </p>
   <nav class="pager">
-    <a class="btn btn-secondary" th:if="${hasPrevious}" th:href="@{/clans(page=${currentPage - 1})}">Previous</a>
-    <a class="btn btn-secondary" th:if="${hasNext}" th:href="@{/clans(page=${currentPage + 1})}">Next</a>
+    <a class="btn btn-secondary" th:if="${hasPrevious}" th:href="@{/clans(page=${currentPage - 1},q=${q},recruiting=${recruiting},sort=${sort})}">Previous</a>
+    <a class="btn btn-secondary" th:if="${hasNext}" th:href="@{/clans(page=${currentPage + 1},q=${q},recruiting=${recruiting},sort=${sort})}">Next</a>
   </nav>
 </main>
 
-<script th:src="@{/js/clanforge.js}"></script>
+<script th:src="@{/js/site.js}"></script>
 </body>
 </html>

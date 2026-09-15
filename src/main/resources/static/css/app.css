@@ -60,3 +60,12 @@ table.clans th {
 .facts { display: grid; grid-template-columns: 8rem 1fr; gap: 0.25rem 1rem; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; }
+
+.flash { padding: 0.6rem 0.9rem; margin: 0.75rem 0; border-left: 3px solid var(--accent); background: #f6f8fa; }
+.flash-error { border-left-color: #c0392b; color: #c0392b; }
+.members { padding-left: 1.2rem; }
+.join { padding: 0.5rem 1rem; font: inherit; cursor: pointer; }
+
+.logo { width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line); }
+
+.description { white-space: pre-line; }

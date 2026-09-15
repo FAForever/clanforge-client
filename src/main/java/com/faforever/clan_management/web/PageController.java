@@ -18,24 +18,4 @@ public class PageController {
         model.addAttribute("showLogin", true);
         return "index";
     }
-
-    @GetMapping("/clanhome")
-    public String clanHome() {
-        return "clanhome";
-    }
-
-    @GetMapping("/create-clan")
-    public String createClan() {
-        return "create-clan";
-    }
-
-    @GetMapping("/invitations")
-    public String invitations() {
-        return "invitations";
-    }
-
-    @GetMapping("/settings")
-    public String settings() {
-        return "settings";
-    }
 }

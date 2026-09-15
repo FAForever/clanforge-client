@@ -7,9 +7,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.web.PageController;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -32,6 +34,10 @@ class LoginFlowTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    // the top bar advice needs it, the sign-in itself does not
+    @MockitoBean
+    private AppUserService appUserService;
 
     @Test
     @DisplayName("signing in returns you to the page you were trying to reach")

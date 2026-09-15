@@ -3,6 +3,7 @@ package com.faforever.clan_management.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,7 +46,9 @@ public class SecurityConfig {
             // ERROR dispatch, and since Spring Security 6 the filter chain applies to
             // ERROR dispatches too - so denying it turns every anonymous 404 into an
             // access-denied response and hides the real status.
-            .requestMatchers("/", "/login", "/error", "/clans", "/clans/**").permitAll()
+            .requestMatchers("/", "/login", "/error").permitAll()
+            // Reading clans is public. Joining one is a POST and needs a signed-in user.
+            .requestMatchers(HttpMethod.GET, "/clans", "/clans/**").permitAll()
             // static assets must be reachable anonymously or the public clan
             // pages render without their stylesheet
             .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
@@ -116,7 +119,17 @@ public class SecurityConfig {
             .password(passwordEncoder.encode("admin"))
             .roles("USER")
             .build();
-        return new InMemoryUserDetailsManager(testUser);
+        // Two more accounts so a demo can show both sides of an invitation, a
+        // join, a removal or a transfer from two browser windows.
+        UserDetails player = User.withUsername("player")
+            .password(passwordEncoder.encode("player"))
+            .roles("USER")
+            .build();
+        UserDetails guest = User.withUsername("guest")
+            .password(passwordEncoder.encode("guest"))
+            .roles("USER")
+            .build();
+        return new InMemoryUserDetailsManager(testUser, player, guest);
     }
 
     @Bean
