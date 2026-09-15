@@ -49,9 +49,11 @@ PostgreSQL on port 5433 rather than the container, which is why `PSQL_CMD` and
 `PGPORT` are set above; `PGHOST`, `PGUSER` and `FAF_DUMP` are overridable the
 same way.
 
-Every connection value is overridable by environment variable and every one has
-a default that matches `docker-compose.yml`, so nothing above needs configuring
-to work. `.env` is gitignored; `.env.example` is the list of what exists.
+Every connection value is read from an environment variable. With the `dev`
+profile each one has a default that matches `docker-compose.yml`, so nothing
+above needs configuring to work. Without the profile, as in a deployed build,
+all three must be set or the application refuses to start. `.env` is
+gitignored; `.env.example` is the list of what exists.
 
 ### Tests
 
