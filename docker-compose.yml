@@ -35,6 +35,7 @@ services:
       timeout: 5s
       retries: 12
 
+
   app:
     build: .
     container_name: faf-app
