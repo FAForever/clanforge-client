@@ -1,4 +1,4 @@
-package com.faforever.clan_management;
+package com.faforever.clan_management.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 @Configuration
@@ -62,11 +63,32 @@ public class SecurityConfig {
             // X-Frame-Options DENY and X-Content-Type-Options nosniff are on by default
         );
 
+        // Built here rather than as a @Bean on purpose. A Filter exposed as a bean
+        // is also picked up by Spring Boot's servlet filter auto-registration and
+        // ends up running twice, once inside this chain and once outside it.
+        LoginRateLimitFilter rateLimitFilter = new LoginRateLimitFilter();
+
+        // Send people back to whatever they were trying to reach. Only when there
+        // is no such request do they land on /clans. The previous
+        // defaultSuccessUrl("/clans", true) discarded the saved request, so
+        // deep-linking to /settings while signed out and then signing in dropped
+        // you on /clans instead.
+        SavedRequestAwareAuthenticationSuccessHandler successHandler =
+                new SavedRequestAwareAuthenticationSuccessHandler();
+        successHandler.setDefaultTargetUrl("/clans");
+
         // Temporary form login for testing the access-control flow. Replaced by
         // OIDC (ORY Hydra) once that is wired up.
         http.formLogin(form -> form
             .loginPage("/login")
-            .defaultSuccessUrl("/clans", true)
+            .successHandler((request, response, authentication) -> {
+                // A correct password is not a guessing attempt, so it must not
+                // spend the address's budget. Without this the sixth sign-in in
+                // a minute from one address is refused, which is a lockout
+                // waiting to happen during a demo or behind a shared NAT.
+                rateLimitFilter.forget(request);
+                successHandler.onAuthenticationSuccess(request, response, authentication);
+            })
             .failureUrl("/login?error")
             .permitAll());
 
@@ -78,7 +100,7 @@ public class SecurityConfig {
         // so it runs before login processing. A plain @Component filter is registered
         // by Spring Boot as a generic servlet filter that runs AFTER the whole security
         // chain, which is too late to block a login attempt.
-        http.addFilterBefore(new LoginRateLimitFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

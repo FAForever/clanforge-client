@@ -22,7 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.faforever.clan_management.SecurityConfig;
+import com.faforever.clan_management.security.SecurityConfig;
 import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.service.ClanCard;
 import com.faforever.clan_management.service.ClanService;

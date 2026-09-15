@@ -11,8 +11,8 @@
 	<groupId>com.faforever</groupId>
 	<artifactId>clan-management</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>clan-management</name>
+	<description>FAForever clan management platform</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -57,6 +57,24 @@
 		<dependency>
 			<groupId>org.thymeleaf.extras</groupId>
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
+		</dependency>
+
+		<!-- Flyway owns the schema. Versions come from the Spring Boot parent.
+		     It must be the starter, not a bare org.flywaydb:flyway-core. Spring
+		     Boot 4 moved every auto-configuration out of spring-boot-autoconfigure
+		     into its own module, so flyway-core on its own puts the library on the
+		     classpath with nothing to wire it up: Flyway silently never runs and
+		     Hibernate then fails validation against an empty database. Observed,
+		     not guessed.
+		     flyway-database-postgresql is separate again from Flyway 10 onwards,
+		     and required: without it Flyway does not recognise PostgreSQL. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
 
 		<dependency>

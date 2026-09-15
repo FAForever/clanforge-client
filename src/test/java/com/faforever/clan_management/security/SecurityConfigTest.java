@@ -1,4 +1,4 @@
-package com.faforever.clan_management;
+package com.faforever.clan_management.security;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

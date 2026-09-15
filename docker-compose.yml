@@ -1,6 +1,6 @@
 # Local development database.
 #
-#   docker compose up -d       start Postgres with the schema already applied
+#   docker compose up -d       start an empty Postgres
 #   docker compose down        stop it (data is kept)
 #   docker compose down -v     stop it and delete all data
 #
@@ -8,6 +8,13 @@
 # Postgres install. Credentials below are development-only defaults and are
 # deliberately overridable - do not put real credentials in this file or in
 # application.properties, override them with a .env file instead.
+#
+# The container starts empty on purpose. It used to mount
+# db/V1__initial_schema.sql as an initdb script, which meant the schema had
+# two owners: the entrypoint applied V1 and Flyway then had to be told to
+# tolerate a database it had never migrated. Flyway owns it now, so the app
+# creates the schema on its first start and there is one place a table can
+# come from. Volumes created before this change are unaffected.
 services:
   db:
     image: postgres:16
@@ -19,8 +26,6 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      # applied automatically the first time the database is created
-      - ./db/V1__initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - faf-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clanadmin} -d ${POSTGRES_DB:-clan_management}"]

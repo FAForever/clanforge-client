@@ -1,4 +1,4 @@
-package com.faforever.clan_management;
+package com.faforever.clan_management.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -73,6 +73,19 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         response.setContentType("text/plain;charset=UTF-8");
         response.getWriter().write(
                 "Too many login attempts. Please wait " + retryAfterSeconds + " seconds and try again.");
+    }
+
+    /**
+     * Drop everything remembered about this request's address.
+     *
+     * Called from SecurityConfig when a sign-in succeeds. The counter exists to
+     * slow down guessing, and someone who supplied the right password was not
+     * guessing, so their correct attempts must not count towards the cap.
+     * Without this a single address gets MAX_ATTEMPTS sign-ins per window no
+     * matter how many of them were correct.
+     */
+    void forget(HttpServletRequest request) {
+        attemptsByIp.remove(clientIp(request));
     }
 
     /**
