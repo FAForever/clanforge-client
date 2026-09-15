@@ -453,9 +453,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
   background:var(--text-tertiary); transition:transform .2s ease, background-color .2s ease;
 }
-.toggle-switch input:checked + .toggle-track{ background:var(--accent-dim); border-color:var(--accent); }
-.toggle-switch input:checked + .toggle-track .toggle-thumb{ transform:translateX(18px); background:var(--accent-bright); }
-.toggle-switch input:focus-visible + .toggle-track{ outline:2px solid var(--accent-bright); outline-offset:2px; }
+/* The combinator is deliberately ~ and not +. Thymeleaf's th:field emits a
+   hidden _fieldname input immediately after a checkbox, so .toggle-track is no
+   longer the adjacent sibling and + silently stops matching: the checkbox
+   toggles and the form submits correctly, but the switch never looks on. */
+.toggle-switch input:checked ~ .toggle-track{ background:var(--accent-dim); border-color:var(--accent); }
+.toggle-switch input:checked ~ .toggle-track .toggle-thumb{ transform:translateX(18px); background:var(--accent-bright); }
+.toggle-switch input:focus-visible ~ .toggle-track{ outline:2px solid var(--accent-bright); outline-offset:2px; }
 .toggle-text{ font-size:.85rem; }
 @media (prefers-reduced-motion:reduce){
   .toggle-track, .toggle-thumb{ transition:none; }
