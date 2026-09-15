@@ -119,7 +119,17 @@ public class SecurityConfig {
             .password(passwordEncoder.encode("admin"))
             .roles("USER")
             .build();
-        return new InMemoryUserDetailsManager(testUser);
+        // Two more accounts so a demo can show both sides of an invitation, a
+        // join, a removal or a transfer from two browser windows.
+        UserDetails player = User.withUsername("player")
+            .password(passwordEncoder.encode("player"))
+            .roles("USER")
+            .build();
+        UserDetails guest = User.withUsername("guest")
+            .password(passwordEncoder.encode("guest"))
+            .roles("USER")
+            .build();
+        return new InMemoryUserDetailsManager(testUser, player, guest);
     }
 
     @Bean

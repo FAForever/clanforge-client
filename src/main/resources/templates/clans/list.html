@@ -55,6 +55,7 @@
      CLAN GRID
      ============================================================ -->
 <main class="browse-main">
+  <div th:replace="~{fragments/topbar :: flash}"></div>
   <div class="clan-grid" id="clanGrid">
 
     <article class="panel clan-card" th:each="card : ${clans}">

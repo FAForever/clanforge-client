@@ -30,9 +30,11 @@ docker compose up -d          # PostgreSQL on 5432, schema applied by Flyway on 
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Then http://localhost:8080. The `dev` profile adds one in-memory account,
-`admin` / `admin`, and nothing else; it is the only way to sign in until OpenID
-Connect is wired up, and `@Profile("dev")` keeps it out of any deployed build.
+Then http://localhost:8080. The `dev` profile adds three in-memory accounts,
+`admin` / `admin`, `player` / `player` and `guest` / `guest`, and nothing else;
+they are the only way to sign in until OpenID Connect is wired up, and
+`@Profile("dev")` keeps them out of any deployed build. Three accounts let one
+person show both sides of an invitation, a join or a transfer from two windows.
 
 The container starts empty and the application creates the schema on its first
 start, so run the app once before loading anything. Then, for the 1,477 real

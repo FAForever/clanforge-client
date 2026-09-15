@@ -85,7 +85,7 @@
     <div class="roster-group">
       <p class="group-heading">Members · <span class="js-member-count" th:text="${memberCount}">0</span></p>
       <ul>
-        <li class="member-row" th:each="m : ${roster}" th:attr="data-name=${#strings.toLowerCase(m.user.displayName)},data-role=${#strings.toLowerCase(m.role)}">
+        <li class="member-row" th:each="m : ${roster}" th:attr="data-name=${#strings.toLowerCase(m.user.displayName)},data-role=${#strings.toLowerCase(m.role)},data-user-id=${m.user.id}">
           <span class="avatar avatar-md" th:classappend="${m.owner} ? 'is-owner'" th:text="${m.initials}">??</span>
           <div><p class="member-name" th:text="${m.user.displayName}">name</p><p class="member-role" th:text="${m.roleLabel}">Member</p></div>
           <div class="member-actions" th:if="${me.canManage and !m.owner and m.user.id != me.user.id}">
