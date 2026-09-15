@@ -1,0 +1,17 @@
+# Normalise line endings in the repository to LF. Without this, Git on Windows
+# checks scripts out with CRLF, and a CRLF mvnw copied into a Linux container
+# fails with "./mvnw: not found" because its shebang becomes "#!/bin/sh\r".
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF; cmd.exe needs it.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Never transform binaries.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.docx binary
+*.zip binary
