@@ -219,4 +219,20 @@ class InvitationServiceTest {
         //System.out.println("role " + m.getRole());
         assertThat(m.getRole()).isEqualTo("MODERATOR");
     }
+
+    @Test
+    @DisplayName("a lapsed pending invite is marked expired and a fresh one goes out")
+    void lapsedInviteIsReplaced() {
+        given(membershipService.manager(eq(kai), anyString())).willReturn(ownerRow);
+        given(users.findByDisplayNameIgnoreCase("sam")).willReturn(Optional.of(sam));
+        given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.empty());
+        ClanInvitation lapsed = Fixtures.invitation(8L, clan, sam, kai, OffsetDateTime.now().minusDays(1));
+        given(invitations.findByClanIdAndInviteeIdAndState(7L, 2L, "PENDING")).willReturn(Optional.of(lapsed));
+        given(invitations.save(any(ClanInvitation.class))).willAnswer(a -> a.getArgument(0));
+        ClanInvitation fresh = service.invite(kai, "sam", null);
+        //System.out.println("lapsed " + lapsed.getState());
+        assertThat(lapsed.getState()).isEqualTo("EXPIRED");
+        assertThat(fresh.getState()).isEqualTo("PENDING");
+        verify(invitations).saveAndFlush(lapsed);
+    }
 }

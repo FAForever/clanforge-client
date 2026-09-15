@@ -17,7 +17,7 @@
         <span th:text="${clan.name}">Clan name</span>
     </h1>
 
-    <p th:if="${clan.description}" th:text="${clan.description}">Description</p>
+    <p class="description" th:if="${clan.description}" th:text="${clan.description}">Description</p>
     <p th:unless="${clan.description}" class="muted">No description.</p>
 
     <dl class="facts">

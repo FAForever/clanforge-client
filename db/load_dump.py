@@ -67,6 +67,13 @@ def split_rows(blob):
     return rows
 
 
+MYSQL_ESCAPES = {"n": "\n", "r": "\r", "t": "\t", "b": "\b", "Z": "\x1a", "0": ""}
+
+
+def unescape(ch):
+    return MYSQL_ESCAPES.get(ch, ch)
+
+
 def split_fields(row):
     fields, cur, in_str, esc, quoted = [], [], False, False, False
 
@@ -77,7 +84,7 @@ def split_fields(row):
     while i < n:
         ch = row[i]
         if in_str:
-            if esc: cur.append(ch); esc = False
+            if esc: cur.append(unescape(ch)); esc = False
             elif ch == "\\": esc = True
             elif ch == "'":
                 if i + 1 < n and row[i + 1] == "'":
@@ -277,7 +284,7 @@ def load(clans, members, m):
         uid[src] = int(pk)
 
     clan_rows = [(
-        clean(c[C_NAME]) or "",
+        (clean(c[C_NAME]) or "").strip(),
         clean(c[C_TAG]) or "",
         clean(c[C_DESC]),
         uid[c[C_LEADER]],

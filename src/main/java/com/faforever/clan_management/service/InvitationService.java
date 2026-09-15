@@ -3,6 +3,7 @@ package com.faforever.clan_management.service;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -54,7 +55,13 @@ public class InvitationService {
         AppUser invitee = users.findByDisplayNameIgnoreCase(name).orElseThrow(() -> new ClanRuleViolation("No player named '" + name + "'."));
         if (invitee.getId().equals(actor.getId())) throw new ClanRuleViolation("You are already in the clan.");
         if (memberships.findActiveByClanIdAndUserId(clan.getId(), invitee.getId()).isPresent()) throw new ClanRuleViolation(invitee.getDisplayName() + " is already a member.");
-        if (invitations.findByClanIdAndInviteeIdAndState(clan.getId(),invitee.getId(), "PENDING").isPresent()) throw new ClanRuleViolation(invitee.getDisplayName() + " already has a pending invite.");
+        Optional<ClanInvitation> open = invitations.findByClanIdAndInviteeIdAndState(clan.getId(), invitee.getId(), "PENDING");
+        if (open.isPresent() && open.get().getExpiresAt().isAfter(OffsetDateTime.now())) throw new ClanRuleViolation(invitee.getDisplayName() + " already has a pending invite.");
+        if (open.isPresent()) {
+            open.get().setState("EXPIRED"); //a lapsed invite is only marked when someone acts on it, and it must be marked before the new row goes in or the one-pending index refuses it
+            open.get().setRespondedAt(OffsetDateTime.now());
+            invitations.saveAndFlush(open.get());
+        }
         ClanInvitation inv = invitations.save(new ClanInvitation(clan, invitee, actor, OffsetDateTime.now().plusDays(expiryDays), offered)); //expires_at is set here, the effective view derives expired from it
         events.record("clan_invitation", inv.getId(), "InvitationCreated", events.invitationPayload(inv), actor);
         //System.out.println("invited " + invitee.getDisplayName() + " to " + clan.getTag());
