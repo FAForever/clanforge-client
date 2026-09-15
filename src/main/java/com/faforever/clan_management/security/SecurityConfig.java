@@ -93,37 +93,28 @@ public class SecurityConfig {
             successHandler.onAuthenticationSuccess(request, response, authentication);
         };
 
-        // Which login to offer is decided by configuration, not by a profile
-        // flag: Spring Boot only creates a ClientRegistrationRepository when
-        // spring.security.oauth2.client.registration.* is set, so configuring a
-        // provider is what turns OIDC on. application-oidc.properties points at
-        // the local Hydra from docker-compose.hydra.yml.
+        // Both sign-ins are offered when both are available, rather than one
+        // replacing the other. Spring Boot only creates a
+        // ClientRegistrationRepository when a provider is configured, so OIDC
+        // appears when application-oidc.properties is active; the form login is
+        // always wired but has nothing to authenticate against unless the dev
+        // profile supplies the in-memory accounts. A deployed build therefore
+        // ends up with OIDC only, without needing a second switch.
         if (clientRegistrations.getIfAvailable() != null) {
             http.oauth2Login(oidc -> oidc
                 .loginPage("/login")
                 .successHandler(onSuccess));
-
-            // Hydra is the source of identity, so signing out here should not
-            // silently leave the provider session open. Ending the Hydra session
-            // as well is RP-initiated logout and is the next step; for now this
-            // clears the application session only.
-            http.logout(logout -> logout
-                .logoutSuccessUrl("/login?logout")
-                .permitAll());
-        } else {
-            // Development and test fallback. The in-memory accounts below only
-            // exist under the dev profile, so this form has nothing to
-            // authenticate against in a deployed build.
-            http.formLogin(form -> form
-                .loginPage("/login")
-                .successHandler(onSuccess)
-                .failureUrl("/login?error")
-                .permitAll());
-
-            http.logout(logout -> logout
-                .logoutSuccessUrl("/login?logout")
-                .permitAll());
         }
+
+        http.formLogin(form -> form
+            .loginPage("/login")
+            .successHandler(onSuccess)
+            .failureUrl("/login?error")
+            .permitAll());
+
+        http.logout(logout -> logout
+            .logoutSuccessUrl("/login?logout")
+            .permitAll());
 
         // Registered inside Spring Security's own chain rather than as a @Component,
         // so it runs before login processing. A plain @Component filter is registered
