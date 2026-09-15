@@ -385,3 +385,6 @@ body {
 .oidc-box .btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .oidc-lead { font-size: .95rem; }
 .oidc-note { font-size: .8rem; opacity: .7; }
+
+.oidc-divider { display:flex; align-items:center; gap:10px; font-size:.75rem; opacity:.6; margin:4px 0 0; }
+.oidc-divider::before, .oidc-divider::after { content:""; flex:1; height:1px; background:currentColor; opacity:.35; }
