@@ -1,0 +1,56 @@
+# Runs on every push and pull request. Keep this fast and dependency-free:
+# a check nobody waits for is a check people learn to ignore.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# A new push to the same branch cancels the run still going for the old one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          # caches ~/.m2 keyed on pom.xml, so a run takes about a minute
+          # instead of re-downloading every dependency
+          cache: maven
+
+      # No database on the runner, and that is deliberate. The four
+      # database-backed tests skip themselves when SPRING_DATASOURCE_URL is
+      # unset, so this needs no services and cannot fail for environment
+      # reasons. Add a postgres service here when we want those four to run.
+      - name: Run tests
+        run: ./mvnw -B --no-transfer-progress test
+
+      # The report is what you actually want when a run goes red, and it is
+      # gone once the runner is destroyed.
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  compose:
+    name: docker-compose is valid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Two seconds, and it catches the kind of YAML mistake that stops
+      # docker compose up before it does anything at all.
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet
