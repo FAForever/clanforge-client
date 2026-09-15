@@ -36,6 +36,22 @@ they are the only way to sign in until OpenID Connect is wired up, and
 `@Profile("dev")` keeps them out of any deployed build. Three accounts let one
 person show both sides of an invitation, a join or a transfer from two windows.
 
+### Running the application in Docker
+
+To run both PostgreSQL and the application in Docker:
+
+```bash
+docker compose --profile app up --build -d
+```
+
+Then open http://localhost:8080/clans.
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
 The container starts empty and the application creates the schema on its first
 start, so run the app once before loading anything. Then, for the 1,477 real
 clans out of FAForever's published 2023 dump:
