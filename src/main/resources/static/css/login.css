@@ -376,3 +376,12 @@ body {
 .login-register p a:hover {
   text-decoration: underline;
 }
+
+
+/* OIDC sign-in, shown instead of the username and password form when an
+   identity provider is configured. The button is an anchor rather than a
+   submit, so it needs the block layout the form's button gets for free. */
+.oidc-box { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.oidc-box .btn { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.oidc-lead { font-size: .95rem; }
+.oidc-note { font-size: .8rem; opacity: .7; }

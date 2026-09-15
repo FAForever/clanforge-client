@@ -69,7 +69,23 @@
 
       <h2>Login</h2>
 
-      <form th:action="@{/login}" method="post">
+      <!-- OIDC sign-in. Shown when a provider is configured; the username and
+           password form below is the development fallback and is hidden then,
+           because with OIDC this application never sees a password. -->
+      <div th:if="${oidcEnabled}" class="oidc-box">
+
+        <p class="form-message form-message-error" th:if="${param.error}">Sign-in failed. Please try again.</p>
+        <p class="form-message form-message-success" th:if="${param.logout}">You have been signed out.</p>
+
+        <p class="oidc-lead">Sign in with your Forged Alliance Forever account.</p>
+
+        <a class="btn" th:href="@{/oauth2/authorization/hydra}">Sign in with FAForever</a>
+
+        <p class="oidc-note">You will be taken to the FAForever sign-in page and returned here.</p>
+
+      </div>
+
+      <form th:unless="${oidcEnabled}" th:action="@{/login}" method="post">
 
         <p class="form-message form-message-error" th:if="${param.error}">Invalid username or password.</p>
         <p class="form-message form-message-success" th:if="${param.logout}">You have been signed out.</p>

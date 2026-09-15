@@ -3,6 +3,7 @@ package com.faforever.clan_management.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -11,8 +12,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
@@ -40,7 +43,8 @@ public class SecurityConfig {
           + "form-action 'self'";
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+            ObjectProvider<ClientRegistrationRepository> clientRegistrations) throws Exception {
         http.authorizeHttpRequests(auth -> auth
             // /error must stay permitted. Spring forwards unhandled 404s to it as an
             // ERROR dispatch, and since Spring Security 6 the filter chain applies to
@@ -80,24 +84,46 @@ public class SecurityConfig {
                 new SavedRequestAwareAuthenticationSuccessHandler();
         successHandler.setDefaultTargetUrl("/clans");
 
-        // Temporary form login for testing the access-control flow. Replaced by
-        // OIDC (ORY Hydra) once that is wired up.
-        http.formLogin(form -> form
-            .loginPage("/login")
-            .successHandler((request, response, authentication) -> {
-                // A correct password is not a guessing attempt, so it must not
-                // spend the address's budget. Without this the sixth sign-in in
-                // a minute from one address is refused, which is a lockout
-                // waiting to happen during a demo or behind a shared NAT.
-                rateLimitFilter.forget(request);
-                successHandler.onAuthenticationSuccess(request, response, authentication);
-            })
-            .failureUrl("/login?error")
-            .permitAll());
+        // A correct password is not a guessing attempt, so it must not spend the
+        // address's budget. Without this the sixth sign-in in a minute from one
+        // address is refused, which is a lockout waiting to happen during a demo
+        // or behind a shared NAT.
+        AuthenticationSuccessHandler onSuccess = (request, response, authentication) -> {
+            rateLimitFilter.forget(request);
+            successHandler.onAuthenticationSuccess(request, response, authentication);
+        };
 
-        http.logout(logout -> logout
-            .logoutSuccessUrl("/login?logout")
-            .permitAll());
+        // Which login to offer is decided by configuration, not by a profile
+        // flag: Spring Boot only creates a ClientRegistrationRepository when
+        // spring.security.oauth2.client.registration.* is set, so configuring a
+        // provider is what turns OIDC on. application-oidc.properties points at
+        // the local Hydra from docker-compose.hydra.yml.
+        if (clientRegistrations.getIfAvailable() != null) {
+            http.oauth2Login(oidc -> oidc
+                .loginPage("/login")
+                .successHandler(onSuccess));
+
+            // Hydra is the source of identity, so signing out here should not
+            // silently leave the provider session open. Ending the Hydra session
+            // as well is RP-initiated logout and is the next step; for now this
+            // clears the application session only.
+            http.logout(logout -> logout
+                .logoutSuccessUrl("/login?logout")
+                .permitAll());
+        } else {
+            // Development and test fallback. The in-memory accounts below only
+            // exist under the dev profile, so this form has nothing to
+            // authenticate against in a deployed build.
+            http.formLogin(form -> form
+                .loginPage("/login")
+                .successHandler(onSuccess)
+                .failureUrl("/login?error")
+                .permitAll());
+
+            http.logout(logout -> logout
+                .logoutSuccessUrl("/login?logout")
+                .permitAll());
+        }
 
         // Registered inside Spring Security's own chain rather than as a @Component,
         // so it runs before login processing. A plain @Component filter is registered
