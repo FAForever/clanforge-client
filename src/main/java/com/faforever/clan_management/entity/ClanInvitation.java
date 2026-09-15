@@ -46,6 +46,14 @@ public class ClanInvitation {
     protected ClanInvitation() {
     }
 
+    public ClanInvitation(Clan clan, AppUser invitee, AppUser inviter, OffsetDateTime expiresAt) {
+        this.clan = clan;
+        this.invitee = invitee;
+        this.inviter = inviter;
+        this.expiresAt = expiresAt;
+        this.createdAt = OffsetDateTime.now();
+    }
+
     public Long getId() {
         return id;
     }
@@ -66,6 +74,10 @@ public class ClanInvitation {
         return state;
     }
 
+    public void setState(String state) {
+        this.state = state;
+    }
+
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
@@ -76,5 +88,9 @@ public class ClanInvitation {
 
     public OffsetDateTime getRespondedAt() {
         return respondedAt;
+    }
+
+    public void setRespondedAt(OffsetDateTime respondedAt) {
+        this.respondedAt = respondedAt;
     }
 }

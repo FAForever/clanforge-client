@@ -390,3 +390,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* moved out of an inline style attribute so the CSP can forbid inline styles */
 .svg-sprite{ display:none; }
 .pager{ display:flex; gap:12px; justify-content:center; margin-top:18px; }
+
+/* the browse controls became a form and the empty state now carries a link */
+.browse-controls .btn{ flex:0 0 auto; }
+.empty-state a{ color:var(--accent-bright); }
+.nav-search{ margin-bottom:0; }

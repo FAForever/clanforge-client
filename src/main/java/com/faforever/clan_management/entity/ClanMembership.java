@@ -45,6 +45,13 @@ public class ClanMembership {
     protected ClanMembership() {
     }
 
+    public ClanMembership(Clan clan, AppUser user, String role) {
+        this.clan = clan;
+        this.user = user;
+        this.role = role;
+        this.joinedAt = OffsetDateTime.now();
+    }
+
     public Long getId() {
         return id;
     }
@@ -61,6 +68,10 @@ public class ClanMembership {
         return role;
     }
 
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public String getSourceId() {
         return sourceId;
     }
@@ -71,6 +82,10 @@ public class ClanMembership {
 
     public OffsetDateTime getLeftAt() {
         return leftAt;
+    }
+
+    public void setLeftAt(OffsetDateTime leftAt) {
+        this.leftAt = leftAt;
     }
 
     public String getSource() {

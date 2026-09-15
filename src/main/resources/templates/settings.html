@@ -4,292 +4,136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0d12">
-<meta name="description" content="Edit Iron Vanguard's clan settings on Clanforge — name, tag, description, and preferences.">
-<title>Clan Settings · Clanforge</title>
+<meta name="description" content="Your account on Clanforge, and your clan's settings if you run one.">
+<title>Settings · Clanforge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/styles.css" th:href="@{/css/styles.css}">
+<link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
 
-<!-- ============================================================
-     ICON SPRITE — hand-drawn line icons, referenced via <use>
-     ============================================================ -->
-<svg class="svg-sprite" aria-hidden="true">
-  <symbol id="icon-crest" viewBox="0 0 24 24">
-    <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-    <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
-  </symbol>
-  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
-  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
-  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
-  <symbol id="icon-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M22 12h-3M5 12H2M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12M19.07 19.07l-2.12-2.12M7.05 7.05L4.93 4.93"/></symbol>
-  <symbol id="icon-warning" viewBox="0 0 24 24">
-    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
-    <line x1="12" y1="9" x2="12" y2="13"/>
-    <line x1="12" y1="17" x2="12.01" y2="17"/>
-  </symbol>
-  <symbol id="icon-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15 L16 10 L5 20"/></symbol>
-  <symbol id="icon-message" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9A1.5 1.5 0 0 1 18.5 16H9l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5Z"/></symbol>
-  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></symbol>
-  <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
-  <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
-</svg>
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('settings')}"></header>
 
-<!-- ============================================================
-     TOP BAR
-     ============================================================ -->
-<header class="topbar">
-  <div class="topbar-inner">
-    <a class="brand" href="/clanhome" th:href="@{/clanhome}" aria-label="Clanforge home">
-      <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
-      <span class="brand-word">CLANFORGE</span>
-    </a>
-
-    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link" href="/clans" th:href="@{/clans}">Browse Clans</a>
-      <a class="nav-link is-active" href="/clanhome" th:href="@{/clanhome}" aria-current="page">My Clan</a>
-      <a class="nav-link" href="/invitations" th:href="@{/invitations}">Invitations<span class="nav-badge">3</span></a>
-      <div class="nav-search" role="search">
-        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
-        <label class="sr-only" for="navClanSearch">Search clans</label>
-        <input type="search" id="navClanSearch" placeholder="Search clans…" autocomplete="off">
-      </div>
-    </nav>
-
-    <div class="topbar-actions">
-      <a href="/create-clan" th:href="@{/create-clan}" class="btn btn-primary btn-create" aria-label="Create Clan">
-        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
-        <span class="btn-label">Create Clan</span>
-      </a>
-
-      <div class="popover-wrap">
-        <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
-          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
-          <span class="badge-dot" aria-hidden="true"></span>
-        </button>
-        <div class="popover" id="notifPanel">
-          <p class="popover-title">Notifications</p>
-          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
-            <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
-            <span class="notif-time">1h ago</span>
-          </a>
-          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
-            <p class="notif-text">3 new applications are waiting for review.</p>
-            <span class="notif-time">5h ago</span>
-          </a>
-          <div class="notif-item">
-            <p class="notif-text">Clan Ladder Night was added to the events calendar.</p>
-            <span class="notif-time">1d ago</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="popover-wrap">
-        <button type="button" class="icon-btn avatar-btn" id="avatarBtn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
-          <span class="avatar avatar-sm is-owner">W9</span>
-        </button>
-        <div class="popover" id="avatarPanel">
-          <div class="popover-user">
-            <span class="avatar avatar-md is-owner">W9</span>
-            <div>
-              <p class="popover-user-name">Warhawk_09</p>
-              <p class="popover-user-role">Leader · Iron Vanguard</p>
-            </div>
-          </div>
-          <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="/settings" th:href="@{/settings}">Account Settings</a>
-          <form class="logout-form" th:action="@{/logout}" method="post">
-            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
-          </form>
-        </div>
-      </div>
-
-      <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
-        <svg class="icon icon-menu" aria-hidden="true"><use href="#icon-menu"></use></svg>
-        <svg class="icon icon-close" aria-hidden="true"><use href="#icon-close"></use></svg>
-      </button>
-    </div>
-  </div>
-</header>
-
-<!-- ============================================================
-     PAGE HERO
-     ============================================================ -->
 <section class="page-hero">
-  <h1 class="page-title">Clan Settings</h1>
-  <p class="page-subtitle">Update Iron Vanguard's info, preferences, and more.</p>
+  <h1 class="page-title">Settings</h1>
+  <p class="page-subtitle" th:text="${clan != null} ? 'Your account, and the details of ' + ${clan.name} + '.' : 'Your account.'">Your account.</p>
 </section>
 
-<!-- ============================================================
-     FORM + LIVE PREVIEW
-     ============================================================ -->
 <main class="editor-layout">
   <div class="form-stack">
-    <section class="panel">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-crest"></use></svg>Clan Identity</p>
-      <div class="form-field">
-        <label for="clanName">Clan Name</label>
-        <input type="text" id="clanName" value="Iron Vanguard" autocomplete="off">
-      </div>
-      <div class="form-field" id="clanTagField">
-        <label for="clanTag">Clan Tag</label>
-        <input type="text" id="clanTag" class="is-uppercase" value="IVG" autocomplete="off">
-        <p class="field-hint" id="clanTagHint">Exactly 3 letters or numbers. Shown in brackets, like [IVG].</p>
-      </div>
-      <div class="form-field">
-        <label for="clanDesc">Description</label>
-        <textarea id="clanDesc">Elite ladder squad running nightly 4v4s, team nights, and weekly co-op runs. EU/NA hours — all skill levels welcome to apply.</textarea>
-      </div>
-    </section>
+    <div th:replace="~{fragments/topbar :: flash}"></div>
 
     <section class="panel">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-image"></use></svg>Clan Image</p>
-      <div class="image-upload">
-        <div class="image-preview" id="imagePreviewBox">
-          <span id="imagePreviewText">IVG</span>
-          <img id="imagePreviewImg" alt="" hidden>
-        </div>
-        <div class="image-upload-actions">
-          <label class="btn btn-secondary" for="clanImageInput">Upload Image</label>
-          <input type="file" id="clanImageInput" accept="image/png, image/jpeg, image/webp" class="sr-only">
-          <button type="button" class="link-btn" id="removeImageBtn" hidden>Remove image</button>
-        </div>
-      </div>
-      <p class="field-hint">PNG, JPG, or WEBP. Square images work best. Optional — a tag badge is used until you add one.</p>
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Account</p>
+      <p class="panel-subtitle-text">Who the platform knows you as. Your name comes from your sign-in and changes there, not here.</p>
+      <div class="form-field"><label>Display name</label><p th:text="${me.user.displayName}">name</p></div>
+      <div class="form-field"><label>Sign-in id</label><p th:text="${me.user.oidcSubject}">id</p></div>
+      <div class="form-field"><label>Member since</label><p th:text="${#temporals.format(me.user.createdAt, 'd MMMM yyyy')}">date</p></div>
+      <div class="form-field"><label>Clan</label><p th:text="${me.inClan} ? ${me.roleLabel + ' of ' + me.clanName + ' [' + me.clanTag + ']'} : 'None'">clan</p></div>
     </section>
 
-    <section class="panel">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Clan Preferences</p>
-      <div class="form-field">
-        <label for="clanRegion">Region</label>
-        <select id="clanRegion">
-          <option value="EU/NA" selected>EU/NA</option>
-          <option value="EU">EU</option>
-          <option value="NA">NA</option>
-          <option value="Asia">Asia</option>
-          <option value="Oceania">Oceania</option>
-          <option value="Global">Global</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label class="toggle-switch">
-          <input type="checkbox" id="publicToggle" checked>
-          <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
-          <span class="toggle-text">Public clan</span>
-        </label>
-        <p class="field-hint">Private clans won't appear in Browse Clans.</p>
-      </div>
-    </section>
-
-    <div class="form-actions">
-      <button type="button" class="btn btn-primary" id="saveBtn">Save Changes</button>
-      <span class="save-confirmation" id="saveConfirmation">✓ Settings saved</span>
-    </div>
-
-    <section class="panel" id="motd-section">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>Message of the Day</p>
-      <p class="panel-subtitle-text">Shown on your clan's dashboard for all members to see.</p>
-      <div class="form-field">
-        <label for="motdText" class="sr-only">Message of the day</label>
-        <textarea id="motdText">Season 24 ladder finals are this weekend — full squad needed for the 4v4 bracket Saturday. Check #events on Discord for the lineup.</textarea>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-primary" id="motdSaveBtn">Update Message</button>
-        <span class="save-confirmation" id="motdConfirmation">✓ Message updated</span>
-      </div>
-    </section>
-
-    <section class="panel" id="events-section">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg>Clan Events</p>
-      <p class="panel-subtitle-text">Manage the events shown on your clan's dashboard.</p>
-
-      <div class="event-list" id="eventList">
-        <div class="event-row">
-          <div class="event-date"><span class="day">28</span><span class="mon">Aug</span></div>
-          <div class="event-row-info">
-            <p class="event-title">Clan Ladder Night</p>
-            <p class="event-time">8:00 PM UTC · Fri</p>
-          </div>
-          <button type="button" class="link-btn remove-event-btn">Remove</button>
-        </div>
-        <div class="event-row">
-          <div class="event-date"><span class="day">31</span><span class="mon">Aug</span></div>
-          <div class="event-row-info">
-            <p class="event-title">Co-op Night</p>
-            <p class="event-time">6:00 PM UTC · Mon</p>
-          </div>
-          <button type="button" class="link-btn remove-event-btn">Remove</button>
-        </div>
-      </div>
-      <p class="empty-state" id="eventsEmpty">No upcoming events. Add one below.</p>
-
-      <div class="add-event-form">
-        <p class="section-label">Add Event</p>
+    <!--/* the clan form only for the owner and moderators, everyone else sees why not */-->
+    <form th:if="${clan != null and me.canManage}" class="form-stack" th:action="@{/settings/clan}" th:object="${form}" method="post">
+      <section class="panel">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-crest"></use></svg>Clan Identity</p>
+        <p class="field-hint is-error" th:if="${error}" th:text="${error}">error</p>
         <div class="form-field">
-          <label for="eventTitleInput">Title</label>
-          <input type="text" id="eventTitleInput" placeholder="e.g. Clan Ladder Night" autocomplete="off">
+          <label for="clanName">Clan Name</label>
+          <input type="text" id="clanName" th:field="*{name}" autocomplete="off" maxlength="40" required>
         </div>
-        <div class="field-row">
-          <div class="form-field">
-            <label for="eventDateInput">Date</label>
-            <input type="date" id="eventDateInput">
-          </div>
-          <div class="form-field">
-            <label for="eventTimeInput">Time (UTC)</label>
-            <input type="time" id="eventTimeInput">
-          </div>
+        <div class="form-field" id="clanTagField">
+          <label for="clanTag">Clan Tag</label>
+          <input type="text" id="clanTag" th:field="*{tag}" autocomplete="off" maxlength="3" required>
+          <p class="field-hint" id="clanTagHint" th:text="${#strings.capitalize(tagHint)} + '. Shown in brackets, like [IVG].'">Tag hint</p>
         </div>
-        <button type="button" class="btn btn-secondary" id="addEventBtn">Add Event</button>
+        <div class="form-field">
+          <label for="clanDesc">Description</label>
+          <textarea id="clanDesc" th:field="*{description}"></textarea>
+        </div>
+      </section>
+
+      <section class="panel">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Clan Preferences</p>
+        <div class="form-field">
+          <label class="toggle-switch">
+            <input type="checkbox" id="publicToggle" th:field="*{publicClan}">
+            <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+            <span class="toggle-text">Public clan</span>
+          </label>
+          <p class="field-hint">Private clans do not appear in Browse Clans and take members by invitation only.</p>
+        </div>
+        <div class="form-field">
+          <label class="toggle-switch">
+            <input type="checkbox" id="inviteOnlyToggle" th:field="*{requiresInvitation}">
+            <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+            <span class="toggle-text">Invitation only</span>
+          </label>
+          <p class="field-hint">Off: anyone can join a public clan from its page. On: they need an invite from you or a moderator.</p>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="saveBtn">Save Changes</button>
       </div>
+    </form>
+
+    <section class="panel" th:if="${clan != null and !me.canManage}">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-crest"></use></svg>Clan Settings</p>
+      <p class="panel-subtitle-text">Only the owner and moderators can change the clan's details.</p>
     </section>
 
-    <section class="panel danger-zone">
+    <section class="panel danger-zone" th:if="${clan != null and me.owner}">
       <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-warning"></use></svg>Danger Zone</p>
       <div class="danger-item">
         <div>
-          <p class="danger-item-title">Transfer Leadership</p>
-          <p class="danger-item-desc">Hand off your Leader role to another officer. You'll become a regular Officer.</p>
+          <p class="danger-item-title">Transfer Ownership</p>
+          <p class="danger-item-desc">Hand the clan to another member. You stay on as a moderator.</p>
         </div>
-        <button type="button" class="btn btn-secondary" id="transferBtn">Transfer Leadership</button>
+        <form class="transfer-form" th:action="@{/settings/transfer}" method="post" data-confirm="Transfer ownership of the clan? You will become a moderator.">
+          <label class="sr-only" for="transferTo">New owner</label>
+          <select id="transferTo" name="userId" class="role-filter" required>
+            <option th:each="m : ${roster}" th:unless="${m.owner}" th:value="${m.user.id}" th:text="${m.user.displayName + ' (' + m.roleLabel + ')'}">member</option>
+          </select>
+          <button type="submit" class="btn btn-secondary" id="transferBtn">Transfer</button>
+        </form>
       </div>
       <div class="danger-item">
         <div>
-          <p class="danger-item-title">Disband Clan</p>
-          <p class="danger-item-desc">Permanently delete Iron Vanguard and remove all 42 members. This cannot be undone.</p>
+          <p class="danger-item-title">Delete Clan</p>
+          <p class="danger-item-desc" th:text="'Delete ' + ${clan.name} + ' and remove all ' + ${#lists.size(roster)} + ' members. The name and tag become free again.'">delete</p>
         </div>
-        <button type="button" class="btn btn-danger" id="disbandBtn">Disband Clan</button>
+        <form th:action="@{/settings/delete}" method="post" th:attr="data-confirm=${'Delete ' + clan.name + ' and remove every member? This cannot be undone.'}">
+          <button type="submit" class="btn btn-danger" id="disbandBtn">Delete Clan</button>
+        </form>
       </div>
-      <p class="danger-feedback" id="dangerFeedback"></p>
     </section>
   </div>
 
-  <aside class="preview-sidebar">
+  <aside class="preview-sidebar" th:if="${clan != null and me.canManage}">
     <p class="preview-label"><span class="dot" aria-hidden="true"></span>Live Preview</p>
     <article class="panel clan-card">
       <div class="clan-card-head">
-        <div class="clan-badge" id="previewBadge">
-          <span id="previewBadgeText">IVG</span>
-          <img id="previewBadgeImg" alt="" hidden>
-        </div>
+        <div class="clan-badge" id="previewBadge"><span id="previewBadgeText" th:text="${clan.tag}">TAG</span></div>
         <div>
-          <p class="clan-card-name" id="previewName">Iron Vanguard</p>
-          <p class="clan-card-tag" id="previewTag">[IVG]</p>
+          <p class="clan-card-name" id="previewName" th:text="${clan.name}">Clan</p>
+          <p class="clan-card-tag" id="previewTag" th:text="'[' + ${clan.tag} + ']'">[TAG]</p>
         </div>
       </div>
-      <p class="clan-card-desc" id="previewDesc">Elite ladder squad running nightly 4v4s, team nights, and weekly co-op runs. EU/NA hours — all skill levels welcome to apply.</p>
+      <p class="clan-card-desc" id="previewDesc" th:text="${#strings.isEmpty(clan.description)} ? 'Your clan description will appear here.' : ${clan.description}">description</p>
       <div class="clan-stats">
-        <div class="stat"><span class="stat-value">42</span><span class="stat-label">Members</span></div>
-        <div class="stat"><span class="stat-value">#7</span><span class="stat-label">Ladder Rank</span></div>
+        <div class="stat"><span class="stat-value" th:text="${#lists.size(roster)}">0</span><span class="stat-label">Members</span></div>
+        <div class="stat"><span class="stat-value" th:text="${#temporals.format(clan.createdAt, 'yyyy')}">2014</span><span class="stat-label">Founded</span></div>
       </div>
       <div class="clan-card-foot">
-        <span class="status-badge is-public" id="previewStatus">Public</span>
+        <span class="status-badge" th:classappend="${clan.visibility == 'PUBLIC'} ? 'is-public' : 'is-private'" id="previewStatus" th:text="${clan.visibility == 'PUBLIC'} ? 'Public' : 'Private'">Public</span>
       </div>
     </article>
   </aside>
 </main>
 
-<script src="/js/settings.js" th:src="@{/js/settings.js}"></script>
+<script th:src="@{/js/site.js}"></script>
+<script th:src="@{/js/clan-form.js}"></script>
 </body>
 </html>

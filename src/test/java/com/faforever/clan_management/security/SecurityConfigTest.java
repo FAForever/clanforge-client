@@ -9,7 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.faforever.clan_management.service.AppUserService;
+import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
+import com.faforever.clan_management.service.InvitationService;
+import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.TagRule;
 
 import java.util.Optional;
 
@@ -36,12 +41,28 @@ class SecurityConfigTest {
     @MockitoBean
     private ClanService clanService;
 
+    // The management pages and the top bar advice bring in the rest.
+    @MockitoBean
+    private AppUserService appUserService;
+
+    @MockitoBean
+    private MembershipService membershipService;
+
+    @MockitoBean
+    private ClanManagementService clanManagementService;
+
+    @MockitoBean
+    private InvitationService invitationService;
+
+    @MockitoBean
+    private TagRule tagRule;
+
     @Test
     @DisplayName("anonymous users may reach the public clan routes")
     void publicRoutesArePermitted() throws Exception {
         // 200, not a redirect to login. The point of this test is that anonymous
         // callers are not bounced to the login page, whatever the route returns.
-        org.mockito.BDDMockito.given(clanService.findPublicClanCards(org.mockito.ArgumentMatchers.any()))
+        org.mockito.BDDMockito.given(clanService.searchPublicClanCards(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
                 .willReturn(Page.empty());
         mockMvc.perform(get("/clans")).andExpect(status().isOk());
 

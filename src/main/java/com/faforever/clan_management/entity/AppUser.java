@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -38,6 +39,20 @@ public class AppUser {
     protected AppUser() {
     }
 
+    public AppUser(String oidcSubject, String displayName, String source, String sourceId) {
+        this.oidcSubject = oidcSubject;
+        this.displayName = displayName;
+        this.source = source;
+        this.sourceId = sourceId;
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    public void touch() {
+        updatedAt = OffsetDateTime.now();
+    }
+
     public Long getId() {
         return id;
     }
@@ -48,6 +63,10 @@ public class AppUser {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getSource() {

@@ -4,231 +4,89 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0d12">
-<meta name="description" content="Manage clan invitations on Clanforge — review applications to join Iron Vanguard and track invites you've sent.">
+<meta name="description" content="Clan invitations on Clanforge: the invites waiting for you and the invites your clan has sent.">
 <title>Invitations · Clanforge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/styles.css" th:href="@{/css/styles.css}">
+<link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
 
-<!-- ============================================================
-     ICON SPRITE — hand-drawn line icons, referenced via <use>
-     ============================================================ -->
-<svg class="svg-sprite" aria-hidden="true">
-  <symbol id="icon-crest" viewBox="0 0 24 24">
-    <path d="M12 2 L20 6.5 V15.5 L12 22 L4 15.5 V6.5 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-    <path class="icon-fill" d="M13.2 6.4 L8.3 13.6 H11.3 L10.1 17.6 L16 10 H12.6 Z"/>
-  </symbol>
-  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></symbol>
-  <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
-  <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></symbol>
-  <symbol id="icon-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></symbol>
-  <symbol id="icon-menu" viewBox="0 0 24 24" class="icon-menu"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
-  <symbol id="icon-close" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></symbol>
-</svg>
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('invitations')}"></header>
 
-<!-- ============================================================
-     TOP BAR
-     ============================================================ -->
-<header class="topbar">
-  <div class="topbar-inner">
-    <a class="brand" href="/clanhome" th:href="@{/clanhome}" aria-label="Clanforge home">
-      <svg class="brand-mark icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
-      <span class="brand-word">CLANFORGE</span>
-    </a>
-
-    <nav class="primary-nav" id="primaryNav" aria-label="Primary">
-      <a class="nav-link" href="/clans" th:href="@{/clans}">Browse Clans</a>
-      <a class="nav-link" href="/clanhome" th:href="@{/clanhome}">My Clan</a>
-      <a class="nav-link is-active" href="/invitations" th:href="@{/invitations}" aria-current="page">Invitations<span class="nav-badge">3</span></a>
-      <div class="nav-search" role="search">
-        <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
-        <label class="sr-only" for="navClanSearch">Search clans</label>
-        <input type="search" id="navClanSearch" placeholder="Search clans…" autocomplete="off">
-      </div>
-    </nav>
-
-    <div class="topbar-actions">
-      <a href="/create-clan" th:href="@{/create-clan}" class="btn btn-primary btn-create" aria-label="Create Clan">
-        <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
-        <span class="btn-label">Create Clan</span>
-      </a>
-
-      <div class="popover-wrap">
-        <button type="button" class="icon-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
-          <svg class="icon" aria-hidden="true"><use href="#icon-bell"></use></svg>
-          <span class="badge-dot" aria-hidden="true"></span>
-        </button>
-        <div class="popover" id="notifPanel">
-          <p class="popover-title">Notifications</p>
-          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
-            <p class="notif-text"><strong>IonBlade</strong> accepted their invite and joined the clan.</p>
-            <span class="notif-time">1h ago</span>
-          </a>
-          <a class="notif-item notif-item-link" href="/invitations" th:href="@{/invitations}">
-            <p class="notif-text">3 new applications are waiting for review.</p>
-            <span class="notif-time">5h ago</span>
-          </a>
-          <div class="notif-item">
-            <p class="notif-text">Clan Ladder Night was added to the events calendar.</p>
-            <span class="notif-time">1d ago</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="popover-wrap">
-        <button type="button" class="icon-btn avatar-btn" id="avatarBtn" aria-label="Account menu" aria-haspopup="true" aria-expanded="false">
-          <span class="avatar avatar-sm is-owner">W9</span>
-        </button>
-        <div class="popover" id="avatarPanel">
-          <div class="popover-user">
-            <span class="avatar avatar-md is-owner">W9</span>
-            <div>
-              <p class="popover-user-name">Warhawk_09</p>
-              <p class="popover-user-role">Leader · Iron Vanguard</p>
-            </div>
-          </div>
-          <a class="popover-link" href="#">My Profile</a>
-          <a class="popover-link" href="/settings" th:href="@{/settings}">Account Settings</a>
-          <form class="logout-form" th:action="@{/logout}" method="post">
-            <button type="submit" class="popover-link popover-link-button">Sign Out</button>
-          </form>
-        </div>
-      </div>
-
-      <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primaryNav">
-        <svg class="icon icon-menu" aria-hidden="true"><use href="#icon-menu"></use></svg>
-        <svg class="icon icon-close" aria-hidden="true"><use href="#icon-close"></use></svg>
-      </button>
-    </div>
-  </div>
-</header>
-
-<!-- ============================================================
-     INVITATIONS HERO
-     ============================================================ -->
 <section class="invites-hero">
   <h1 class="invites-title">Invitations</h1>
-  <p class="invites-subtitle">Review applications from players who want to join Iron Vanguard, and keep track of invites you've sent out.</p>
+  <p class="invites-subtitle">Invitations waiting for you, and if you run a clan, the invites it has sent out.</p>
   <div class="invites-stats">
-    <div class="stat"><span class="stat-value" id="pendingCount">3</span><span class="stat-label">Pending Applications</span></div>
-    <div class="stat"><span class="stat-value" id="sentCount">3</span><span class="stat-label">Invites Sent</span></div>
-    <div class="stat"><span class="stat-value" id="joinedCount">12</span><span class="stat-label">Joined This Season</span></div>
+    <div class="stat"><span class="stat-value" th:text="${#lists.size(inbox)}">0</span><span class="stat-label">Waiting for you</span></div>
+    <div class="stat" th:if="${sent != null}"><span class="stat-value" th:text="${#lists.size(sent)}">0</span><span class="stat-label">Invites Sent</span></div>
   </div>
 </section>
 
-<!-- ============================================================
-     MAIN LAYOUT
-     ============================================================ -->
 <main class="invites-layout">
 
-  <section class="panel invites-main" aria-label="Applications to join">
-    <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>Applications to Join</p>
-    <p class="panel-subtitle-text">Players who've asked to join Iron Vanguard. Review their note and respond.</p>
+  <section class="panel invites-main" aria-label="Invitations for you">
+    <div th:replace="~{fragments/topbar :: flash}"></div>
+    <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>Invitations for You</p>
+    <p class="panel-subtitle-text">Clans that have asked you to join. Accepting puts you in that clan straight away.</p>
 
-    <div class="invite-list" id="applicationsList">
-      <div class="invite-row">
-        <span class="avatar avatar-md">FN</span>
+    <div class="invite-list" id="inboxList">
+      <div class="invite-row" th:each="i : ${inbox}">
+        <span class="avatar avatar-md" th:text="${i.clan.tag}">TAG</span>
         <div class="invite-row-info">
-          <p class="invite-row-name">Falcon_Nine</p>
-          <p class="invite-row-note">"Diamond league player, looking for an active ladder squad. Free most evenings EU time."</p>
-          <p class="invite-row-meta">Applied 2d ago</p>
+          <p class="invite-row-name" th:text="${i.clan.name + ' [' + i.clan.tag + ']'}">clan</p>
+          <p class="invite-row-note" th:text="${#strings.isEmpty(i.clan.description)} ? 'No description.' : ${i.clan.description}">description</p>
+          <p class="invite-row-meta" th:text="'Invited by ' + ${i.inviter.displayName} + ' · expires ' + ${#temporals.format(i.expiresAt, 'd MMM yyyy')}">meta</p>
         </div>
         <div class="invite-row-actions">
-          <button type="button" class="btn btn-primary accept-btn">Accept</button>
-          <button type="button" class="btn btn-secondary decline-btn">Decline</button>
-        </div>
-      </div>
-      <div class="invite-row">
-        <span class="avatar avatar-md">WA</span>
-        <div class="invite-row-info">
-          <p class="invite-row-name">Wraith_Ander</p>
-          <p class="invite-row-note">"Returning player after a long break, previously ran co-op with [FBL]. Happy to start as a recruit."</p>
-          <p class="invite-row-meta">Applied 1d ago</p>
-        </div>
-        <div class="invite-row-actions">
-          <button type="button" class="btn btn-primary accept-btn">Accept</button>
-          <button type="button" class="btn btn-secondary decline-btn">Decline</button>
-        </div>
-      </div>
-      <div class="invite-row">
-        <span class="avatar avatar-md">ST</span>
-        <div class="invite-row-info">
-          <p class="invite-row-name">Starlance</p>
-          <p class="invite-row-note">"New to competitive play but very active — just want to learn from a good group."</p>
-          <p class="invite-row-meta">Applied 5h ago</p>
-        </div>
-        <div class="invite-row-actions">
-          <button type="button" class="btn btn-primary accept-btn">Accept</button>
-          <button type="button" class="btn btn-secondary decline-btn">Decline</button>
+          <form class="inline-form" th:action="@{/invitations/{id}/accept(id=${i.id})}" method="post"><button type="submit" class="btn btn-primary">Accept</button></form>
+          <form class="inline-form" th:action="@{/invitations/{id}/decline(id=${i.id})}" method="post"><button type="submit" class="btn btn-secondary">Decline</button></form>
         </div>
       </div>
     </div>
 
-    <p class="empty-state" id="applicationsEmpty">No pending applications right now.</p>
+    <p class="empty-state is-visible" th:if="${#lists.isEmpty(inbox)}">No invitations waiting for you right now.</p>
   </section>
 
   <aside class="invites-side">
-    <div class="panel mini-panel">
+    <div class="panel mini-panel" th:if="${sent != null}">
       <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>Send an Invite</p>
-      <form class="invite-form" id="inviteForm">
+      <form class="invite-form" th:action="@{/invitations}" method="post">
         <label class="sr-only" for="inviteUsername">Player username</label>
-        <input type="text" id="inviteUsername" placeholder="Player username…" autocomplete="off">
-        <div class="invite-form-row">
-          <label class="sr-only" for="inviteRole">Invite as</label>
-          <select id="inviteRole" aria-label="Invite as role">
-            <option value="soldier">Invite as Soldier</option>
-            <option value="officer">Invite as Officer</option>
-          </select>
-        </div>
+        <input type="text" id="inviteUsername" name="username" placeholder="Player username…" autocomplete="off" required>
         <button type="submit" class="btn btn-primary btn-block">Send Invite</button>
       </form>
     </div>
 
-    <div class="panel mini-panel">
+    <div class="panel mini-panel" th:if="${sent != null}">
       <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>Invites Sent</p>
       <div class="invite-list" id="sentList">
-        <div class="invite-row">
-          <span class="avatar avatar-md">NR</span>
+        <div class="invite-row" th:each="i : ${sent}">
+          <span class="avatar avatar-md" th:text="${i.inviteeInitials}">??</span>
           <div class="invite-row-info">
-            <p class="invite-row-name">Nightreach</p>
-            <p class="invite-row-meta">Invited as Soldier · Sent 3d ago</p>
+            <p class="invite-row-name" th:text="${i.invitee.displayName}">name</p>
+            <p class="invite-row-meta" th:text="'Sent ' + ${#temporals.format(i.createdAt, 'd MMM')} + ' by ' + ${i.inviter.displayName} + ' · expires ' + ${#temporals.format(i.expiresAt, 'd MMM')}">meta</p>
           </div>
           <div class="invite-row-actions">
             <span class="invite-status is-pending">Pending</span>
-            <button type="button" class="link-btn cancel-btn">Cancel</button>
-          </div>
-        </div>
-        <div class="invite-row">
-          <span class="avatar avatar-md">KO</span>
-          <div class="invite-row-info">
-            <p class="invite-row-name">Korrath</p>
-            <p class="invite-row-meta">Invited as Officer · Sent 6d ago</p>
-          </div>
-          <div class="invite-row-actions">
-            <span class="invite-status is-pending">Pending</span>
-            <button type="button" class="link-btn cancel-btn">Cancel</button>
-          </div>
-        </div>
-        <div class="invite-row">
-          <span class="avatar avatar-md">ZV</span>
-          <div class="invite-row-info">
-            <p class="invite-row-name">Zephyr_Vale</p>
-            <p class="invite-row-meta">Invited as Soldier · Sent 2w ago</p>
-          </div>
-          <div class="invite-row-actions">
-            <span class="invite-status is-declined">Declined</span>
+            <form class="inline-form" th:action="@{/invitations/{id}/revoke(id=${i.id})}" method="post"><button type="submit" class="link-btn">Revoke</button></form>
           </div>
         </div>
       </div>
-      <p class="empty-state" id="sentEmpty">You haven't sent any invites yet.</p>
+      <p class="empty-state is-visible" th:if="${#lists.isEmpty(sent)}">No open invites.</p>
+    </div>
+
+    <div class="panel mini-panel" th:if="${sent == null}">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>Sending Invites</p>
+      <p class="panel-subtitle-text" th:if="${me.inClan}">Only the owner and moderators of a clan send its invites.</p>
+      <p class="panel-subtitle-text" th:unless="${me.inClan}">Create a clan, or become a moderator of one, to start inviting players.</p>
     </div>
   </aside>
 
 </main>
 
-<script src="/js/invitations.js" th:src="@{/js/invitations.js}"></script>
+<script th:src="@{/js/site.js}"></script>
 </body>
 </html>

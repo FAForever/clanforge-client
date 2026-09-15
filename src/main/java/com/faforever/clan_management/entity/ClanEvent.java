@@ -2,6 +2,9 @@ package com.faforever.clan_management.entity;
 
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,6 +31,8 @@ public class ClanEvent {
     @Column(name = "event_type", nullable = false)
     private String eventType;
 
+    //bound as json rather than varchar, postgres refuses a plain string into a jsonb column
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String payload;
 
@@ -48,6 +53,15 @@ public class ClanEvent {
     private String lastError;
 
     protected ClanEvent() {
+    }
+
+    public ClanEvent(String entityType, Long entityId, String eventType, String payload, AppUser actor) {
+        this.entityType = entityType;
+        this.entityId = entityId;
+        this.eventType = eventType;
+        this.payload = payload;
+        this.actor = actor;
+        this.occurredAt = OffsetDateTime.now();
     }
 
     public Long getId() {

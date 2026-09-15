@@ -959,3 +959,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width:480px){
   .danger-item{ flex-direction:column; align-items:flex-start; gap:10px; }
 }
+
+
+/* ============================================================
+   FLASH MESSAGES AND ROW FORMS
+   Added with the database wiring: a notice or refusal after a
+   redirect, and the small forms that sit inside roster and
+   invitation rows.
+   ============================================================ */
+.flash{ padding:12px 14px; margin-bottom:16px; font-size:.85rem; border-left:3px solid var(--accent); background:var(--bg-inset); }
+.flash-error{ border-left-color:var(--danger); color:var(--danger); }
+.inline-form{ display:inline; margin:0; }
+.member-actions{ margin-left:auto; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.transfer-form{ display:flex; gap:10px; align-items:center; flex-shrink:0; }
+.transfer-form .role-filter{ padding-top:9px; padding-bottom:9px; }
+.form-actions-centre{ justify-content:center; flex-wrap:wrap; }
+.form-field p{ font-size:.9rem; }
+.nav-search{ margin-bottom:0; }

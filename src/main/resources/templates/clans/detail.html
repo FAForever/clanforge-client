@@ -8,6 +8,8 @@
 <body>
 <main class="page">
     <p><a th:href="@{/clans}">Back to clans</a></p>
+    <p class="flash flash-notice" th:if="${notice}" th:text="${notice}">notice</p>
+    <p class="flash flash-error" th:if="${error}" th:text="${error}">error</p>
 
     <h1>
         <span class="tag" th:text="${clan.tag}">TAG</span>
@@ -24,7 +26,20 @@
         <dd th:text="${#temporals.format(clan.createdAt, 'd MMMM yyyy')}">date</dd>
         <dt>Membership</dt>
         <dd th:text="${clan.requiresInvitation} ? 'Invitation only' : 'Open'">Open</dd>
+        <dt>Members</dt>
+        <dd th:text="${memberCount}">0</dd>
     </dl>
+
+    <!--/* join is a post, so it needs a signed-in person with no clan and a clan that is open */-->
+    <form th:if="${canJoin}" th:action="@{/clans/{id}/join(id=${clan.id})}" method="post">
+        <button type="submit" class="join">Join this clan</button>
+    </form>
+    <p th:if="${!signedIn and !clan.requiresInvitation}" class="muted"><a th:href="@{/login}">Sign in</a> to join this clan.</p>
+
+    <h2>Members</h2>
+    <ul class="members">
+        <li th:each="m : ${roster}"><span th:text="${m.user.displayName}">name</span> <span class="muted" th:text="${m.roleLabel}">role</span></li>
+    </ul>
 </main>
 </body>
 </html>
