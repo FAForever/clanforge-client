@@ -35,7 +35,8 @@
 
   <aside class="panel clan-id">
     <div class="clan-crest">
-      <svg class="icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
+      <img th:if="${clan.hasLogo}" th:src="@{/clans/{id}/logo(id=${clan.id},v=${clan.logoUpdatedAt.toEpochSecond()})}" alt="">
+      <svg th:unless="${clan.hasLogo}" class="icon-fill" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-crest"></use></svg>
     </div>
     <h1 class="clan-name" th:text="${clan.name}">Clan</h1>
     <p class="clan-tag" th:text="'[' + ${clan.tag} + ']'">[TAG]</p>
@@ -54,6 +55,8 @@
       <div class="stat"><span class="stat-value" th:text="${#temporals.format(clan.createdAt, 'yyyy')}">2014</span><span class="stat-label">Founded</span></div>
     </div>
     <p class="clan-desc" th:text="${#strings.isEmpty(clan.description)} ? 'No description yet.' : ${clan.description}">description</p>
+    <p class="id-label">Region</p>
+    <p class="clan-desc" th:text="${clan.region != null} ? ${clan.region} : 'Not set'">region</p>
     <p class="id-label">Visibility</p>
     <p class="clan-desc" th:text="${clan.visibility == 'PUBLIC'} ? (${clan.requiresInvitation} ? 'Public, joins by invitation' : 'Public, open to join') : 'Private, invitation only'">visibility</p>
 
@@ -119,7 +122,33 @@
     </div>
 
     <div class="panel mini-panel">
-      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>Your Membership</p>
+      <div class="panel-header">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-message"></use></svg>Message of the Day</p>
+        <a th:if="${me.canManage}" class="panel-header-action" th:href="@{/settings#motd-section}" aria-label="Edit message of the day">
+          <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>
+        </a>
+      </div>
+      <p class="motd-text" th:if="${clan.motd != null}" th:text="${clan.motd}">motd</p>
+      <p class="motd-meta" th:if="${clan.motd != null}" th:text="'Posted by ' + ${clan.motdAuthor != null ? clan.motdAuthor.displayName : 'someone'} + ' · ' + ${#temporals.format(clan.motdUpdatedAt, 'd MMM yyyy')}">meta</p>
+      <p class="motd-meta" th:if="${clan.motd == null}">No message yet.</p>
+    </div>
+
+    <div class="panel mini-panel">
+      <div class="panel-header">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"></use></svg>Upcoming Events</p>
+        <a th:if="${me.canManage}" class="panel-header-action" th:href="@{/settings#events-section}" aria-label="Manage clan events">
+          <svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>
+        </a>
+      </div>
+      <div class="event-row" th:each="ev : ${upcoming}">
+        <div class="event-date"><span class="day" th:text="${#temporals.format(ev.startsAtUtc, 'd')}">28</span><span class="mon" th:text="${#temporals.format(ev.startsAtUtc, 'MMM')}">Aug</span></div>
+        <div><p class="event-title" th:text="${ev.title}">title</p><p class="event-time" th:text="${#temporals.format(ev.startsAtUtc, 'HH:mm')} + ' UTC · ' + ${#temporals.format(ev.startsAtUtc, 'EEE')}">time</p></div>
+      </div>
+      <p class="motd-meta" th:if="${#lists.isEmpty(upcoming)}">No upcoming events.</p>
+    </div>
+
+    <div class="panel mini-panel">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Your Membership</p>
       <p class="motd-text" th:text="${me.roleLabel + ' since ' + #temporals.format(me.membership.joinedAt, 'd MMMM yyyy')}">role</p>
       <form th:unless="${me.owner}" th:action="@{/clanhome/leave}" method="post" data-confirm="Leave this clan?">
         <button type="submit" class="btn btn-danger">Leave Clan</button>

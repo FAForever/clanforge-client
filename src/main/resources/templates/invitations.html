@@ -38,7 +38,7 @@
         <div class="invite-row-info">
           <p class="invite-row-name" th:text="${i.clan.name + ' [' + i.clan.tag + ']'}">clan</p>
           <p class="invite-row-note" th:text="${#strings.isEmpty(i.clan.description)} ? 'No description.' : ${i.clan.description}">description</p>
-          <p class="invite-row-meta" th:text="'Invited by ' + ${i.inviter.displayName} + ' · expires ' + ${#temporals.format(i.expiresAt, 'd MMM yyyy')}">meta</p>
+          <p class="invite-row-meta" th:text="'Invited by ' + ${i.inviter.displayName} + ' as ' + ${i.roleLabel} + ' · expires ' + ${#temporals.format(i.expiresAt, 'd MMM yyyy')}">meta</p>
         </div>
         <div class="invite-row-actions">
           <form class="inline-form" th:action="@{/invitations/{id}/accept(id=${i.id})}" method="post"><button type="submit" class="btn btn-primary">Accept</button></form>
@@ -56,6 +56,13 @@
       <form class="invite-form" th:action="@{/invitations}" method="post">
         <label class="sr-only" for="inviteUsername">Player username</label>
         <input type="text" id="inviteUsername" name="username" placeholder="Player username…" autocomplete="off" required>
+        <div class="invite-form-row">
+          <label class="sr-only" for="inviteRole">Invite as</label>
+          <select id="inviteRole" name="role" aria-label="Invite as role">
+            <option value="MEMBER">Invite as Member</option>
+            <option value="MODERATOR" th:if="${me.owner}">Invite as Moderator</option>
+          </select>
+        </div>
         <button type="submit" class="btn btn-primary btn-block">Send Invite</button>
       </form>
     </div>
@@ -67,7 +74,7 @@
           <span class="avatar avatar-md" th:text="${i.inviteeInitials}">??</span>
           <div class="invite-row-info">
             <p class="invite-row-name" th:text="${i.invitee.displayName}">name</p>
-            <p class="invite-row-meta" th:text="'Sent ' + ${#temporals.format(i.createdAt, 'd MMM')} + ' by ' + ${i.inviter.displayName} + ' · expires ' + ${#temporals.format(i.expiresAt, 'd MMM')}">meta</p>
+            <p class="invite-row-meta" th:text="'Invited as ' + ${i.roleLabel} + ' · sent ' + ${#temporals.format(i.createdAt, 'd MMM')} + ' by ' + ${i.inviter.displayName} + ' · expires ' + ${#temporals.format(i.expiresAt, 'd MMM')}">meta</p>
           </div>
           <div class="invite-row-actions">
             <span class="invite-status is-pending">Pending</span>

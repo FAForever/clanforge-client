@@ -1,6 +1,7 @@
 package com.faforever.clan_management.service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -20,11 +21,13 @@ public class AppUserService {
     private final AppUserRepository users;
     private final ClanMembershipRepository memberships;
     private final ClanInvitationRepository invitations;
+    private final NotificationService notifications;
 
-    public AppUserService(AppUserRepository users, ClanMembershipRepository memberships, ClanInvitationRepository invitations) {
+    public AppUserService(AppUserRepository users, ClanMembershipRepository memberships, ClanInvitationRepository invitations, NotificationService notifications) {
         this.users = users;
         this.memberships = memberships;
         this.invitations = invitations;
+        this.notifications = notifications;
     }
 
     //the principal name is the dev accounts username today and the oidc subject once hydra is wired in, same column either way
@@ -51,7 +54,8 @@ public class AppUserService {
         ClanMembership m = memberships.findActiveByUserId(u.getId()).orElse(null);
         long pending = invitations.countOpenForInvitee(u.getId(), OffsetDateTime.now());
         //System.out.println("me " + u.getDisplayName() + " " + pending);
-        return Optional.of(new SignedInUser(u, m, pending));
+        List<Notice> notices = m == null ? List.of() : notifications.forClan(m.getClan(), 5); //the bell, five latest happenings in their clan
+        return Optional.of(new SignedInUser(u, m, pending, notices));
     }
 
     public Optional<AppUser> findByDisplayName(String name) {

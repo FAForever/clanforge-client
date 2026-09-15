@@ -44,15 +44,18 @@ public class InvitationService {
     }
 
     @Transactional
-    public ClanInvitation invite(AppUser actor,String inviteeName) {
+    public ClanInvitation invite(AppUser actor, String inviteeName, String role) {
         ClanMembership me = membershipService.manager(actor, "Only the owner and moderators can send invites.");
         Clan clan = me.getClan();
+        String offered = role == null || role.isBlank() ? MembershipService.memberRole : role.trim();
+        if (!MembershipService.memberRole.equals(offered) && !MembershipService.moderatorRole.equals(offered)) throw new ClanRuleViolation("That role does not exist.");
+        if (MembershipService.moderatorRole.equals(offered) && !MembershipService.ownerRole.equals(me.getRole())) throw new ClanRuleViolation("Only the owner can invite as moderator.");//a moderator hands out the member role only
         String name = inviteeName == null ? "" : inviteeName.trim(); //owner or moderator invites by display name, the imported players are User_<id> until real names arrive
         AppUser invitee = users.findByDisplayNameIgnoreCase(name).orElseThrow(() -> new ClanRuleViolation("No player named '" + name + "'."));
         if (invitee.getId().equals(actor.getId())) throw new ClanRuleViolation("You are already in the clan.");
         if (memberships.findActiveByClanIdAndUserId(clan.getId(), invitee.getId()).isPresent()) throw new ClanRuleViolation(invitee.getDisplayName() + " is already a member.");
         if (invitations.findByClanIdAndInviteeIdAndState(clan.getId(),invitee.getId(), "PENDING").isPresent()) throw new ClanRuleViolation(invitee.getDisplayName() + " already has a pending invite.");
-        ClanInvitation inv = invitations.save(new ClanInvitation(clan, invitee, actor, OffsetDateTime.now().plusDays(expiryDays))); //expires_at is set here, the effective view derives expired from it
+        ClanInvitation inv = invitations.save(new ClanInvitation(clan, invitee, actor, OffsetDateTime.now().plusDays(expiryDays), offered)); //expires_at is set here, the effective view derives expired from it
         events.record("clan_invitation", inv.getId(), "InvitationCreated", events.invitationPayload(inv), actor);
         //System.out.println("invited " + invitee.getDisplayName() + " to " + clan.getTag());
         return inv;
@@ -66,7 +69,7 @@ public class InvitationService {
         if (memberships.findActiveByUserId(user.getId()).isPresent()) throw new ClanRuleViolation("Leave your current clan before accepting an invite.");
         inv.setState("ACCEPTED");
         inv.setRespondedAt(OffsetDateTime.now());
-        ClanMembership m = memberships.save(new ClanMembership(clan, user, MembershipService.memberRole));
+        ClanMembership m = memberships.save(new ClanMembership(clan, user, inv.getRole())); //the role the invite offered, member unless the owner said moderator
         events.record("clan_invitation", inv.getId(), "InvitationAccepted", events.invitationPayload(inv),user);
         events.record("clan_membership", m.getId(), "MemberJoined",events.membershipPayload(m), user);
         //System.out.println("accepted " + id);

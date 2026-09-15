@@ -27,6 +27,7 @@ import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.service.ClanCard;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.AppUserService;
+import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.MembershipService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -55,6 +56,9 @@ class ClanControllerTest {
 
     @MockitoBean
     private AppUserService appUserService;
+
+    @MockitoBean
+    private ClanManagementService clanManagementService;
 
     /**
      * Clan has a protected constructor and no setters, which is correct for a

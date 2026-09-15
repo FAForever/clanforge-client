@@ -47,6 +47,20 @@ public class Clan {
     @Column(name = "website_url")
     private String websiteUrl;
 
+    private String region;
+
+    private String motd;
+
+    @ManyToOne
+    @JoinColumn(name = "motd_author_id")
+    private AppUser motdAuthor;
+
+    @Column(name = "motd_updated_at")
+    private OffsetDateTime motdUpdatedAt;
+
+    @Column(name = "logo_updated_at")
+    private OffsetDateTime logoUpdatedAt;
+
     @Column(nullable = false)
     private String source = "local";
 
@@ -143,6 +157,44 @@ public class Clan {
 
     public String getWebsiteUrl() {
         return websiteUrl;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public String getMotd() {
+        return motd;
+    }
+
+    public AppUser getMotdAuthor() {
+        return motdAuthor;
+    }
+
+    public OffsetDateTime getMotdUpdatedAt() {
+        return motdUpdatedAt;
+    }
+
+    public void setMotd(String motd, AppUser author) {
+        this.motd = motd;
+        this.motdAuthor = motd == null ? null : author;
+        this.motdUpdatedAt = motd == null ? null : OffsetDateTime.now();
+    }
+
+    public OffsetDateTime getLogoUpdatedAt() {
+        return logoUpdatedAt;
+    }
+
+    public void setLogoUpdatedAt(OffsetDateTime logoUpdatedAt) {
+        this.logoUpdatedAt = logoUpdatedAt;
+    }
+
+    public boolean isHasLogo() {
+        return logoUpdatedAt != null;
     }
 
     public String getSource() {

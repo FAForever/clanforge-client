@@ -38,9 +38,9 @@ public class InvitationController {
     }
 
     @PostMapping("/invitations")
-    public String invite(@RequestParam String username,Authentication auth, RedirectAttributes flash) {
+    public String invite(@RequestParam String username, @RequestParam(defaultValue = "MEMBER") String role, Authentication auth, RedirectAttributes flash) {
         try {
-            invitations.invite(users.require(auth), username);
+            invitations.invite(users.require(auth), username, role);
             flash.addFlashAttribute("notice", "Invite sent to "+username.trim()+".");
         } catch (ClanRuleViolation e) {
             flash.addFlashAttribute("error", e.getMessage());

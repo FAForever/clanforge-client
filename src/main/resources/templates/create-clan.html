@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0d12">
-<meta name="description" content="Create a new clan on Clanforge: set your name, tag, description and preferences.">
+<meta name="description" content="Create a new clan on Clanforge: set your name, tag, description, image and preferences.">
 <title>Create Clan · Clanforge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,8 +23,8 @@
 
 <main>
   <div class="editor-layout">
-    <!--/* a real form now, the service checks it and the page comes back with the refusal when there is one */-->
-    <form class="form-stack" th:action="@{/create-clan}" th:object="${form}" method="post">
+    <!--/* a real form now, the service checks it and the page comes back with the refusal when there is one. multipart for the image */-->
+    <form class="form-stack" th:action="@{/create-clan}" th:object="${form}" method="post" enctype="multipart/form-data">
       <div th:replace="~{fragments/topbar :: flash}"></div>
       <section class="panel">
         <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-crest"></use></svg>Clan Identity</p>
@@ -45,7 +45,29 @@
       </section>
 
       <section class="panel">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-image"></use></svg>Clan Image</p>
+        <div class="image-upload">
+          <div class="image-preview" id="imagePreviewBox">
+            <span id="imagePreviewText">TAG</span>
+            <img id="imagePreviewImg" alt="" hidden>
+          </div>
+          <div class="image-upload-actions">
+            <label class="btn btn-secondary" for="clanImageInput">Upload Image</label>
+            <input type="file" id="clanImageInput" name="image" accept="image/png, image/jpeg, image/webp" class="sr-only">
+            <button type="button" class="link-btn" id="removeImageBtn" hidden>Remove image</button>
+          </div>
+        </div>
+        <p class="field-hint">PNG, JPG or WEBP, 512 KB at most. Square images work best. Optional: a tag badge is used until you add one.</p>
+      </section>
+
+      <section class="panel">
         <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Clan Preferences</p>
+        <div class="form-field">
+          <label for="clanRegion">Region</label>
+          <select id="clanRegion" th:field="*{region}">
+            <option th:each="r : ${regions}" th:value="${r}" th:text="${r}">EU/NA</option>
+          </select>
+        </div>
         <div class="form-field">
           <label class="toggle-switch">
             <input type="checkbox" id="publicToggle" th:field="*{publicClan}">
@@ -74,7 +96,10 @@
       <p class="preview-label"><span class="dot" aria-hidden="true"></span>Live Preview</p>
       <article class="panel clan-card">
         <div class="clan-card-head">
-          <div class="clan-badge" id="previewBadge"><span id="previewBadgeText">TAG</span></div>
+          <div class="clan-badge" id="previewBadge">
+            <span id="previewBadgeText">TAG</span>
+            <img id="previewBadgeImg" alt="" hidden>
+          </div>
           <div>
             <p class="clan-card-name" id="previewName">Your Clan Name</p>
             <p class="clan-card-tag" id="previewTag">[TAG]</p>

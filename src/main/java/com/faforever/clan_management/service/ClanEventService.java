@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import com.faforever.clan_management.entity.AppUser;
+import com.faforever.clan_management.entity.CalendarEvent;
 import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.entity.ClanEvent;
 import com.faforever.clan_management.entity.ClanInvitation;
@@ -43,6 +44,10 @@ public class ClanEventService {
         p.put("visibility", c.getVisibility());
         p.put("requiresInvitation", c.isRequiresInvitation());
         p.put("status", c.getStatus());
+        p.put("region", c.getRegion());
+        p.put("motd", c.getMotd());
+        p.put("motdUpdatedAt", text(c.getMotdUpdatedAt()));
+        p.put("logoUpdatedAt", text(c.getLogoUpdatedAt()));
         p.put("createdAt",text(c.getCreatedAt()));
         p.put("updatedAt", text(c.getUpdatedAt()));
         p.put("deletedAt", text(c.getDeletedAt()));
@@ -68,9 +73,21 @@ public class ClanEventService {
         p.put("inviteeId", i.getInvitee().getId());
         p.put("inviterId",i.getInviter().getId());
         p.put("state", i.getState());
+        p.put("role", i.getRole());
         p.put("createdAt", text(i.getCreatedAt()));
         p.put("expiresAt", text(i.getExpiresAt()));
         p.put("respondedAt", text(i.getRespondedAt()));
+        return p;
+    }
+
+    public Map<String, Object> calendarPayload(CalendarEvent e) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("id", e.getId());
+        p.put("clanId", e.getClan().getId());
+        p.put("title", e.getTitle());
+        p.put("startsAt", text(e.getStartsAt()));
+        p.put("createdBy", e.getCreatedBy() == null ? null : e.getCreatedBy().getId());
+        //System.out.println("calendar payload " + p);
         return p;
     }
 

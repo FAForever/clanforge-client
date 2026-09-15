@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.service.AppUserService;
+import com.faforever.clan_management.service.CalendarService;
 import com.faforever.clan_management.service.ClanRuleViolation;
 import com.faforever.clan_management.service.MemberCard;
 import com.faforever.clan_management.service.MembershipService;
@@ -23,10 +24,12 @@ public class ClanHomeController {
 
     private final AppUserService users;
     private final MembershipService memberships;
+    private final CalendarService calendar;
 
-    public ClanHomeController(AppUserService users, MembershipService memberships) {
+    public ClanHomeController(AppUserService users, MembershipService memberships, CalendarService calendar) {
         this.users = users;
         this.memberships = memberships;
+        this.calendar = calendar;
     }
 
     @GetMapping("/clanhome")
@@ -38,6 +41,7 @@ public class ClanHomeController {
         model.addAttribute("clan", clan);
         model.addAttribute("roster", roster);
         model.addAttribute("memberCount", roster.size());
+        model.addAttribute("upcoming", calendar.upcoming(clan, 5));
         //System.out.println("home " + clan.getTag() + " " + roster.size());
         return "clanhome";
     }

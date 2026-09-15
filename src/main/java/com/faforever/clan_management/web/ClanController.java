@@ -1,5 +1,6 @@
 package com.faforever.clan_management.web;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,8 +23,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.HttpStatus;
 
 import com.faforever.clan_management.entity.Clan;
+import com.faforever.clan_management.entity.ClanLogo;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanCard;
+import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanRuleViolation;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.MemberCard;
@@ -38,11 +44,13 @@ public class ClanController {
     private final ClanService clanService;
     private final MembershipService membershipService;
     private final AppUserService userService;
+    private final ClanManagementService clanManagementService;
 
-    public ClanController(ClanService clanService, MembershipService membershipService, AppUserService userService) {
+    public ClanController(ClanService clanService, MembershipService membershipService, AppUserService userService, ClanManagementService clanManagementService) {
         this.clanService = clanService;
         this.membershipService = membershipService;
         this.userService = userService;
+        this.clanManagementService = clanManagementService;
     }
 
     @GetMapping("/clans")
@@ -94,6 +102,18 @@ public class ClanController {
         model.addAttribute("canJoin", canJoin);
         model.addAttribute("signedIn", me.isPresent());
         return "clans/detail";
+    }
+
+    // The image bytes, with the type they were sniffed as. Public clans serve it
+    // to anyone; a private clan only to its own members.
+    @GetMapping("/clans/{id}/logo")
+    public ResponseEntity<byte[]> logo(@PathVariable Long id, Authentication auth) {
+        ClanLogo logo = clanManagementService.logo(id, userService.find(auth))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(logo.getContentType()))
+                .cacheControl(CacheControl.maxAge(Duration.ofMinutes(5)))
+                .body(logo.getContent());
     }
 
     @PostMapping("/clans/{id}/join")

@@ -1,5 +1,8 @@
 package com.faforever.clan_management.service;
 
+import java.time.Duration;
+import java.time.OffsetDateTime;
+
 //small text helpers the page carriers share
 final class Names {
 
@@ -16,6 +19,17 @@ final class Names {
         }
         //System.out.println("initials " + name + " " + sb);
         return sb.length() == 0 ? "??" : sb.toString();
+    }
+
+    //just now, 5m ago, 3h ago, 2d ago, the shape the mock-ups used
+    static String ago(OffsetDateTime t) {
+        if (t == null) return "";
+        long minutes = Duration.between(t, OffsetDateTime.now()).toMinutes();
+        //System.out.println("ago " + minutes);
+        if (minutes < 1) return "just now";
+        if (minutes < 60) return minutes + "m ago";
+        if (minutes < 1440) return (minutes / 60) + "h ago";
+        return (minutes / 1440) + "d ago";
     }
 
     static String roleLabel(String role) {

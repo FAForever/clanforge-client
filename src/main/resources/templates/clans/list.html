@@ -59,10 +59,13 @@
 
     <article class="panel clan-card" th:each="card : ${clans}">
       <div class="clan-card-head">
-        <div class="clan-badge" th:text="${card.clan.tag}">TAG</div>
+        <div class="clan-badge">
+          <img th:if="${card.clan.hasLogo}" th:src="@{/clans/{id}/logo(id=${card.clan.id},v=${card.clan.logoUpdatedAt.toEpochSecond()})}" alt="">
+          <span th:unless="${card.clan.hasLogo}" th:text="${card.clan.tag}">TAG</span>
+        </div>
         <div>
           <p class="clan-card-name" th:text="${card.clan.name}">Clan name</p>
-          <p class="clan-card-tag" th:text="'[' + ${card.clan.tag} + '] &middot; Forged Alliance Forever'">[TAG]</p>
+          <p class="clan-card-tag" th:text="'[' + ${card.clan.tag} + '] · ' + (${card.clan.region != null} ? ${card.clan.region} : 'Forged Alliance Forever')">[TAG]</p>
         </div>
       </div>
       <p class="clan-card-desc"

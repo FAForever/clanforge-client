@@ -395,3 +395,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .browse-controls .btn{ flex:0 0 auto; }
 .empty-state a{ color:var(--accent-bright); }
 .nav-search{ margin-bottom:0; }
+
+/* a clan image sits inside the badge on the cards */
+.clan-badge{ position:relative; overflow:hidden; }
+.clan-badge img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }

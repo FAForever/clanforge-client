@@ -10,6 +10,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.faforever.clan_management.service.AppUserService;
+import com.faforever.clan_management.service.CalendarService;
+import com.faforever.clan_management.service.Regions;
 import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.InvitationService;
@@ -56,6 +58,12 @@ class SecurityConfigTest {
 
     @MockitoBean
     private TagRule tagRule;
+
+    @MockitoBean
+    private Regions regions;
+
+    @MockitoBean
+    private CalendarService calendarService;
 
     @Test
     @DisplayName("anonymous users may reach the public clan routes")

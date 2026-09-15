@@ -58,7 +58,7 @@ class InvitationServiceTest {
     @DisplayName("a plain member cannot send invites")
     void inviteRefusedForMember() {
         given(membershipService.manager(eq(sam), anyString())).willThrow(new ClanRuleViolation("Only the owner and moderators can send invites."));
-        assertThatThrownBy(() -> service.invite(sam, "lee"))
+        assertThatThrownBy(() -> service.invite(sam, "lee", null))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("Only the owner and moderators");
         verify(invitations, never()).save(any());
@@ -69,7 +69,7 @@ class InvitationServiceTest {
     void inviteUnknownName() {
         given(membershipService.manager(eq(kai), anyString())).willReturn(ownerRow);
         given(users.findByDisplayNameIgnoreCase("nobody")).willReturn(Optional.empty());
-        assertThatThrownBy(() -> service.invite(kai, " nobody "))
+        assertThatThrownBy(() -> service.invite(kai, " nobody ", null))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("No player named 'nobody'");
     }
@@ -80,7 +80,7 @@ class InvitationServiceTest {
         given(membershipService.manager(eq(kai), anyString())).willReturn(ownerRow);
         given(users.findByDisplayNameIgnoreCase("sam")).willReturn(Optional.of(sam));
         given(memberships.findActiveByClanIdAndUserId(7L,2L)).willReturn(Optional.of(Fixtures.membership(6L,clan,sam,"MEMBER")));
-        assertThatThrownBy(() -> service.invite(kai, "sam"))
+        assertThatThrownBy(() -> service.invite(kai, "sam", null))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("already a member");
     }
@@ -92,7 +92,7 @@ class InvitationServiceTest {
         given(users.findByDisplayNameIgnoreCase("sam")).willReturn(Optional.of(sam));
         given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.empty());
         given(invitations.findByClanIdAndInviteeIdAndState(7L, 2L,"PENDING")).willReturn(Optional.of(Fixtures.invitation(8L, clan, sam, kai, OffsetDateTime.now().plusDays(1))));
-        assertThatThrownBy(() -> service.invite(kai, "sam"))
+        assertThatThrownBy(() -> service.invite(kai, "sam", null))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("already has a pending invite");
     }
@@ -105,7 +105,7 @@ class InvitationServiceTest {
         given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.empty());
         given(invitations.findByClanIdAndInviteeIdAndState(7L,2L,"PENDING")).willReturn(Optional.empty());
         given(invitations.save(any(ClanInvitation.class))).willAnswer(a -> a.getArgument(0));
-        ClanInvitation inv = service.invite(kai,"sam");
+        ClanInvitation inv = service.invite(kai, "sam", "MEMBER");
         //System.out.println("expires " + inv.getExpiresAt());
         assertThat(inv.getState()).isEqualTo("PENDING");
         assertThat(inv.getInvitee()).isSameAs(sam);
@@ -195,5 +195,28 @@ class InvitationServiceTest {
         ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
         verify(events).record(eq("clan_invitation"), eq(8L), type.capture(), any(), eq(kai));
         assertThat(type.getValue()).isEqualTo("InvitationRevoked");
+    }
+
+    @Test
+    @DisplayName("only the owner can invite as moderator, a moderator hands out member")
+    void moderatorRoleIsOwnerOnly() {
+        given(membershipService.manager(eq(sam), anyString())).willReturn(Fixtures.membership(6L, clan, sam, "MODERATOR"));
+        assertThatThrownBy(() -> service.invite(sam, "lee", "MODERATOR"))
+                .isInstanceOf(ClanRuleViolation.class)
+                .hasMessageContaining("Only the owner can invite as moderator");
+        verify(invitations, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("accepting an invite that offered moderator makes a moderator")
+    void acceptAppliesOfferedRole() {
+        ClanInvitation inv = new ClanInvitation(clan, sam, kai, OffsetDateTime.now().plusDays(1), "MODERATOR");
+        org.springframework.test.util.ReflectionTestUtils.setField(inv, "id", 8L);
+        given(invitations.findById(8L)).willReturn(Optional.of(inv));
+        given(memberships.findActiveByUserId(2L)).willReturn(Optional.empty());
+        given(memberships.save(any(ClanMembership.class))).willAnswer(a -> a.getArgument(0));
+        ClanMembership m = service.accept(sam, 8L);
+        //System.out.println("role " + m.getRole());
+        assertThat(m.getRole()).isEqualTo("MODERATOR");
     }
 }

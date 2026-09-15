@@ -17,9 +17,11 @@ import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.entity.ClanInvitation;
 import com.faforever.clan_management.entity.ClanMembership;
 import com.faforever.clan_management.repository.ClanInvitationRepository;
+import com.faforever.clan_management.repository.ClanLogoRepository;
 import com.faforever.clan_management.repository.ClanMembershipRepository;
 import com.faforever.clan_management.repository.ClanRepository;
 
+import java.util.Arrays;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +42,8 @@ class ClanManagementServiceTest {
     @Mock
     private ClanInvitationRepository invitations;
     @Mock
+    private ClanLogoRepository logos;
+    @Mock
     private MembershipService membershipService;
     @Mock
     private ClanEventService events;
@@ -50,7 +54,7 @@ class ClanManagementServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ClanManagementService(clans,memberships, invitations, membershipService, events, new TagRule("^[A-Za-z0-9]{1,3}$", "1 to 3 letters or numbers"));
+        service = new ClanManagementService(clans, memberships, invitations, logos, membershipService, events, new TagRule("^[A-Za-z0-9]{1,3}$", "1 to 3 letters or numbers"), new Regions("EU/NA,EU,NA,Asia,Oceania,Global"));
     }
 
     private ClanForm form(String name, String tag) {
@@ -182,5 +186,47 @@ class ClanManagementServiceTest {
         assertThat(theirs.getRole()).isEqualTo("OWNER");
         assertThat(mine.getRole()).isEqualTo("MODERATOR");
         verify(events).record(eq("clan"), eq(7L), eq("OwnershipTransferred"), any(), eq(kai));
+    }
+
+    @Test
+    @DisplayName("an image is known by its first bytes, and a gif or an oversized file is refused")
+    void imagesAreSniffed() {
+        byte[] png = new byte[]{(byte) 0x89, 'P', 'N', 'G', 13, 10, 26, 10, 0, 0, 0, 13, 'I', 'H', 'D', 'R'};
+        byte[] jpeg = new byte[]{(byte) 0xff, (byte) 0xd8, (byte) 0xff, (byte) 0xe0, 0, 16};
+        byte[] gif = "GIF89a....".getBytes();
+        byte[] huge = new byte[524289];
+        Arrays.fill(huge, (byte) 1);
+        huge[0] = (byte) 0x89; huge[1] = 'P'; huge[2] = 'N'; huge[3] = 'G';
+        assertThat(service.checkImage(png)).isEqualTo("image/png");
+        assertThat(service.checkImage(jpeg)).isEqualTo("image/jpeg");
+        assertThatThrownBy(() -> service.checkImage(gif)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("PNG, JPG or WEBP");
+        assertThatThrownBy(() -> service.checkImage(huge)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("512 KB");
+        assertThatThrownBy(() -> service.checkImage(new byte[0])).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("Choose an image");
+        //System.out.println("sniffed");
+    }
+
+    @Test
+    @DisplayName("the message of the day is for the owner and moderators, capped at 500 characters")
+    void motdRules() {
+        given(membershipService.manager(eq(sam), anyString())).willThrow(new ClanRuleViolation("Only the owner and moderators can change the message of the day."));
+        assertThatThrownBy(() -> service.updateMotd(sam, "hello")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("Only the owner and moderators");
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", kai, false);
+        given(membershipService.manager(eq(kai), anyString())).willReturn(Fixtures.membership(5L, clan, kai, "OWNER"));
+        assertThatThrownBy(() -> service.updateMotd(kai, "x".repeat(501))).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("500 characters");
+        service.updateMotd(kai, "  Finals this weekend.  ");
+        assertThat(clan.getMotd()).isEqualTo("Finals this weekend.");
+        assertThat(clan.getMotdAuthor()).isSameAs(kai);
+        assertThat(clan.getMotdUpdatedAt()).isNotNull();
+        verify(events).record(eq("clan"), eq(7L), eq("ClanMotdUpdated"), any(), eq(kai));
+    }
+
+    @Test
+    @DisplayName("a region outside the configured list is refused")
+    void regionMustBeListed() {
+        given(memberships.findActiveByUserId(1L)).willReturn(Optional.empty());
+        ClanForm f = form("Bad Company", "BC");
+        f.setRegion("Mars");
+        assertThatThrownBy(() -> service.create(kai, f)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("region");
+        verify(clans, never()).save(any());
     }
 }

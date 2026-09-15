@@ -976,3 +976,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .form-actions-centre{ justify-content:center; flex-wrap:wrap; }
 .form-field p{ font-size:.9rem; }
 .nav-search{ margin-bottom:0; }
+
+.clan-crest{ overflow:hidden; }
+.clan-crest img{ width:100%; height:100%; object-fit:cover; }
+.event-row form{ flex-shrink:0; }
+.form-actions .motd-meta{ margin-left:4px; }

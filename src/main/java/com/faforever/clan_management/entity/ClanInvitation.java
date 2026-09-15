@@ -34,6 +34,9 @@ public class ClanInvitation {
     @Column(nullable = false)
     private String state = "PENDING";
 
+    @Column(nullable = false)
+    private String role = "MEMBER";
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -46,11 +49,12 @@ public class ClanInvitation {
     protected ClanInvitation() {
     }
 
-    public ClanInvitation(Clan clan, AppUser invitee, AppUser inviter, OffsetDateTime expiresAt) {
+    public ClanInvitation(Clan clan, AppUser invitee, AppUser inviter, OffsetDateTime expiresAt, String role) {
         this.clan = clan;
         this.invitee = invitee;
         this.inviter = inviter;
         this.expiresAt = expiresAt;
+        this.role = role;
         this.createdAt = OffsetDateTime.now();
     }
 
@@ -76,6 +80,10 @@ public class ClanInvitation {
 
     public void setState(String state) {
         this.state = state;
+    }
+
+    public String getRole() {
+        return role;
     }
 
     public OffsetDateTime getCreatedAt() {

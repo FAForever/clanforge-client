@@ -8,6 +8,7 @@ public class ClanForm {
     private String name = "";
     private String tag = "";
     private String description = "";
+    private String region = "";
     private boolean publicClan = true;
     private boolean requiresInvitation = false;
 
@@ -16,6 +17,7 @@ public class ClanForm {
         f.setName(clan.getName());
         f.setTag(clan.getTag());
         f.setDescription(clan.getDescription() == null ? "" : clan.getDescription());
+        f.setRegion(clan.getRegion() == null ? "" : clan.getRegion());
         f.setPublicClan("PUBLIC".equals(clan.getVisibility()));
         f.setRequiresInvitation(clan.isRequiresInvitation());
         //System.out.println("form " + f.getTag());
@@ -44,6 +46,14 @@ public class ClanForm {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 
     public boolean isPublicClan() {

@@ -45,4 +45,36 @@
 
   update_preview();
 
+  // the image chosen for upload shows straight away, the server checks it again by its first bytes
+  var image_input = document.getElementById('clanImageInput');
+  var preview_img = document.getElementById('imagePreviewImg');
+  var preview_text = document.getElementById('imagePreviewText');
+  var badge_img = document.getElementById('previewBadgeImg');
+  var remove_btn = document.getElementById('removeImageBtn');
+
+  function show_image(url){
+    var has = !!url;
+    if(preview_img){ preview_img.hidden = !has; if(has) preview_img.src = url; }
+    if(preview_text) preview_text.hidden = has;
+    if(badge_img){ badge_img.hidden = !has; if(has) badge_img.src = url; }
+    if(preview_badge) preview_badge.hidden = has;
+    if(remove_btn) remove_btn.hidden = !has;
+    //console.log("image", has);
+  }
+  if(image_input){
+    image_input.addEventListener('change', function(){
+      var file = image_input.files && image_input.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e){ show_image(e.target.result); };
+      reader.readAsDataURL(file);
+    });
+  }
+  if(remove_btn){
+    remove_btn.addEventListener('click', function(){
+      image_input.value = '';
+      show_image(null);
+    });
+  }
+
 })();

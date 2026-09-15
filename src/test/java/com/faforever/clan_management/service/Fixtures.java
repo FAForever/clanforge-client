@@ -35,7 +35,7 @@ final class Fixtures {
     }
 
     static ClanInvitation invitation(long id,Clan clan,AppUser invitee,AppUser inviter, OffsetDateTime expiresAt) {
-        ClanInvitation i = new ClanInvitation(clan, invitee, inviter, expiresAt);
+        ClanInvitation i = new ClanInvitation(clan, invitee, inviter, expiresAt, "MEMBER");
         ReflectionTestUtils.setField(i, "id", id);
         return i;
     }

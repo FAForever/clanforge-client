@@ -22,7 +22,7 @@
     });
   }
 
-  // popovers, only the account menu now the fake notifications are gone
+  // popovers, the bell and the account menu
   function setup_popover(btn_id,panel_id){
     var btn = document.getElementById(btn_id);
     var panel = document.getElementById(panel_id);
@@ -39,6 +39,7 @@
       //console.log("popover", panel_id, will_open);
     });
   }
+  setup_popover('notifBtn','notifPanel');
   setup_popover('avatarBtn','avatarPanel');
 
   document.addEventListener('click', function(e){

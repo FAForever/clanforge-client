@@ -11,6 +11,7 @@
     <p class="flash flash-notice" th:if="${notice}" th:text="${notice}">notice</p>
     <p class="flash flash-error" th:if="${error}" th:text="${error}">error</p>
 
+    <img class="logo" th:if="${clan.hasLogo}" th:src="@{/clans/{id}/logo(id=${clan.id},v=${clan.logoUpdatedAt.toEpochSecond()})}" alt="">
     <h1>
         <span class="tag" th:text="${clan.tag}">TAG</span>
         <span th:text="${clan.name}">Clan name</span>
@@ -28,6 +29,8 @@
         <dd th:text="${clan.requiresInvitation} ? 'Invitation only' : 'Open'">Open</dd>
         <dt>Members</dt>
         <dd th:text="${memberCount}">0</dd>
+        <dt>Region</dt>
+        <dd th:text="${clan.region != null} ? ${clan.region} : 'Not set'">region</dd>
     </dl>
 
     <!--/* join is a post, so it needs a signed-in person with no clan and a clan that is open */-->

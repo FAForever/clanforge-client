@@ -65,3 +65,5 @@ table.clans th {
 .flash-error { border-left-color: #c0392b; color: #c0392b; }
 .members { padding-left: 1.2rem; }
 .join { padding: 0.5rem 1rem; font: inherit; cursor: pointer; }
+
+.logo { width: 96px; height: 96px; object-fit: cover; border: 1px solid var(--line); }

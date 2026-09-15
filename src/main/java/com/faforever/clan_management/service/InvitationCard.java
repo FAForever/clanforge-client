@@ -35,6 +35,14 @@ public class InvitationCard {
         return Names.initials(invitation.getInvitee().getDisplayName());
     }
 
+    public String getRole() {
+        return invitation.getRole();
+    }
+
+    public String getRoleLabel() {
+        return Names.roleLabel(invitation.getRole());
+    }
+
     public String getState() {
         return invitation.getState();
     }

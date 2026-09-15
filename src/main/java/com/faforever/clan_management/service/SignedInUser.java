@@ -1,5 +1,8 @@
 package com.faforever.clan_management.service;
 
+import java.util.List;
+
+
 import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.ClanMembership;
 
@@ -9,11 +12,21 @@ public class SignedInUser {
     private final AppUser user;
     private final ClanMembership membership;
     private final long pendingInvitations;
+    private final List<Notice> notices;
 
     public SignedInUser(AppUser user, ClanMembership membership, long pendingInvitations) {
+        this(user, membership, pendingInvitations, List.of());
+    }
+
+    public SignedInUser(AppUser user, ClanMembership membership, long pendingInvitations, List<Notice> notices) {
         this.user = user;
         this.membership = membership;
         this.pendingInvitations = pendingInvitations;
+        this.notices = notices;
+    }
+
+    public List<Notice> getNotices() {
+        return notices;
     }
 
     public AppUser getUser() {

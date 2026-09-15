@@ -8,11 +8,15 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Table;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,8 +36,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 //
 // this one needs nothing at all: no database, no container, no connection. it
 // builds hibernate's mapping model in memory, asks it which table and column
-// names the seven entities expect, and checks each one exists in
-// V1__initial_schema.sql.
+// names the entities expect, and checks each one exists in the migrations.
 //
 // it catches the single most likely mistake in a hand-written mapping, a
 // @Column name that does not match the migration. it does not check types, so
@@ -49,14 +52,16 @@ class EntityColumnsExistInMigrationTest {
         "com.faforever.clan_management.entity.ClanEvent",
         "com.faforever.clan_management.entity.ClanReport",
         "com.faforever.clan_management.entity.ModerationAction",
+        "com.faforever.clan_management.entity.ClanLogo",
+        "com.faforever.clan_management.entity.CalendarEvent",
     };
 
     @Test
     void everyColumnHibernateExpectsExistsInTheMigration() throws Exception {
-        Map<String, Set<String>> fromMigration = tablesInMigration(readMigration());
+        Map<String, Set<String>> fromMigration = tablesInMigration(readMigrations());
         Map<String, Set<String>> fromEntities = tablesInMapping();
 
-        assertFalse(fromMigration.isEmpty(), "no create table statements found in V1__initial_schema.sql");
+        assertFalse(fromMigration.isEmpty(), "no create table statements found in the migrations");
         assertEquals(ENTITIES.length, fromEntities.size(),
             "expected " + ENTITIES.length + " mapped tables, hibernate produced " + fromEntities.keySet());
 
@@ -68,7 +73,7 @@ class EntityColumnsExistInMigrationTest {
 
             if (actual == null) {
                 problems.append("table '").append(tableName)
-                        .append("' is mapped by an entity but is never created in V1. tables in V1: ")
+                        .append("' is mapped by an entity but is never created by a migration. tables created: ")
                         .append(fromMigration.keySet()).append('\n');
                 continue;
             }
@@ -76,14 +81,14 @@ class EntityColumnsExistInMigrationTest {
             for (String column : table.getValue()) {
                 if (!actual.contains(column)) {
                     problems.append("column '").append(tableName).append('.').append(column)
-                            .append("' is mapped by an entity but is not in V1. columns V1 has: ")
+                            .append("' is mapped by an entity but no migration creates it. columns the migrations have: ")
                             .append(actual).append('\n');
                 }
             }
         }
 
         if (problems.length() > 0) {
-            fail("the entity mapping has drifted from V1__initial_schema.sql:\n" + problems);
+            fail("the entity mapping has drifted from the migrations:\n" + problems);
         }
     }
 
@@ -119,24 +124,38 @@ class EntityColumnsExistInMigrationTest {
         }
     }
 
-    private String readMigration() throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("/db/migration/V1__initial_schema.sql")) {
-            if (in == null) {
-                throw new IllegalStateException(
-                    "V1__initial_schema.sql is not on the classpath. it must live in "
-                        + "src/main/resources/db/migration/ or flyway will not find it either.");
-            }
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    //every V<n>__*.sql under db/migration in version order, joined into one script, so a column V2 adds counts
+    private String readMigrations() throws IOException {
+        Resource[] found = new PathMatchingResourcePatternResolver().getResources("classpath*:db/migration/V*__*.sql");
+        if (found.length == 0) {
+            throw new IllegalStateException(
+                "no migrations on the classpath. they must live in "
+                    + "src/main/resources/db/migration/ or flyway will not find them either.");
         }
+        List<Resource> ordered = new ArrayList<>(Arrays.asList(found));
+        ordered.sort(Comparator.comparingInt(r -> Integer.parseInt(r.getFilename().substring(1, r.getFilename().indexOf("__")))));
+        StringBuilder all = new StringBuilder();
+        for (Resource r : ordered) {
+            try (InputStream in = r.getInputStream()) {
+                all.append(new String(in.readAllBytes(), StandardCharsets.UTF_8)).append('\n');
+            }
+        }
+        //System.out.println("migrations " + ordered.size());
+        return all.toString();
     }
 
     private static final Pattern CREATE_TABLE = Pattern.compile(
         "create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?([a-z_][a-z0-9_]*)\\s*\\((.*?)\\)\\s*;",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
+    private static final Pattern ADD_COLUMN = Pattern.compile(
+        "alter\\s+table\\s+([a-z_][a-z0-9_]*)\\s+add\\s+column\\s+([a-z_][a-z0-9_]*)",
+        Pattern.CASE_INSENSITIVE);
+
     private Map<String, Set<String>> tablesInMigration(String sql) {
         Map<String, Set<String>> tables = new LinkedHashMap<>();
-        Matcher matcher = CREATE_TABLE.matcher(stripLineComments(sql));
+        String clean = stripLineComments(sql);
+        Matcher matcher = CREATE_TABLE.matcher(clean);
 
         while (matcher.find()) {
             String table = matcher.group(1).toLowerCase();
@@ -157,6 +176,11 @@ class EntityColumnsExistInMigrationTest {
                 columns.add(firstWord);
             }
             tables.put(table, columns);
+        }
+        Matcher added = ADD_COLUMN.matcher(clean); //columns a later migration bolts onto an earlier table
+        while (added.find()) {
+            Set<String> columns = tables.get(added.group(1).toLowerCase());
+            if (columns != null) columns.add(added.group(2).toLowerCase());
         }
         return tables;
     }
