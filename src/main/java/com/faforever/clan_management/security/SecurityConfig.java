@@ -1,9 +1,9 @@
 package com.faforever.clan_management.security;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -11,12 +11,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 @Configuration
@@ -52,7 +52,13 @@ public class SecurityConfig {
             // access-denied response and hides the real status.
             .requestMatchers("/", "/login", "/error").permitAll()
             // Reading clans is public. Joining one is a POST and needs a signed-in user.
-            .requestMatchers(HttpMethod.GET, "/clans", "/clans/**").permitAll()
+            .requestMatchers(
+                    HttpMethod.GET,
+                    "/clans",
+                    "/clans/**",
+                    "/api/clans",
+                    "/api/clans/**"
+            ).permitAll()
             // static assets must be reachable anonymously or the public clan
             // pages render without their stylesheet
             .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
