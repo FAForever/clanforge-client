@@ -15,6 +15,11 @@ services:
   hydra-db:
     image: postgres:16
     container_name: hydra-db
+    # Must restart with the rest of the stack. Hydra itself already restarts
+    # automatically; without this, a Docker restart would bring Hydra back up
+    # while its database stayed down, leaving Hydra running but unable to serve
+    # its discovery endpoint - which then fails the application at startup.
+    restart: unless-stopped
     environment:
       POSTGRES_USER: hydra
       POSTGRES_PASSWORD: hydra-dev-password

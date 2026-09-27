@@ -21,6 +21,9 @@ services:
   db:
     image: postgres:16
     container_name: faf-db
+    # Come back automatically after a Docker or machine restart, so the database
+    # is not left down while something that depends on it is brought back up.
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-clanadmin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
