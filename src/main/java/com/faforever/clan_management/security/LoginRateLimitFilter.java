@@ -53,7 +53,6 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
         Attempts attempts = attemptsByIp.computeIfAbsent(clientIp(request), ip -> new Attempts(now));
 
-        long retryAfterSeconds;
         synchronized (attempts) {
             if (now - attempts.windowStart > WINDOW_MILLIS) {
                 attempts.windowStart = now;
@@ -64,15 +63,15 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
-            long elapsed = now - attempts.windowStart;
-            retryAfterSeconds = Math.max(1, (WINDOW_MILLIS - elapsed + 999) / 1000);
         }
 
+        // Deliberately no Retry-After header and no lock-out duration in the body.
+        // Disclosing exactly when the window reopens lets an attacker time a script
+        // to resume guessing the instant the limit lifts; withholding it forces them
+        // to keep probing blindly. Requested by the client at the Sprint 2 demo.
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-        response.setHeader("Retry-After", Long.toString(retryAfterSeconds));
         response.setContentType("text/plain;charset=UTF-8");
-        response.getWriter().write(
-                "Too many login attempts. Please wait " + retryAfterSeconds + " seconds and try again.");
+        response.getWriter().write("Too many login attempts. Please try again later.");
     }
 
     /**
