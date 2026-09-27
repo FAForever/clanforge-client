@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.SignedInUser;
 
-@ControllerAdvice
+@ControllerAdvice(basePackages = "com.faforever.clan_management.web")
 public class CurrentUserAdvice {
 
     private final AppUserService users;
