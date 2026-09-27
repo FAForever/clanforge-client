@@ -49,9 +49,12 @@ class LoginRateLimitFilterTest {
 
         MockHttpServletResponse blocked = send(loginAttempt("10.0.0.1"));
         assertThat(blocked.getStatus()).isEqualTo(429);
-        assertThat(blocked.getHeader("Retry-After")).isNotNull();
-        assertThat(Integer.parseInt(blocked.getHeader("Retry-After"))).isBetween(1, 60);
         assertThat(blocked.getContentAsString()).contains("Too many login attempts");
+        // The lock-out duration must NOT be disclosed: no Retry-After header, and
+        // no number in the body. Telling the caller when the window reopens lets
+        // an attacker time a script to resume exactly then. (Client request.)
+        assertThat(blocked.getHeader("Retry-After")).isNull();
+        assertThat(blocked.getContentAsString()).doesNotContainPattern("[0-9]");
     }
 
     @Test
