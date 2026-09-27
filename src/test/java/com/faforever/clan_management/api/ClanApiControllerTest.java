@@ -1,4 +1,4 @@
-package com.faforever.clan_management.web.api;
+package com.faforever.clan_management.api;
 
 import java.util.List;
 import java.util.Optional;
@@ -63,6 +63,7 @@ class ClanApiControllerTest {
                 false
         );
         ReflectionTestUtils.setField(clan, "id", 1L);
+        clan.setMotd("Members only", owner);
 
         ClanMembership membership =
                 new ClanMembership(clan, owner, "OWNER");
@@ -83,7 +84,8 @@ class ClanApiControllerTest {
                 .andExpect(jsonPath("$.ownerId").value(10))
                 .andExpect(jsonPath("$.ownerDisplayName").value("admin"))
                 .andExpect(jsonPath("$.members[0].id").value(10))
-                .andExpect(jsonPath("$.members[0].role").value("OWNER"));
+                .andExpect(jsonPath("$.members[0].role").value("OWNER"))
+                .andExpect(jsonPath("$.motd").doesNotExist());
     }
 
     @Test

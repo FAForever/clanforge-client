@@ -1,4 +1,4 @@
-package com.faforever.clan_management.web.api;
+package com.faforever.clan_management.api;
 
 import java.time.OffsetDateTime;
 

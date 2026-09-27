@@ -1,4 +1,4 @@
-package com.faforever.clan_management.web.api;
+package com.faforever.clan_management.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;

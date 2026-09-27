@@ -1,4 +1,4 @@
-package com.faforever.clan_management.web.api;
+package com.faforever.clan_management.api;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -14,7 +14,6 @@ public record ClanDetailResponse(
         String visibility,
         boolean requiresInvitation,
         String region,
-        String motd,
         boolean hasLogo,
         Long ownerId,
         String ownerDisplayName,
@@ -33,7 +32,6 @@ public record ClanDetailResponse(
                 clan.getVisibility(),
                 clan.isRequiresInvitation(),
                 clan.getRegion(),
-                clan.getMotd(),
                 clan.isHasLogo(),
                 clan.getOwner().getId(),
                 clan.getOwner().getDisplayName(),
