@@ -1,0 +1,32 @@
+name: Licence Compliance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  license-compliance:
+    name: Check third-party licences
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: Generate third-party licence inventory
+        run: ./mvnw verify
+
+      - name: Check licence compliance
+        run: ./scripts/check-licenses.sh
