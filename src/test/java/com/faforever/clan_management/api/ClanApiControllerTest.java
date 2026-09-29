@@ -5,7 +5,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -14,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -190,5 +194,18 @@ class ClanApiControllerTest {
                 .andExpect(jsonPath("$.totalPages").value(0))
                 .andExpect(jsonPath("$.hasPrevious").value(false))
                 .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("API requests do not run the web top bar user lookup")
+    void apiRequestDoesNotRunTopBarUserLookup() throws Exception {
+        given(clanService.findVisibleClan(999L))
+                .willReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/clans/999"))
+                .andExpect(status().isNotFound());
+
+        verify(appUserService, never()).signedIn(any());
     }
 }
