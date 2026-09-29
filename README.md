@@ -17,8 +17,10 @@ Connect provider, and an audit history mechanism for external synchronization.
 
 ## Running it
 
-Two things to install: **Java 21 or later**, and **Docker**. No PostgreSQL install
-needed.
+Two things to install: **Java 21 or later**, and **Docker Desktop**. No PostgreSQL
+install needed. Start Docker Desktop and wait until it reports it is running before
+any `docker` command below — a stopped Docker is the most common first-run error. Run
+everything from the project root, the folder that holds this README.
 
 ```bash
 docker compose up -d
@@ -37,7 +39,9 @@ and Maven reports `Unknown lifecycle phase ".run.profiles=dev"`:
 ./mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
-Then <http://localhost:8080>.
+The app keeps running and prints logs in that terminal. Once you see
+`Started ClanManagementApplication`, open <http://localhost:8080>. Press `Ctrl+C` in
+the terminal to stop it.
 
 The `dev` profile adds three in-memory accounts, `admin` / `admin`,
 `player` / `player` and `guest` / `guest`, and nothing else. `@Profile("dev")` keeps
@@ -142,13 +146,15 @@ the build stays green without one.
 
 ## The schema belongs to Flyway
 
-`src/main/resources/db/migration/V1__initial_schema.sql` is the schema. Flyway applies
-it on startup and records what it has applied in `flyway_schema_history`.
+The files under `src/main/resources/db/migration/` are the schema:
+`V1__initial_schema.sql` and `V2__design_extras.sql`. Flyway applies them in version
+order on startup and records what it has applied in `flyway_schema_history`.
 
-Adding a column means adding `V2__add_whatever.sql` beside V1. It does not mean
-editing V1: Flyway checksums every migration it has applied and refuses to start if
-one changes underneath it. A database that already had V1 applied by hand is handled
-by `baseline-on-migrate`, so nobody has to drop and recreate anything.
+Adding a column means adding the next file, `V3__add_whatever.sql`, beside them. It
+does not mean editing a migration that has already been applied: Flyway checksums
+every migration it has run and refuses to start if one changes underneath it. A
+database that already had V1 applied by hand is handled by `baseline-on-migrate`, so
+nobody has to drop and recreate anything.
 
 Hibernate runs in `validate` mode and never generates the schema. An entity that names
 a column no migration creates is a startup failure rather than a surprise later.
@@ -163,8 +169,9 @@ all, so it fails on every machine and in CI.
 src/main/java/com/faforever/clan_management/
     entity/       JPA entities. Shared by everyone, so treat as frozen.
     repository/   Spring Data interfaces. Filtering happens in the query.
-    service/      The rules. Both the web pages and the future REST API use these.
+    service/      The rules. Both the web pages and the REST API use these.
     web/          Controllers. Thin: validate, call one service, return a view.
+    api/          REST controllers. Return JSON DTOs, never entities.
     security/     The filter chain, the headers, the login rate limiter.
 src/main/resources/
     db/migration/ Flyway migrations, applied in version order.
@@ -174,8 +181,8 @@ src/main/resources/
 
 Controllers do not talk to repositories. Everything that reaches the database goes
 through a service, so a visibility or permission rule has exactly one place to live
-and cannot be forgotten on a new route. Each package carries a `package-info.java`
-saying what it owns.
+and cannot be forgotten on a new route. Most packages carry a `package-info.java`
+saying what they own.
 
 ### Front-end conventions
 
@@ -232,12 +239,15 @@ APPLICATION FAILED TO START
 
 **Working:** PostgreSQL with Flyway migrations, the 1,477-clan FAForever import, clan
 browsing and detail pages, clan creation, invitations, membership and roles, clan
-settings, OIDC sign-in via ORY Hydra, security headers and Content-Security-Policy,
-login rate limiting, containerisation, and CI.
+settings, a read-only REST endpoint (`GET /api/clans/{id}`) that returns a clan and
+its roster as JSON, OIDC sign-in via ORY Hydra, security headers and
+Content-Security-Policy, login rate limiting, containerisation, and CI.
 
-**Not yet built:** the REST API, the administration interface, and a production login
-provider. Hydra ships no login page, so a deployed build needs either the FAForever
-provider or an application that owns that page.
+**Not yet built:** the rest of the REST API (listing clans, and any write operations
+such as create, join or role changes), a platform-wide administration interface for
+site moderators — administering a single clan already works, for its owner and
+moderators — and a production login provider. Hydra ships no login page, so a deployed
+build needs either the FAForever provider or an application that owns that page.
 
 ## Licence
 
