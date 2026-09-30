@@ -64,7 +64,7 @@ public class ClanService {
         return withCounts(clans);
     }
 
-    private Page<ClanCard> withCounts(Page<Clan> clans) {
+    Page<ClanCard> withCounts(Page<Clan> clans) {
         List<Long> ids = clans.getContent().stream().map(Clan::getId).toList();
         Map<Long, Long> counts = ids.isEmpty()
                 ? Map.of()

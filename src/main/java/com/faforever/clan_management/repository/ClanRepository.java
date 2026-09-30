@@ -65,4 +65,45 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
            """)
     Page<Clan> searchVisibleByMembers(@Param("visibility") String visibility, @Param("pattern") String pattern,
                                       @Param("requiresInvitation") Boolean requiresInvitation, Pageable pageable);
+
+    // The administration listing. Unlike the searches above these ignore
+    // visibility, so private clans are included, and the owner is fetched in the
+    // same query because every row of that listing shows it. Pass an unsorted
+    // Pageable: the order is part of each query.
+    @Query(value = """
+           select c from Clan c join fetch c.owner
+           where (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
+           order by lower(c.name), c.id
+           """,
+           countQuery = """
+           select count(c) from Clan c
+           where (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
+           """)
+    Page<Clan> searchEvery(@Param("pattern") String pattern, Pageable pageable);
+
+    @Query(value = """
+           select c from Clan c join fetch c.owner
+           where c.deletedAt is null and c.status = :status
+             and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
+           order by lower(c.name), c.id
+           """,
+           countQuery = """
+           select count(c) from Clan c
+           where c.deletedAt is null and c.status = :status
+             and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
+           """)
+    Page<Clan> searchLiveByStatus(@Param("pattern") String pattern, @Param("status") String status, Pageable pageable);
+
+    @Query(value = """
+           select c from Clan c join fetch c.owner
+           where c.deletedAt is not null
+             and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
+           order by lower(c.name), c.id
+           """,
+           countQuery = """
+           select count(c) from Clan c
+           where c.deletedAt is not null
+             and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
+           """)
+    Page<Clan> searchDeleted(@Param("pattern") String pattern, Pageable pageable);
 }
