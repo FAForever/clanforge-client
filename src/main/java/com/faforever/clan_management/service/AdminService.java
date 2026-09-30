@@ -2,6 +2,7 @@
 package com.faforever.clan_management.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,8 +47,8 @@ public class AdminService {
 
     // every clan whatever its visibility, by name then id, the filter narrows it to active, suspended or deleted ones
     public Page<ClanCard> clans(String q, String filter, Pageable pageable) {
-        String pattern = "%"+ClanService.escapeLike(q == null ? "" : q.trim().toLowerCase()) + "%";
-        String wanted = filter == null || filter.isBlank() ? "all" : filter.trim().toLowerCase();
+        String pattern = "%"+ClanService.escapeLike(q == null ? "" : q.trim().toLowerCase(Locale.ROOT))+"%";
+        String wanted = filter == null || filter.isBlank() ? "all" : filter.trim().toLowerCase(Locale.ROOT);
         //System.out.println("admin list " + pattern + " " + wanted);
         if ("all".equals(wanted)) return clanService.withCounts(clans.searchEvery(pattern, pageable));
         if ("active".equals(wanted)) return clanService.withCounts(clans.searchLiveByStatus(pattern, "ACTIVE",pageable));
@@ -73,7 +74,7 @@ public class AdminService {
         String why = why(reason);
         Map<String, Object> before = events.clanPayload(clan);
         clan.setStatus("SUSPENDED");
-        return finish(admin, clan,"SUSPEND", why, report, before);
+        return finish(admin, clan,"SUSPEND", why, report,before,"ClanUpdated", null);
     }
 
     @Transactional
@@ -83,7 +84,7 @@ public class AdminService {
         String why = why(reason);
         Map<String, Object> before = events.clanPayload(clan);
         clan.setStatus("ACTIVE");
-        return finish(admin, clan, "UNSUSPEND", why,null, before);
+        return finish(admin, clan, "UNSUSPEND", why,null, before, "ClanUpdated",null);
     }
 
     // the same name rules an owner meets on the settings page, without having to be in the clan
@@ -98,7 +99,7 @@ public class AdminService {
         Map<String, Object> before = events.clanPayload(clan);
         clan.setName(fresh);
         //System.out.println("renamed " + before.get("name") + " to " + fresh);
-        return finish(admin, clan, "RENAME", why, report, before);
+        return finish(admin, clan, "RENAME", why, report,before, "ClanUpdated", null);
     }
 
     @Transactional
@@ -111,10 +112,10 @@ public class AdminService {
         String why = why(reason);
         Map<String, Object> before = events.clanPayload(clan);
         clan.setTag(fresh);
-        return finish(admin,clan, "RETAG", why, report, before);
+        return finish(admin,clan, "RETAG", why, report, before, "ClanUpdated", null);
     }
 
-    //the same soft delete the owner gets: the row stays, memberships close, open invites are revoked
+    //the same soft delete the owner gets: the row stays, memberships close, open invites are revoked, and every report still open on the clan is settled with it
     @Transactional
     public ModerationAction delete(AppUser admin, Long clanId, String reason,Long reportId) {
         Clan clan = live(clanId);
@@ -122,18 +123,22 @@ public class AdminService {
         String why = why(reason);
         Map<String, Object> before = events.clanPayload(clan);
         int gone = management.close(clan);
+        for (ClanReport other : reports.findByClanIdAndState(clan.getId(), "OPEN")) {
+            if (other != report) other.close("RESOLVED", admin); // nothing is left to act on once the clan is gone
+        }
         //System.out.println("admin deleted " + clan.getTag() + " " + gone);
-        return finish(admin,clan, "DELETE", why, report, before);
+        return finish(admin,clan, "DELETE", why, report, before,"ClanDeleted", gone);
     }
 
+    //locked until the action commits, so a second administrator waits and then sees what the first one did
     private Clan live(Long clanId) {
-        return clans.findByIdAndDeletedAtIsNull(clanId).orElseThrow(() -> new ClanRuleViolation("That clan does not exist."));
+        return clans.lockLive(clanId).orElseThrow(() -> new ClanRuleViolation("That clan does not exist."));
     }
 
     // the report an action answers, it has to be an open one about this same clan
     private ClanReport linked(Long reportId, Clan clan) {
         if (reportId == null) return null;
-        ClanReport report = reports.findById(reportId).orElseThrow(() -> new ClanRuleViolation("That report does not exist."));
+        ClanReport report = reports.lockById(reportId).orElseThrow(() -> new ClanRuleViolation("That report does not exist."));
         if (!report.getClan().getId().equals(clan.getId())) throw new ClanRuleViolation("That report is about another clan.");
         if (!"OPEN".equals(report.getState())) throw new ClanRuleViolation("That report is already closed.");
         return report;
@@ -145,8 +150,8 @@ public class AdminService {
         return text;
     }
 
-    //one moderation row holding what the clan looked like before, one history event holding what it looks like now, and the report closed if there was one
-    private ModerationAction finish(AppUser admin, Clan clan, String action, String why, ClanReport report, Map<String, Object> before) {
+    //one moderation row holding what the clan looked like before, the usual ClanUpdated or ClanDeleted so a consumer following those sees the change, one ModerationActionPerformed holding what it looks like now, and the report closed if there was one
+    private ModerationAction finish(AppUser admin, Clan clan, String action, String why,ClanReport report, Map<String, Object> before, String clanEvent, Integer membersRemoved) {
         clan.touch();
         if (report != null) report.close("RESOLVED",admin);
         ModerationAction row = actions.save(new ModerationAction(clan, admin, action, why,report, json.writeValueAsString(before)));
@@ -155,6 +160,9 @@ public class AdminService {
         payload.put("reason", why);
         payload.put("moderationActionId",row.getId());
         payload.put("reportId", report == null ? null : report.getId());
+        Map<String, Object> changed = events.clanPayload(clan);
+        if (membersRemoved != null) changed.put("membersRemoved", membersRemoved);
+        events.record("clan",clan.getId(), clanEvent,changed, admin);
         events.record("clan",clan.getId(), "ModerationActionPerformed", payload, admin);
         //System.out.println("moderation " + action + " " + clan.getId() + " row " + row.getId());
         return row;

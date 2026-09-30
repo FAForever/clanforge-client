@@ -238,4 +238,22 @@ class ClanManagementServiceTest {
         assertThatThrownBy(() -> service.create(kai, f)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("region");
         verify(clans, never()).save(any());
     }
+
+    @Test
+    @DisplayName("the name and tag checks an administrator uses refuse a taken name or tag and let the clan keep its own")
+    void checkNameAndTagOnTheirOwn() {
+        Clan mine = Fixtures.clan(7L,"Bad Company", "BC",kai, false);
+        Clan theirs = Fixtures.clan(8L, "Good Company", "GC",sam, false);
+        given(clans.findByNameIgnoreCaseAndDeletedAtIsNull("good company")).willReturn(Optional.of(theirs));
+        given(clans.findByNameIgnoreCaseAndDeletedAtIsNull("bad company")).willReturn(Optional.of(mine));
+        given(clans.findByTagIgnoreCaseAndDeletedAtIsNull("gc")).willReturn(Optional.of(theirs));
+        given(clans.findByTagIgnoreCaseAndDeletedAtIsNull("bc")).willReturn(Optional.of(mine));
+        assertThatThrownBy(() -> service.checkName("good company", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already in use");
+        assertThatThrownBy(() -> service.checkTag("gc", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already in use");
+        assertThatThrownBy(() -> service.checkName("", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("Give the clan a name");
+        assertThatThrownBy(() -> service.checkTag("TOOLONG", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("1 to 3");
+        service.checkName("bad company",mine);
+        service.checkTag("bc", mine);
+        //System.out.println("own name and tag pass");
+    }
 }

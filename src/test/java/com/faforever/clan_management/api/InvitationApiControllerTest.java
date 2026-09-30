@@ -116,7 +116,10 @@ class InvitationApiControllerTest {
                 .andExpect(jsonPath("$.inviterDisplayName").value("kai"))
                 .andExpect(jsonPath("$.role").value("MODERATOR"))
                 .andExpect(jsonPath("$.state").value("PENDING"))
-                .andExpect(jsonPath("$.expiresAt").exists());
+                .andExpect(jsonPath("$.clanName").value("Bad Company"))
+                .andExpect(jsonPath("$.inviterId").value(1))
+                .andExpect(jsonPath("$.expiresAt").value(org.hamcrest.Matchers.startsWith(java.time.LocalDate.now().plusDays(7).toString()))) //a week out, the invitations own expiry and not its creation
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.startsWith(java.time.LocalDate.now().toString())));
         ArgumentCaptor<Authentication> who = ArgumentCaptor.forClass(Authentication.class);
         verify(users).require(who.capture());
         //System.out.println("caller " + who.getValue().getName());

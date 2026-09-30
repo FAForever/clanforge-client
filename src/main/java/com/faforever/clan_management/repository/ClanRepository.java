@@ -5,10 +5,13 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.faforever.clan_management.entity.Clan;
+
+import jakarta.persistence.LockModeType;
 
 public interface ClanRepository extends JpaRepository<Clan, Long> {
 
@@ -23,6 +26,13 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
     long countByVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(String visibility);
 
     Optional<Clan> findByIdAndDeletedAtIsNull(Long id);
+
+    // The same live clan, locked until the transaction ends, so two
+    // administrators acting on one clan at once take turns instead of each
+    // checking the status the other is about to change.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Clan c where c.id = :id and c.deletedAt is null")
+    Optional<Clan> lockLive(@Param("id") Long id);
 
     // Live rows only, so a deleted clan's name or tag can be used again, which
     // is exactly what the partial unique indexes in V1 allow.

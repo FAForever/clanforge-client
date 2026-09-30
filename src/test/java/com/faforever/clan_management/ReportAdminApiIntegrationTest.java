@@ -110,11 +110,16 @@ class ReportAdminApiIntegrationTest {
         mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, reporterToken).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":" + clan.getId() + ",\"category\":\"OFFENSIVE_TAG\",\"reason\":\"again\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("You have already reported this clan."));
+        AppUser another = someone("another", stamp);
+        MvcResult newer = mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer(another.getOidcSubject(), false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":" + clan.getId() + ",\"category\":\"OFFENSIVE_NAME\",\"reason\":\"a later report\"}"))
+                .andExpect(status().isCreated()).andReturn();
+        long newerId = json.readTree(newer.getResponse().getContentAsString()).path("id").asLong();
         mockMvc.perform(get("/api/admin/reports").header(HttpHeaders.AUTHORIZATION,adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reports[0].id").value(id))
-                .andExpect(jsonPath("$.reports[0].clanTag").value(clan.getTag()))
-                .andExpect(jsonPath("$.reports[0].reporterDisplayName").value(reporter.getDisplayName()));
+                .andExpect(jsonPath("$.reports[0].id").value(newerId)) //newest first
+                .andExpect(jsonPath("$.reports[1].id").value(id))
+                .andExpect(jsonPath("$.reports[1].clanTag").value(clan.getTag()))
+                .andExpect(jsonPath("$.reports[1].reporterDisplayName").value(reporter.getDisplayName()));
         mockMvc.perform(get("/api/admin/reports").header(HttpHeaders.AUTHORIZATION, reporterToken)).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/reports").param("state", "lost").header(HttpHeaders.AUTHORIZATION, adminToken)).andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/admin/reports")).andExpect(status().isUnauthorized());

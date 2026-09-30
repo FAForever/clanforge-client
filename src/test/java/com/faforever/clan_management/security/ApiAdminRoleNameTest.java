@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 //the same probe with the admin role renamed, the way a deployment outside faforever would set it
 @WebMvcTest(ApiAdminSecurityTest.AdminProbe.class)
 @Import({SecurityConfig.class, ApiAdminSecurityTest.AdminProbe.class})
-@TestPropertySource(properties = "clan.admin.role=CLAN_BOSS")
+@TestPropertySource(properties = "clan.admin.role= CLAN_BOSS  ")
 class ApiAdminRoleNameTest {
 
     @Autowired

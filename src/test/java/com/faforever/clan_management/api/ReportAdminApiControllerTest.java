@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -153,6 +154,11 @@ class ReportAdminApiControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.clans.length()").value(1))
                 .andExpect(jsonPath("$.clans[0].id").value(7))
+                .andExpect(jsonPath("$.clans[0].name").value("Bad Company"))
+                .andExpect(jsonPath("$.clans[0].tag").value("BC"))
+                .andExpect(jsonPath("$.clans[0].description").value("Nightly ladder squad."))
+                .andExpect(jsonPath("$.clans[0].createdAt").exists())
+                .andExpect(jsonPath("$.clans[0].deletedAt").doesNotExist())
                 .andExpect(jsonPath("$.clans[0].visibility").value("PRIVATE"))
                 .andExpect(jsonPath("$.clans[0].status").value("ACTIVE"))
                 .andExpect(jsonPath("$.clans[0].deleted").value(false))
@@ -207,5 +213,16 @@ class ReportAdminApiControllerTest {
                 .andExpect(jsonPath("$.reports[0].state").value("DISMISSED"))
                 .andExpect(jsonPath("$.reports[0].resolvedById").value(1))
                 .andExpect(jsonPath("$.reports[0].resolvedAt").exists());
+    }
+
+    @Test
+    @DisplayName("a write the database turns down, such as two requests racing for one unique row, is 409 with a sentence and not a 500")
+    void constraintClashIsConflict() throws Exception {
+        given(users.require(any())).willReturn(sam);
+        given(reports.file(sam, 7L,"OFFENSIVE_NAME", "raced")).willThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint \"clan_report_one_open\""));
+        mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_NAME\",\"reason\":\"raced\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("That could not be saved.")));
+        //System.out.println("409 ok");
     }
 }

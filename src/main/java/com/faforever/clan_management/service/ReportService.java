@@ -2,6 +2,7 @@
 package com.faforever.clan_management.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +39,7 @@ public class ReportService {
         Clan clan = clanId == null ? null : clans.findByIdAndDeletedAtIsNull(clanId).orElse(null);
         boolean hidden = clan != null && !"PUBLIC".equals(clan.getVisibility()) && memberships.findActiveByClanIdAndUserId(clan.getId(),reporter.getId()).isEmpty();
         if (clan == null || hidden) throw new ClanRuleViolation("That clan does not exist."); // a private clan reads the same as a missing one to an outsider
-        String kind = category == null ? "" : category.trim().toUpperCase();
+        String kind = category == null ? "" : category.trim().toUpperCase(Locale.ROOT);
         if (!categories.contains(kind)) throw new ClanRuleViolation("Say what the report is about: an offensive name, an offensive tag or inappropriate content.");
         String text = reason == null ? "" : reason.trim();
         if (text.isEmpty()) throw new ClanRuleViolation("Say what is wrong with the clan.");
@@ -50,7 +51,7 @@ public class ReportService {
 
     // the queue an administrator works through, one state at a time or ALL of them, newest first
     public Page<ClanReport> byState(String state, Pageable pageable) {
-        String wanted = state == null || state.isBlank() ? "OPEN" : state.trim().toUpperCase();
+        String wanted = state == null || state.isBlank() ? "OPEN" : state.trim().toUpperCase(Locale.ROOT);
         if ("ALL".equals(wanted)) return reports.findAllNewestFirst(pageable);
         if (!states.contains(wanted)) throw new ClanRuleViolation("Reports are open, resolved or dismissed.");
         return reports.findByStateNewestFirst(wanted, pageable);
@@ -59,7 +60,7 @@ public class ReportService {
     //settled once, by whoever acted on it or threw it out
     @Transactional
     public ClanReport close(AppUser admin,Long reportId, boolean dismissed) {
-        ClanReport report = reports.findById(reportId).orElseThrow(() -> new ClanRuleViolation("That report does not exist."));
+        ClanReport report = reports.lockById(reportId).orElseThrow(() -> new ClanRuleViolation("That report does not exist."));
         if (!"OPEN".equals(report.getState())) throw new ClanRuleViolation("That report is already closed.");
         report.close(dismissed ? "DISMISSED" : "RESOLVED", admin);
         //System.out.println("report " + reportId + " " + report.getState());

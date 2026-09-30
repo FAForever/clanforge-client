@@ -143,4 +143,36 @@ class AdminIntegrationTest {
         assertThatThrownBy(() -> admins.suspend(admin, clan.getId(), null, null)).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
         //System.out.println("deleted " + clan.getId());
     }
+
+    @Test
+    @DisplayName("each action also writes ClanUpdated or ClanDeleted, and a delete settles every report still open on the clan")
+    void historyAndReportsAfterActions() {
+        AppUser admin = someone("admin");
+        AppUser owner = someone("owner");
+        Clan clan = openClan(owner, true);
+        ClanReport first = reports.file(someone("reporter"), clan.getId(), "OFFENSIVE_NAME","first report");
+        ClanReport second = reports.file(someone("reporter"), clan.getId(),"OFFENSIVE_TAG", "second report");
+        admins.suspend(admin,clan.getId(),null, null);
+        admins.delete(admin, clan.getId(),"abandoned", first.getId());
+        //System.out.println("history for " + clan.getId());
+        assertThat(one("select string_agg(event_type, ',' order by id) from clan_event where entity_type = 'clan' and entity_id = :id", clan.getId())).isEqualTo("ClanCreated,ClanUpdated,ModerationActionPerformed,ClanDeleted,ModerationActionPerformed");
+        assertThat(one("select (payload ->> 'membersRemoved') || ':' || actor_id from clan_event where event_type = 'ClanDeleted' and entity_id = :id", clan.getId())).isEqualTo("1:" + admin.getId());
+        assertThat(one("select string_agg(state || ':' || resolved_by, ',' order by id) from clan_report where clan_id = :id", clan.getId())).isEqualTo("RESOLVED:" + admin.getId() + ",RESOLVED:" + admin.getId());
+        assertThat(second.getId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("the admin listing is in name order whatever order the clans were made in")
+    void listingIsInNameOrder() {
+        String stamp = Long.toString(System.nanoTime());
+        ClanForm later = new ClanForm();
+        later.setName("Order " + stamp + " B");
+        later.setTag(freeTag());
+        management.create(someone("owner"), later);
+        ClanForm earlier = new ClanForm();
+        earlier.setName("Order " + stamp + " A");
+        earlier.setTag(freeTag());
+        management.create(someone("owner"), earlier);
+        assertThat(admins.clans("order " + stamp, "all", PageRequest.of(0, 20)).getContent()).extracting(c -> c.getClan().getName()).containsExactly("Order " + stamp+" A","Order " + stamp + " B");
+    }
 }

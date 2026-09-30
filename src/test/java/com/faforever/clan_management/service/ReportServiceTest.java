@@ -2,6 +2,7 @@
 package com.faforever.clan_management.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -69,7 +70,7 @@ class ReportServiceTest {
     }
 
     @Test
-    @DisplayName("a missing clan, a deleted one and a private one seen from outside all read as not existing")
+    @DisplayName("a missing clan, no clan at all and a private one seen from outside all read as not existing")
     void fileHidesWhatTheReporterCannotSee() {
         given(clans.findByIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
         assertThatThrownBy(() -> service.file(sam, 99L, "OFFENSIVE_TAG","bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
@@ -130,9 +131,9 @@ class ReportServiceTest {
     void closeSettlesOnce() {
         ClanReport first = Fixtures.report(3L, clan, sam, "OFFENSIVE_NAME");
         ClanReport second = Fixtures.report(4L, clan,sam, "OFFENSIVE_TAG");
-        given(reports.findById(3L)).willReturn(Optional.of(first));
-        given(reports.findById(4L)).willReturn(Optional.of(second));
-        given(reports.findById(5L)).willReturn(Optional.empty());
+        given(reports.lockById(3L)).willReturn(Optional.of(first));
+        given(reports.lockById(4L)).willReturn(Optional.of(second));
+        given(reports.lockById(5L)).willReturn(Optional.empty());
         service.close(kai, 3L,false);
         service.close(kai, 4L, true);
         //System.out.println("closed " + first.getState() + " " + second.getState());
@@ -142,5 +143,24 @@ class ReportServiceTest {
         assertThat(second.getState()).isEqualTo("DISMISSED");
         assertThatThrownBy(() -> service.close(kai, 3L, true)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already closed");
         assertThatThrownBy(() -> service.close(kai, 5L,false)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("does not exist");
+    }
+
+    @Test
+    @DisplayName("a reason of exactly 1000 characters is kept, and the category folds the same way in any language")
+    void reasonLimitAndLocale() {
+        given(clans.findByIdAndDeletedAtIsNull(7L)).willReturn(Optional.of(clan));
+        given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(false);
+        given(reports.save(any(ClanReport.class))).willAnswer(a -> a.getArgument(0));
+        assertThat(service.file(sam, 7L, "OFFENSIVE_NAME", "x".repeat(1000)).getReason()).hasSize(1000);
+        Locale was = Locale.getDefault();
+        Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+        try {
+            //System.out.println("tr " + "offensive_name".toUpperCase());
+            assertThat(service.file(sam, 7L, "inappropriate_content","the description").getCategory()).isEqualTo("INAPPROPRIATE_CONTENT");
+            given(reports.findByStateNewestFirst("DISMISSED", PageRequest.of(0, 5))).willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 5), 0));
+            assertThat(service.byState("dismissed", PageRequest.of(0, 5)).getTotalElements()).isZero();
+        } finally {
+            Locale.setDefault(was);
+        }
     }
 }
