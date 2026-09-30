@@ -82,6 +82,12 @@ public class InvitationService {
 
     @Transactional
     public ClanMembership accept(AppUser user, Long id) {
+        Optional<Long> clanId = invitations.findClanIdByIdAndInviteeId(id, user.getId(), OffsetDateTime.now()); //the clock open() uses below, not the database's
+        if (clanId.isPresent()) { // an open invitation of the caller's, so the two refusals it could still meet come here, in the order they come below, only sooner
+            if (!invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(id, "ACTIVE")) throw new ClanRuleViolation("That clan is no longer taking members.");
+            if (memberships.existsByUserIdAndLeftAtIsNull(user.getId())) throw new ClanRuleViolation("Leave your current clan before accepting an invite.");
+            membershipService.lockClan(clanId.get()); //locked before the invitation is read, so a delete running now finishes first and the revoke it wrote is what gets read
+        }
         ClanInvitation inv = open(user, id);
         Clan clan = inv.getClan();  // accepting joins the clan in the same transaction, one active membership per person is the database rule this leans on
         if (clan.getDeletedAt() != null || !"ACTIVE".equals(clan.getStatus())) throw new ClanRuleViolation("That clan is no longer taking members.");
@@ -97,6 +103,7 @@ public class InvitationService {
 
     @Transactional
     public void decline(AppUser user, Long id) {
+        invitations.findClanIdByIdAndInviteeId(id,user.getId(), OffsetDateTime.now()).ifPresent(membershipService::lockClan); //the same lock accept takes, so a decline cannot overwrite a revoke from a delete
         ClanInvitation inv = open(user,id);
         inv.setState("DECLINED");
         inv.setRespondedAt(OffsetDateTime.now());

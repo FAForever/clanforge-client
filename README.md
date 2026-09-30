@@ -138,6 +138,17 @@ Runs without a database. The tests that need one skip themselves unless
 SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/clan_management SPRING_DATASOURCE_USERNAME=clanadmin SPRING_DATASOURCE_PASSWORD=devpassword ./mvnw test
 ```
 
+`ClanLockIntegrationTest` races two real transactions on one clan, so it commits what it
+writes, and `clan_event` keeps every row for good. It runs only when `CLAN_RACE_TESTS`
+names the database it may write to, so point it at one made for the run, never at
+`clan_management`:
+
+```bash
+createdb clan_race
+CLAN_RACE_TESTS=clan_race SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/clan_race SPRING_DATASOURCE_USERNAME=clanadmin SPRING_DATASOURCE_PASSWORD=devpassword ./mvnw test -Dtest=ClanLockIntegrationTest
+dropdb clan_race
+```
+
 GitHub Actions runs the suite and validates `docker-compose.yml` on every push and
 pull request. There is no database on the runner, which is why the skip rule matters:
 the build stays green without one.

@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 package com.faforever.clan_management.api;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
@@ -22,6 +24,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.filter.FormContentFilter;
 
 import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.Clan;
@@ -54,6 +57,8 @@ class ReportAdminApiControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private ApplicationContext context;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
@@ -224,5 +229,34 @@ class ReportAdminApiControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("That could not be saved.")));
         //System.out.println("409 ok");
+        given(reports.file(sam, 7L,"OFFENSIVE_TAG", "raced")).willThrow(new DataIntegrityViolationException("could not execute statement", new SQLException("duplicate key value violates unique constraint", "23505")));
+        mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION,bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_TAG\",\"reason\":\"raced\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("a value the database cannot store, such as a nul character, is the caller's 400 and not a clash")
+    void badDataIsBadRequest() throws Exception {
+        given(users.require(any())).willReturn(sam);
+        given(reports.file(sam, 7L, "OFFENSIVE_NAME","nul")).willThrow(new DataIntegrityViolationException("could not execute statement", new SQLException("invalid byte sequence for encoding \"UTF8\": 0x00", "22021")));
+        mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_NAME\",\"reason\":\"nul\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("That request holds a value the database cannot store")));
+    }
+
+    @Test
+    @DisplayName("a body that is not json is 400 with a message field like every other refusal")
+    void unreadableBodyIsBadRequestWithAMessage() throws Exception {
+        mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The request body could not be read as the JSON this route takes."));
+        verifyNoInteractions(reports);
+    }
+
+    @Test
+    @DisplayName("no filter reads a put, patch or delete form body in full before the api size cap has run")
+    void formBodiesAreNotReadAhead() {
+        //System.out.println("form filters " + context.getBeansOfType(FormContentFilter.class).keySet());
+        assertThat(context.getBeansOfType(FormContentFilter.class)).isEmpty();
     }
 }

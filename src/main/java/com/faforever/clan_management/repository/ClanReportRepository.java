@@ -32,5 +32,8 @@ public interface ClanReportRepository extends JpaRepository<ClanReport, Long> {
     @Query("select r from ClanReport r where r.id = :id")
     Optional<ClanReport> lockById(@Param("id") Long id);
 
-    List<ClanReport> findByClanIdAndState(Long clanId, String state);
+    //locked like lockById, so a report being closed elsewhere is waited for and then left as that close set it
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ClanReport r where r.clan.id = :clanId and r.state = 'OPEN' order by r.id")
+    List<ClanReport> lockOpenForClan(@Param("clanId") Long clanId);
 }

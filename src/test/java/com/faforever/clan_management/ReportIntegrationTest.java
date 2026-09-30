@@ -96,6 +96,24 @@ class ReportIntegrationTest {
     }
 
     @Test
+    @DisplayName("reports filed at the same instant list the highest id first, so a page never reshuffles between two requests")
+    void sameInstantFallsBackToTheId() {
+        Clan clan = clanOf(someone("owner"));
+        List<Long> ids = new java.util.ArrayList<>();
+        for (String who : List.of("first", "second","third")) {
+            ids.add(reports.file(someone(who), clan.getId(), "OFFENSIVE_NAME", "filed by " + who).getId());
+        }
+        em.flush();
+        //one timestamp for all three, a day ahead so nothing else in the queue sits between them
+        em.createNativeQuery("update clan_report set created_at = now() + interval '1 day' where id in (:ids)").setParameter("ids", ids).executeUpdate();
+        em.clear();
+        List<Long> newestFirst = List.of(ids.get(2), ids.get(1), ids.get(0));
+        //System.out.println("tied ids " + ids);
+        assertThat(reports.byState("OPEN", PageRequest.of(0, 3)).getContent()).extracting(ClanReport::getId).containsExactlyElementsOf(newestFirst);
+        assertThat(reports.byState("ALL", PageRequest.of(0,3)).getContent()).extracting(ClanReport::getId).containsExactlyElementsOf(newestFirst);
+    }
+
+    @Test
     @DisplayName("the database itself holds one open report per person per clan, for when two requests pass the check together")
     void deletedClanAndTheOpenReportIndex() {
         AppUser owner = someone("owner");

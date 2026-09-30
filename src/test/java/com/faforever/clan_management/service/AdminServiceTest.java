@@ -183,6 +183,7 @@ class AdminServiceTest {
         assertThat(json.readTree(row.getPrevious()).path("deletedAt").isNull()).isTrue();
         List<ClanEvent> rows = eventRows("ClanDeleted");
         assertThat(json.readTree(rows.get(0).getPayload()).path("membersRemoved").asInt()).isEqualTo(4);
+        assertThat(json.readTree(rows.get(0).getPayload()).path("moderationAction").asText()).isEqualTo("DELETE");
         assertThat(json.readTree(rows.get(1).getPayload()).path("action").asText()).isEqualTo("DELETE");
     }
 
@@ -277,6 +278,7 @@ class AdminServiceTest {
         List<ClanEvent> rows = eventRows("ClanUpdated");
         assertThat(json.readTree(rows.get(0).getPayload()).path("status").asText()).isEqualTo("SUSPENDED");
         assertThat(json.readTree(rows.get(0).getPayload()).has("action")).isFalse();
+        assertThat(json.readTree(rows.get(0).getPayload()).path("moderationAction").asText()).isEqualTo("SUSPEND"); //so the bell leaves it to the moderation event
     }
 
     @Test
@@ -300,7 +302,7 @@ class AdminServiceTest {
         given(reports.lockById(5L)).willReturn(Optional.of(forName));
         given(reports.lockById(6L)).willReturn(Optional.of(forTag));
         given(reports.lockById(8L)).willReturn(Optional.of(forContent));
-        given(reports.findByClanIdAndState(7L, "OPEN")).willReturn(List.of(forContent));
+        given(reports.lockOpenForClan(7L)).willReturn(List.of(forContent));
         assertThat(service.rename(admin,7L, "Good Company",null,5L).getReport()).isSameAs(forName);
         assertThat(service.retag(admin, 7L,"GC", null, 6L).getReport()).isSameAs(forTag);
         assertThat(service.delete(admin, 7L, null, 8L).getReport()).isSameAs(forContent);
@@ -314,7 +316,7 @@ class AdminServiceTest {
         AppUser lee = Fixtures.user(3L, "lee");
         ClanReport one = Fixtures.report(5L, clan, lee, "OFFENSIVE_NAME");
         ClanReport two = Fixtures.report(6L, clan, Fixtures.user(4L, "kim"),"OFFENSIVE_TAG");
-        given(reports.findByClanIdAndState(7L,"OPEN")).willReturn(List.of(one, two));
+        given(reports.lockOpenForClan(7L)).willReturn(List.of(one, two));
         service.delete(admin, 7L, "abandoned", null);
         assertThat(one.getState()).isEqualTo("RESOLVED");
         assertThat(two.getState()).isEqualTo("RESOLVED");

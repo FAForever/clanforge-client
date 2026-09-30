@@ -183,7 +183,7 @@ public class ClanManagementService {
     }
 
     private ClanMembership owner(AppUser actor, String refusal) {
-        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
+        ClanMembership me = membershipService.lockedMembership(actor).orElseThrow(() -> new ClanAccessRefused("You are not in a clan.")); //the clan locked before the role is read, see lockedMembership
         if (!MembershipService.ownerRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
         return me;
     }

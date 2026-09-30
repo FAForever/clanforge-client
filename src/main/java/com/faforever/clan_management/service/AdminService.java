@@ -123,7 +123,7 @@ public class AdminService {
         String why = why(reason);
         Map<String, Object> before = events.clanPayload(clan);
         int gone = management.close(clan);
-        for (ClanReport other : reports.findByClanIdAndState(clan.getId(), "OPEN")) {
+        for (ClanReport other : reports.lockOpenForClan(clan.getId())) {
             if (other != report) other.close("RESOLVED", admin); // nothing is left to act on once the clan is gone
         }
         //System.out.println("admin deleted " + clan.getTag() + " " + gone);
@@ -162,6 +162,7 @@ public class AdminService {
         payload.put("reportId", report == null ? null : report.getId());
         Map<String, Object> changed = events.clanPayload(clan);
         if (membersRemoved != null) changed.put("membersRemoved", membersRemoved);
+        changed.put("moderationAction", action); // tells the bell this change was an administrator's, so it is not read out as the members own edit
         events.record("clan",clan.getId(), clanEvent,changed, admin);
         events.record("clan",clan.getId(), "ModerationActionPerformed", payload, admin);
         //System.out.println("moderation " + action + " " + clan.getId() + " row " + row.getId());

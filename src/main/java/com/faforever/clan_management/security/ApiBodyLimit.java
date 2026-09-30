@@ -36,6 +36,14 @@ public class ApiBodyLimit extends OncePerRequestFilter {
         chain.doFilter(declared >= 0 ? request : new Capped(request, max), response);
     }
 
+    //what the capped stream throws, so the api error handler can answer 413 with the same sentence a declared length gets
+    public static final class TooLarge extends IOException {
+
+        public TooLarge(long max) {
+            super("Request bodies are " + max + " bytes at most.");
+        }
+    }
+
     //a body sent in chunks names no length up front, so the stream itself stops at the cap
     private static final class Capped extends HttpServletRequestWrapper {
 
@@ -68,7 +76,7 @@ public class ApiBodyLimit extends OncePerRequestFilter {
 
                 private void count(long n) throws IOException {
                     seen += n;
-                    if (seen > max) throw new IOException("request body over " + max + " bytes");
+                    if (seen > max) throw new TooLarge(max);
                 }
 
                 @Override

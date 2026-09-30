@@ -68,4 +68,21 @@ class AdminAccessTest {
         assertThatThrownBy(() -> new AdminAccess("  ", users)).isInstanceOf(IllegalStateException.class).hasMessageContaining("clan.admin.role");
         assertThatThrownBy(() -> new AdminAccess(null, users)).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("a role name of nothing but control characters is blank too, since the token side trims it to nothing")
+    void controlCharacterRoleIsRefused() {
+        assertThatThrownBy(() -> new AdminAccess("\u0001\u0002", users)).isInstanceOf(IllegalStateException.class).hasMessageContaining("clan.admin.role");
+        assertThatThrownBy(() -> new AdminAccess(" \t\u0000 ", users)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("a role name holding delete, a c1 control or a space of any kind is refused too, since trim leaves those in")
+    void controlCharactersInsideTheNameAreRefused() {
+        for (String bad : List.of("\u007f", "\u0085", "ADMIN\u009fCLAN","ADMIN CLAN", "ADMIN\u00a0CLAN")) {
+            assertThatThrownBy(() -> new AdminAccess(bad, users)).isInstanceOf(IllegalStateException.class).hasMessageContaining("clan.admin.role");
+        }
+        //System.out.println("plain name still fine");
+        assertThat(new AdminAccess("ADMIN_CLAN", users).allows(holding("ROLE_ADMIN_CLAN"))).isTrue();
+    }
 }

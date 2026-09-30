@@ -27,6 +27,17 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
 
     Optional<Clan> findByIdAndDeletedAtIsNull(Long id);
 
+    // Yes or no questions about a live clan that load no entity, so a request
+    // that will be refused is refused before it waits on the clan's lock, and
+    // the clan the lock then loads is read fresh.
+    boolean existsByIdAndDeletedAtIsNull(Long id);
+
+    boolean existsByIdAndVisibilityAndDeletedAtIsNull(Long id,String visibility);
+
+    boolean existsByIdAndVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(Long id, String visibility);
+
+    boolean existsByIdAndVisibilityAndStatusAndRequiresInvitationFalseAndDeletedAtIsNull(Long id, String visibility, String status);
+
     // The same live clan, locked until the transaction ends, so two
     // administrators acting on one clan at once take turns instead of each
     // checking the status the other is about to change.

@@ -55,7 +55,8 @@ class ReportServiceTest {
     @Test
     @DisplayName("a report on a public clan is saved open, with the category in capitals and the reason trimmed")
     void fileSavesOpenReport() {
-        given(clans.findByIdAndDeletedAtIsNull(7L)).willReturn(Optional.of(clan));
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(7L, "PUBLIC")).willReturn(true);
+        given(clans.lockLive(7L)).willReturn(Optional.of(clan));
         given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(false);
         given(reports.save(any(ClanReport.class))).willAnswer(a -> a.getArgument(0));
         ClanReport r = service.file(sam, 7L, " offensive_name ", "  the name is a slur  ");
@@ -72,20 +73,23 @@ class ReportServiceTest {
     @Test
     @DisplayName("a missing clan, no clan at all and a private one seen from outside all read as not existing")
     void fileHidesWhatTheReporterCannotSee() {
-        given(clans.findByIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(99L, "PUBLIC")).willReturn(false);
         assertThatThrownBy(() -> service.file(sam, 99L, "OFFENSIVE_TAG","bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
         assertThatThrownBy(() -> service.file(sam,null,"OFFENSIVE_TAG", "bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
-        given(clans.findByIdAndDeletedAtIsNull(8L)).willReturn(Optional.of(privateClan()));
-        given(memberships.findActiveByClanIdAndUserId(8L, 2L)).willReturn(Optional.empty());
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(8L, "PUBLIC")).willReturn(false);
+        given(memberships.existsByClanIdAndUserIdAndLeftAtIsNull(8L,2L)).willReturn(false);
         assertThatThrownBy(() -> service.file(sam,8L, "OFFENSIVE_TAG", "bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
         verify(reports,never()).save(any());
+        verify(clans,never()).lockLive(any()); //turned away before the lock, so an outsider never waits on a clan it cannot see
     }
 
     @Test
     @DisplayName("a member of a private clan can report it")
     void memberCanReportTheirPrivateClan() {
         Clan quiet = privateClan();
-        given(clans.findByIdAndDeletedAtIsNull(8L)).willReturn(Optional.of(quiet));
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(8L, "PUBLIC")).willReturn(false);
+        given(memberships.existsByClanIdAndUserIdAndLeftAtIsNull(8L, 2L)).willReturn(true);
+        given(clans.lockLive(8L)).willReturn(Optional.of(quiet));
         given(memberships.findActiveByClanIdAndUserId(8L, 2L)).willReturn(Optional.of(Fixtures.membership(6L, quiet, sam,"MEMBER")));
         given(reports.existsByClanIdAndReporterIdAndState(8L, 2L, "OPEN")).willReturn(false);
         given(reports.save(any(ClanReport.class))).willAnswer(a -> a.getArgument(0));
@@ -93,23 +97,45 @@ class ReportServiceTest {
     }
 
     @Test
+    @DisplayName("a clan made private while the report waited for the lock reads as missing to an outsider once the lock is held")
+    void reportChecksAgainAfterTheLock() {
+        Clan quiet = privateClan();
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(8L, "PUBLIC")).willReturn(true); //still public when it was asked
+        given(clans.lockLive(8L)).willReturn(Optional.of(quiet));
+        given(memberships.findActiveByClanIdAndUserId(8L, 2L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.file(sam, 8L, "OFFENSIVE_NAME", "too late")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
+        verify(reports, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("a report filed by the same person while this one waited for the lock is found once the lock is held")
+    void duplicateCheckedAgainUnderTheLock() {
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(7L, "PUBLIC")).willReturn(true);
+        given(clans.lockLive(7L)).willReturn(Optional.of(clan));
+        given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(false, true); //none before the lock, one after it
+        assertThatThrownBy(() -> service.file(sam, 7L, "OFFENSIVE_NAME","sent twice")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already reported");
+        verify(reports, never()).save(any());
+    }
+
+    @Test
     @DisplayName("the category has to be one of the three and the reason has to say something within the limit")
     void fileChecksCategoryAndReason() {
-        given(clans.findByIdAndDeletedAtIsNull(7L)).willReturn(Optional.of(clan));
         assertThatThrownBy(() -> service.file(sam, 7L, "RUDE", "x")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("what the report is about");
         assertThatThrownBy(() -> service.file(sam, 7L, null, "x")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("what the report is about");
         assertThatThrownBy(() -> service.file(sam,7L, "OFFENSIVE_TAG", "   ")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("what is wrong");
         assertThatThrownBy(() -> service.file(sam,7L,"OFFENSIVE_TAG", "x".repeat(1001))).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("1000 characters");
         verify(reports, never()).save(any());
+        verify(clans, never()).lockLive(any()); //the report itself is checked before the clan is even looked at
     }
 
     @Test
     @DisplayName("one open report per person per clan")
     void fileRefusesASecondOpenReport() {
-        given(clans.findByIdAndDeletedAtIsNull(7L)).willReturn(Optional.of(clan));
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(7L, "PUBLIC")).willReturn(true);
         given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(true);
         assertThatThrownBy(() -> service.file(sam, 7L, "OFFENSIVE_NAME", "still there")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already reported");
         verify(reports, never()).save(any());
+        verify(clans, never()).lockLive(any());
     }
 
     @Test
@@ -148,7 +174,8 @@ class ReportServiceTest {
     @Test
     @DisplayName("a reason of exactly 1000 characters is kept, and the category folds the same way in any language")
     void reasonLimitAndLocale() {
-        given(clans.findByIdAndDeletedAtIsNull(7L)).willReturn(Optional.of(clan));
+        given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(7L, "PUBLIC")).willReturn(true);
+        given(clans.lockLive(7L)).willReturn(Optional.of(clan));
         given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(false);
         given(reports.save(any(ClanReport.class))).willAnswer(a -> a.getArgument(0));
         assertThat(service.file(sam, 7L, "OFFENSIVE_NAME", "x".repeat(1000)).getReason()).hasSize(1000);

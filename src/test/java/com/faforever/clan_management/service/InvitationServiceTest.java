@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -263,6 +265,82 @@ class InvitationServiceTest {
         assertThat(inv.getState()).isEqualTo("PENDING");
         assertThat(inv.getClan()).isSameAs(big);
         verify(events).record(eq("clan_invitation"), any(), eq("InvitationCreated"), any(),eq(kai));
+    }
+
+    @Test
+    @DisplayName("accepting and declining lock the invitation's clan before the invitation is read, so a delete already running is finished first")
+    void answersLockTheClanFirst() {
+        ClanInvitation first = Fixtures.invitation(8L, clan, sam, kai, OffsetDateTime.now().plusDays(1));
+        ClanInvitation second = Fixtures.invitation(9L, clan, sam,kai, OffsetDateTime.now().plusDays(1));
+        given(invitations.findClanIdByIdAndInviteeId(eq(8L), eq(2L), any())).willReturn(Optional.of(7L));
+        given(invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(8L, "ACTIVE")).willReturn(true);
+        given(invitations.findClanIdByIdAndInviteeId(eq(9L), eq(2L), any())).willReturn(Optional.of(7L));
+        given(invitations.findById(8L)).willReturn(Optional.of(first));
+        given(invitations.findById(9L)).willReturn(Optional.of(second));
+        given(memberships.findActiveByUserId(2L)).willReturn(Optional.empty());
+        given(memberships.save(any(ClanMembership.class))).willAnswer(a -> a.getArgument(0));
+        service.accept(sam, 8L);
+        service.decline(sam,9L);
+        InOrder order = inOrder(membershipService, invitations);
+        order.verify(membershipService).lockClan(7L);
+        order.verify(invitations).findById(8L);
+        order.verify(membershipService).lockClan(7L);
+        order.verify(invitations).findById(9L);
+        //System.out.println("states " + first.getState() + " " + second.getState());
+        assertThat(first.getState()).isEqualTo("ACCEPTED");
+        assertThat(second.getState()).isEqualTo("DECLINED");
+    }
+
+    @Test
+    @DisplayName("an invitation a clan delete revoked while the answer waited reads as no longer open, and nobody joins")
+    void revokedWhileWaitingIsNotAccepted() {
+        ClanInvitation revoked = Fixtures.invitation(8L, clan, sam,kai, OffsetDateTime.now().plusDays(1));
+        revoked.setState("REVOKED");
+        given(invitations.findClanIdByIdAndInviteeId(eq(8L), eq(2L), any())).willReturn(Optional.of(7L));
+        given(invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(8L, "ACTIVE")).willReturn(true);
+        given(invitations.findById(8L)).willReturn(Optional.of(revoked));
+        assertThatThrownBy(() -> service.accept(sam, 8L)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("no longer open");
+        assertThatThrownBy(() -> service.decline(sam, 8L)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("no longer open");
+        assertThat(revoked.getState()).isEqualTo("REVOKED");
+        verify(memberships,never()).save(any());
+    }
+
+    @Test
+    @DisplayName("an answer to someone else's invitation is refused without waiting on that clan's lock")
+    void someoneElsesInvitationTakesNoLock() {
+        AppUser lee = Fixtures.user(3L,"lee");
+        given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, clan, sam, kai, OffsetDateTime.now().plusDays(1))));
+        assertThatThrownBy(() -> service.accept(lee, 8L)).isInstanceOf(ClanRuleViolation.class).hasMessage("That invitation does not exist.");
+        assertThatThrownBy(() -> service.decline(lee, 8L)).isInstanceOf(ClanRuleViolation.class).hasMessage("That invitation does not exist.");
+        verify(invitations, org.mockito.Mockito.times(2)).findClanIdByIdAndInviteeId(eq(8L), eq(3L), any()); //asked with the caller's own id, which matches no invitation of sam's
+        verify(membershipService, never()).lockClan(any());
+    }
+
+    @Test
+    @DisplayName("a clan suspended while the accept waited for the lock is still refused once the lock is held")
+    void acceptChecksTheClanAgainUnderTheLock() {
+        Clan suspended = Fixtures.clan(7L, "Bad Company", "BC",kai,true);
+        suspended.setStatus("SUSPENDED"); //committed while the accept waited
+        given(invitations.findClanIdByIdAndInviteeId(eq(8L), eq(2L), any())).willReturn(Optional.of(7L));
+        given(invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(8L, "ACTIVE")).willReturn(true); //still active when asked
+        given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L,suspended, sam, kai, OffsetDateTime.now().plusDays(1))));
+        assertThatThrownBy(() -> service.accept(sam, 8L)).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan is no longer taking members.");
+        verify(memberships,never()).save(any());
+    }
+
+    @Test
+    @DisplayName("an accept refused for the clan or for the caller's own clan is refused before the lock, with the sentence it had before")
+    void acceptRefusalsComeBeforeTheLock() {
+        given(invitations.findClanIdByIdAndInviteeId(eq(8L), eq(2L), any())).willReturn(Optional.of(7L));
+        given(invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(8L, "ACTIVE")).willReturn(false); //suspended or deleted
+        assertThatThrownBy(() -> service.accept(sam, 8L)).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan is no longer taking members.");
+        given(invitations.findClanIdByIdAndInviteeId(eq(9L),eq(2L), any())).willReturn(Optional.of(7L));
+        given(invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(9L,"ACTIVE")).willReturn(true);
+        given(memberships.existsByUserIdAndLeftAtIsNull(2L)).willReturn(true); //already in a clan
+        assertThatThrownBy(() -> service.accept(sam, 9L)).isInstanceOf(ClanRuleViolation.class).hasMessage("Leave your current clan before accepting an invite.");
+        //System.out.println("no lock for either accept");
+        verify(membershipService, never()).lockClan(any());
+        verify(invitations, never()).findById(any());
     }
 
     @Test

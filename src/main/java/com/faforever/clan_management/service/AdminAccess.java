@@ -16,8 +16,10 @@ public class AdminAccess {
     private final AppUserService users;
 
     public AdminAccess(@Value("${clan.admin.role:ADMIN_CLAN}") String role,AppUserService users) {
-        if (role == null || role.isBlank()) throw new IllegalStateException("clan.admin.role is blank, so nobody could reach /api/admin"); //refused at startup rather than quietly locking everyone out
-        this.authority = "ROLE_" + role.trim(); // the role name is a property so a deployment outside faforever names its own
+        String name = role == null ? "" : role.trim(); //trimmed first, so control characters alone count as blank the way TokenRoles counts them
+        if (name.isEmpty()) throw new IllegalStateException("clan.admin.role is blank, so nobody could reach /api/admin"); //refused at startup rather than quietly locking everyone out
+        if (name.chars().anyMatch(c -> Character.isISOControl(c) || Character.isSpaceChar(c) || Character.isWhitespace(c))) throw new IllegalStateException("clan.admin.role holds a space or a control character, which no role name should"); // trim leaves delete and the c1 controls in place
+        this.authority = "ROLE_"+name; // the role name is a property so a deployment outside faforever names its own
         this.users = users;
     }
 

@@ -168,11 +168,23 @@ class AdminIntegrationTest {
         ClanForm later = new ClanForm();
         later.setName("Order " + stamp + " B");
         later.setTag(freeTag());
-        management.create(someone("owner"), later);
+        AppUser ownerB = someone("owner");
+        management.create(ownerB, later);
         ClanForm earlier = new ClanForm();
         earlier.setName("Order " + stamp + " A");
         earlier.setTag(freeTag());
-        management.create(someone("owner"), earlier);
-        assertThat(admins.clans("order " + stamp, "all", PageRequest.of(0, 20)).getContent()).extracting(c -> c.getClan().getName()).containsExactly("Order " + stamp+" A","Order " + stamp + " B");
+        AppUser ownerA = someone("owner");
+        management.create(ownerA, earlier);
+        ClanForm last = new ClanForm();
+        last.setName("Order " + stamp + " C");
+        last.setTag(freeTag());
+        AppUser ownerC = someone("owner");
+        management.create(ownerC, last); //made B, A, C, so id order either way differs from the name order
+        assertThat(admins.clans("order " + stamp, "all", PageRequest.of(0, 20)).getContent()).extracting(c -> c.getClan().getName()).containsExactly("Order " + stamp+" A","Order " + stamp + " B", "Order "+stamp + " C");
+        assertThat(admins.clans("order "+stamp, "active", PageRequest.of(0, 20)).getContent()).extracting(k -> k.getClan().getName()).containsExactly("Order " + stamp+" A","Order " + stamp + " B","Order "+stamp + " C");
+        for (AppUser owner : List.of(ownerC, ownerA, ownerB)) {
+            management.delete(owner);
+        }
+        assertThat(admins.clans("order " + stamp, "deleted", PageRequest.of(0, 20)).getContent()).extracting(k -> k.getClan().getName()).containsExactly("Order " + stamp+" A","Order "+stamp + " B", "Order "+stamp+" C");
     }
 }
