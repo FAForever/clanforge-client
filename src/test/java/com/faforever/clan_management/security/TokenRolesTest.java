@@ -43,5 +43,6 @@ class TokenRolesTest {
         assertThat(names(token().claim("ext", Map.of("roles", "ADMIN_CLAN")).build())).isEmpty();
         assertThat(names(token().claim("ext", Map.of("roles", Arrays.asList("ADMIN_CLAN",7, " ", null))).build())).containsExactly("ROLE_ADMIN_CLAN");
         assertThat(names(token().claim("ext", Map.of("roles", List.of("  ADMIN_CLAN  "))).build())).containsExactly("ROLE_ADMIN_CLAN");
+        assertThat(names(token().claim("ext", Map.of("roles",List.of("\u0000", "\u0001\u001f"))).build())).isEmpty(); //nothing but control characters is no role, not a bare ROLE_
     }
 }

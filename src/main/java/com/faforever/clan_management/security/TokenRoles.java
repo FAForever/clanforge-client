@@ -24,7 +24,8 @@ public class TokenRoles implements Converter<Jwt, Collection<GrantedAuthority>> 
         Object ext = jwt.getClaim("ext"); //a token from another provider has no ext at all, or one of another shape, and then there are simply no roles
         if (ext instanceof Map<?,?> map && map.get("roles") instanceof Collection<?> roles) {
             for (Object r : roles) {
-                if (r instanceof String name && !name.isBlank()) out.add(new SimpleGrantedAuthority("ROLE_" + name.trim()));
+                String name = r instanceof String s ? s.trim() : ""; //trimmed first, so a name of nothing but control characters is no role at all
+                if (!name.isEmpty()) out.add(new SimpleGrantedAuthority("ROLE_" + name));
             }
         }
         //System.out.println("authorities " + out);

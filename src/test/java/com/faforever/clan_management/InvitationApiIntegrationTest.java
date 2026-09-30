@@ -144,6 +144,11 @@ class InvitationApiIntegrationTest {
         mockMvc.perform(post("/api/clans/" + clan.getId() + "/invite").header(HttpHeaders.AUTHORIZATION,bearer(owner.getOidcSubject())).contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"nobody_" + stamp + "\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("No player named 'nobody_" + stamp + "'."));
+        MvcResult theirs = mockMvc.perform(post("/api/clans/" + clan.getId() + "/invite").header(HttpHeaders.AUTHORIZATION, bearer(owner.getOidcSubject())).contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"" + outsider.getDisplayName()+"\"}")).andExpect(status().isCreated()).andReturn();
+        long theirsId = json.readTree(theirs.getResponse().getContentAsString()).path("id").asLong();
+        mockMvc.perform(post("/api/invitations/" + theirsId + "/accept").header(HttpHeaders.AUTHORIZATION, bearer(owner.getOidcSubject()))) //the owner trying the outsiders invitation
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("That invitation does not exist."));
         mockMvc.perform(post("/api/invitations/999999999/accept").header(HttpHeaders.AUTHORIZATION, bearer(outsider.getOidcSubject())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("That invitation does not exist."));

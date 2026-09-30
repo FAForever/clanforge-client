@@ -16,6 +16,7 @@ public class AdminAccess {
     private final AppUserService users;
 
     public AdminAccess(@Value("${clan.admin.role:ADMIN_CLAN}") String role,AppUserService users) {
+        if (role == null || role.isBlank()) throw new IllegalStateException("clan.admin.role is blank, so nobody could reach /api/admin"); //refused at startup rather than quietly locking everyone out
         this.authority = "ROLE_" + role.trim(); // the role name is a property so a deployment outside faforever names its own
         this.users = users;
     }

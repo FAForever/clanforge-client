@@ -78,6 +78,26 @@ class ApiAdminSecurityTest {
         mockMvc.perform(get("/api/admin/deeper/probe").header(HttpHeaders.AUTHORIZATION, admin)).andExpect(status().isOk());
     }
 
+    @Test
+    @DisplayName("a token that names no subject is turned away with 401 on every api route, admin role or not")
+    void tokenWithoutSubjectIsRefused() throws Exception {
+        Instant now = Instant.now();
+        given(jwtDecoder.decode("token-nosub")).willReturn(Jwt.withTokenValue("token-nosub").header("alg", "RS256").claim("ext", Map.of("roles", List.of("ADMIN_CLAN"))).issuedAt(now).expiresAt(now.plusSeconds(300)).build());
+        mockMvc.perform(get("/api/admin/probe").header(HttpHeaders.AUTHORIZATION,"Bearer token-nosub")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/probe").header(HttpHeaders.AUTHORIZATION, "Bearer token-nosub")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("a request body over the cap is 413 before anything reads it, and one under it goes through")
+    void bodyOverTheCapIsRefused() throws Exception {
+        String plain = bearer(jwtDecoder, "7", null);
+        mockMvc.perform(post("/api/probe").header(HttpHeaders.AUTHORIZATION,plain).contentType("application/json").content(new byte[65537]))
+                .andExpect(status().is(413))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("65536 bytes at most")));
+        mockMvc.perform(post("/api/probe").header(HttpHeaders.AUTHORIZATION, plain).contentType("application/json").content(new byte[65536])).andExpect(status().isOk());
+        mockMvc.perform(post("/api/probe").contentType("application/json").content(new byte[65537])).andExpect(status().is(413)); //no token needed to be turned away for size
+    }
+
     @RestController
     public static class AdminProbe {
 

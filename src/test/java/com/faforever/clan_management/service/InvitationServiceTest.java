@@ -120,8 +120,9 @@ class InvitationServiceTest {
     void acceptRefusesWrongPerson() {
         given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, clan, sam,kai, OffsetDateTime.now().plusDays(1))));
         assertThatThrownBy(() -> service.accept(Fixtures.user(3L, "lee"), 8L))
-                .isInstanceOf(ClanAccessRefused.class)
-                .hasMessageContaining("not yours");
+                .isInstanceOf(ClanRuleViolation.class)
+                .isNotInstanceOf(ClanAccessRefused.class)
+                .hasMessage("That invitation does not exist."); //the same answer as a missing one, so ids cannot be probed
         verify(memberships, never()).save(any());
     }
 
@@ -180,8 +181,9 @@ class InvitationServiceTest {
         Clan other = Fixtures.clan(3L,"Other", "OTH",sam, false);
         given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, other, Fixtures.user(3L, "lee"), sam, OffsetDateTime.now().plusDays(1))));
         assertThatThrownBy(() -> service.revoke(kai,8L))
-                .isInstanceOf(ClanAccessRefused.class)
-                .hasMessageContaining("another clan");
+                .isInstanceOf(ClanRuleViolation.class)
+                .isNotInstanceOf(ClanAccessRefused.class)
+                .hasMessage("That invitation does not exist.");
     }
 
     @Test
@@ -266,8 +268,6 @@ class InvitationServiceTest {
     @Test
     @DisplayName("a refusal about who is asking is an access refusal, a broken rule is not")
     void accessRefusalsAreToldApart() {
-        given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, clan, sam, kai, OffsetDateTime.now().plusDays(1))));
-        assertThatThrownBy(() -> service.accept(Fixtures.user(3L, "lee"), 8L)).isInstanceOf(ClanAccessRefused.class);
         given(membershipService.manager(eq(sam), anyString())).willReturn(Fixtures.membership(6L, clan,sam, "MODERATOR"));
         assertThatThrownBy(() -> service.invite(sam, "lee", "MODERATOR")).isInstanceOf(ClanAccessRefused.class);
         given(membershipService.manager(eq(kai), anyString())).willReturn(ownerRow);

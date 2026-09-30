@@ -23,8 +23,8 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -54,7 +54,8 @@ public class SecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
             ObjectProvider<JwtDecoder> jwtDecoders,
-            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole,
+            @Value("${clan.api.max-body-bytes:65536}") long maxBody
     ) throws Exception {
         http.securityMatcher("/api/**")
             .authorizeHttpRequests(auth -> auth
@@ -73,18 +74,17 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(
-                        new BearerTokenAuthenticationEntryPoint()));
+                        new BearerTokenAuthenticationEntryPoint()))
+            // A JSON body has no size cap of its own, so the API sets one.
+            .addFilterBefore(new ApiBodyLimit(maxBody), BearerTokenAuthenticationFilter.class);
 
         JwtDecoder jwtDecoder = jwtDecoders.getIfAvailable();
 
         if (jwtDecoder != null) {
-            JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-            converter.setJwtGrantedAuthoritiesConverter(new TokenRoles());
-
             http.oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
                     .decoder(jwtDecoder)
-                    .jwtAuthenticationConverter(converter)));
+                    .jwtAuthenticationConverter(new ApiTokenConverter())));
         }
 
         return http.build();

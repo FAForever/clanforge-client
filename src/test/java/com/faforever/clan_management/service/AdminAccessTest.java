@@ -61,4 +61,11 @@ class AdminAccessTest {
         assertThat(access.allows(holding("ROLE_CLAN_BOSS"))).isTrue();
         assertThat(access.allows(holding("ROLE_ADMIN_CLAN"))).isFalse();
     }
+
+    @Test
+    @DisplayName("a blank role name is refused when the application starts, instead of quietly letting nobody in")
+    void blankRoleIsRefused() {
+        assertThatThrownBy(() -> new AdminAccess("  ", users)).isInstanceOf(IllegalStateException.class).hasMessageContaining("clan.admin.role");
+        assertThatThrownBy(() -> new AdminAccess(null, users)).isInstanceOf(IllegalStateException.class);
+    }
 }
