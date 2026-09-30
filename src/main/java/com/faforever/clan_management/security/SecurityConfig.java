@@ -19,6 +19,11 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+
 @Configuration
 public class SecurityConfig {
 
@@ -43,6 +48,39 @@ public class SecurityConfig {
           + "form-action 'self'";
 
     @Bean
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(
+            HttpSecurity http,
+            ObjectProvider<JwtDecoder> jwtDecoders
+    ) throws Exception {
+        http.securityMatcher("/api/**")
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/clans",
+                        "/api/clans/**"
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(
+                        new BearerTokenAuthenticationEntryPoint()));
+
+        JwtDecoder jwtDecoder = jwtDecoders.getIfAvailable();
+
+        if (jwtDecoder != null) {
+            http.oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.decoder(jwtDecoder)));
+        }
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
             ObjectProvider<ClientRegistrationRepository> clientRegistrations) throws Exception {
         http.authorizeHttpRequests(auth -> auth
@@ -55,9 +93,7 @@ public class SecurityConfig {
             .requestMatchers(
                     HttpMethod.GET,
                     "/clans",
-                    "/clans/**",
-                    "/api/clans",
-                    "/api/clans/**"
+                    "/clans/**"
             ).permitAll()
             // static assets must be reachable anonymously or the public clan
             // pages render without their stylesheet
