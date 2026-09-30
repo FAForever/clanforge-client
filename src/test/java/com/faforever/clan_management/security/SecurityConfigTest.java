@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.faforever.clan_management.service.AdminAccess;
+import com.faforever.clan_management.service.AdminService;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.CalendarService;
 import com.faforever.clan_management.service.Regions;
@@ -16,6 +18,7 @@ import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.InvitationService;
 import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.ReportService;
 import com.faforever.clan_management.service.TagRule;
 
 import java.util.Optional;
@@ -64,6 +67,16 @@ class SecurityConfigTest {
 
     @MockitoBean
     private CalendarService calendarService;
+
+    // The report and admin REST controllers are part of the slice too.
+    @MockitoBean
+    private ReportService reportService;
+
+    @MockitoBean
+    private AdminService adminService;
+
+    @MockitoBean
+    private AdminAccess adminAccess;
 
     @Test
     @DisplayName("anonymous users may reach the public clan routes")
