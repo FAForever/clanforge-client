@@ -60,7 +60,7 @@ public class CalendarService {
     public void remove(AppUser actor,Long id) {
         ClanMembership me = membershipService.manager(actor, "Only the owner and moderators can remove events.");
         CalendarEvent ev = calendar.findById(id).orElseThrow(() -> new ClanRuleViolation("That event does not exist."));
-        if (!ev.getClan().getId().equals(me.getClan().getId())) throw new ClanRuleViolation("That event belongs to another clan.");
+        if (!ev.getClan().getId().equals(me.getClan().getId())) throw new ClanAccessRefused("That event belongs to another clan.");
         Map<String, Object> payload = events.calendarPayload(ev); // taken before the row goes, the history keeps the title
         calendar.delete(ev);
         events.record("clan_calendar_event", ev.getId(), "CalendarEventRemoved", payload, actor);

@@ -46,11 +46,23 @@ public class InvitationService {
 
     @Transactional
     public ClanInvitation invite(AppUser actor, String inviteeName, String role) {
+        return send(membershipService.manager(actor, "Only the owner and moderators can send invites."), actor, inviteeName, role);
+    }
+
+    //the api names the clan in its path, so the clan the caller runs has to be that one before anything is sent
+    @Transactional
+    public ClanInvitation invite(AppUser actor, Long clanId,String inviteeName, String role) {
         ClanMembership me = membershipService.manager(actor, "Only the owner and moderators can send invites.");
+        //System.out.println("invite path " + clanId + " mine " + me.getClan().getId());
+        if (!me.getClan().getId().equals(clanId)) throw new ClanAccessRefused("You can only invite players to your own clan.");
+        return send(me, actor, inviteeName, role);
+    }
+
+    private ClanInvitation send(ClanMembership me, AppUser actor, String inviteeName, String role) {
         Clan clan = me.getClan();
         String offered = role == null || role.isBlank() ? MembershipService.memberRole : role.trim();
         if (!MembershipService.memberRole.equals(offered) && !MembershipService.moderatorRole.equals(offered)) throw new ClanRuleViolation("That role does not exist.");
-        if (MembershipService.moderatorRole.equals(offered) && !MembershipService.ownerRole.equals(me.getRole())) throw new ClanRuleViolation("Only the owner can invite as moderator.");//a moderator hands out the member role only
+        if (MembershipService.moderatorRole.equals(offered) && !MembershipService.ownerRole.equals(me.getRole())) throw new ClanAccessRefused("Only the owner can invite as moderator.");//a moderator hands out the member role only
         String name = inviteeName == null ? "" : inviteeName.trim(); //owner or moderator invites by display name, the imported players are User_<id> until real names arrive
         AppUser invitee = users.findByDisplayNameIgnoreCase(name).orElseThrow(() -> new ClanRuleViolation("No player named '" + name + "'."));
         if (invitee.getId().equals(actor.getId())) throw new ClanRuleViolation("You are already in the clan.");
@@ -95,7 +107,7 @@ public class InvitationService {
     public void revoke(AppUser actor, Long id) {
         ClanMembership me = membershipService.manager(actor,"Only the owner and moderators can revoke invites.");
         ClanInvitation inv = invitations.findById(id).orElseThrow(() -> new ClanRuleViolation("That invitation does not exist."));
-        if (!inv.getClan().getId().equals(me.getClan().getId())) throw new ClanRuleViolation("That invitation belongs to another clan.");
+        if (!inv.getClan().getId().equals(me.getClan().getId())) throw new ClanAccessRefused("That invitation belongs to another clan.");
         if (!"PENDING".equals(inv.getState())) throw new ClanRuleViolation("That invitation is no longer open.");
         inv.setState("REVOKED");
         inv.setRespondedAt(OffsetDateTime.now());
@@ -105,7 +117,7 @@ public class InvitationService {
 
     private ClanInvitation open(AppUser user,Long id) {
         ClanInvitation inv = invitations.findById(id).orElseThrow(() -> new ClanRuleViolation("That invitation does not exist.")); // an invitation the given person may still answer: theirs, pending, and not past its expiry
-        if (!inv.getInvitee().getId().equals(user.getId())) throw new ClanRuleViolation("That invitation is not yours.");
+        if (!inv.getInvitee().getId().equals(user.getId())) throw new ClanAccessRefused("That invitation is not yours.");
         if (!"PENDING".equals(inv.getState())) throw new ClanRuleViolation("That invitation is no longer open.");
         if (!inv.getExpiresAt().isAfter(OffsetDateTime.now())) throw new ClanRuleViolation("That invitation has expired.");
         return inv;

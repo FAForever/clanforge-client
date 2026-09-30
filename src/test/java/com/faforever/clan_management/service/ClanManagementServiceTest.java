@@ -123,7 +123,7 @@ class ClanManagementServiceTest {
     @Test
     @DisplayName("a plain member cannot edit the clan")
     void updateRefusesMember() {
-        given(membershipService.manager(eq(kai),anyString())).willThrow(new ClanRuleViolation("Only the owner and moderators can edit the clan."));
+        given(membershipService.manager(eq(kai),anyString())).willThrow(new ClanAccessRefused("Only the owner and moderators can edit the clan."));
         assertThatThrownBy(() -> service.update(kai, form("New", "NEW")))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("Only the owner and moderators");
@@ -135,9 +135,18 @@ class ClanManagementServiceTest {
         Clan clan = Fixtures.clan(7L, "Bad Company","BC",sam, false);
         given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L,clan, kai,"MODERATOR")));
         assertThatThrownBy(() -> service.delete(kai))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("Only the owner can delete");
         assertThat(clan.getDeletedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("someone in no clan cannot delete one, and that is an access refusal")
+    void deleteRefusesOutsider() {
+        AppUser zed = Fixtures.user(9L, "zed");
+        given(memberships.findActiveByUserId(9L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.delete(zed)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
+        verify(clans, never()).save(any());
     }
 
     @Test
@@ -208,7 +217,7 @@ class ClanManagementServiceTest {
     @Test
     @DisplayName("the message of the day is for the owner and moderators, capped at 500 characters")
     void motdRules() {
-        given(membershipService.manager(eq(sam), anyString())).willThrow(new ClanRuleViolation("Only the owner and moderators can change the message of the day."));
+        given(membershipService.manager(eq(sam), anyString())).willThrow(new ClanAccessRefused("Only the owner and moderators can change the message of the day."));
         assertThatThrownBy(() -> service.updateMotd(sam, "hello")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("Only the owner and moderators");
         Clan clan = Fixtures.clan(7L, "Bad Company", "BC", kai, false);
         given(membershipService.manager(eq(kai), anyString())).willReturn(Fixtures.membership(5L, clan, kai, "OWNER"));

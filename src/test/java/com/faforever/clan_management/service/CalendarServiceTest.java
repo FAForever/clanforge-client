@@ -47,7 +47,7 @@ class CalendarServiceTest {
     @Test
     @DisplayName("a plain member cannot add an event")
     void memberCannotAdd() {
-        given(membershipService.manager(eq(kai), anyString())).willThrow(new ClanRuleViolation("Only the owner and moderators can add events."));
+        given(membershipService.manager(eq(kai), anyString())).willThrow(new ClanAccessRefused("Only the owner and moderators can add events."));
         assertThatThrownBy(() -> service.add(kai,"Ladder Night","2026-10-03","20:00"))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("Only the owner and moderators");
@@ -86,7 +86,7 @@ class CalendarServiceTest {
         ReflectionTestUtils.setField(theirs, "id", 4L);
         given(calendar.findById(4L)).willReturn(Optional.of(theirs));
         assertThatThrownBy(() -> service.remove(kai, 4L))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("another clan");
         verify(calendar,never()).delete(any());
     }

@@ -71,7 +71,7 @@ public class MembershipService {
         ClanMembership target = memberships.findActiveByClanIdAndUserId(me.getClan().getId(), userId).orElseThrow(() -> new ClanRuleViolation("That player is not in your clan."));
         if (target.getId().equals(me.getId())) throw new ClanRuleViolation("Use leave to remove yourself.");
         if (ownerRole.equals(target.getRole())) throw new ClanRuleViolation("The owner cannot be removed.");
-        if (moderatorRole.equals(me.getRole()) && moderatorRole.equals(target.getRole())) throw new ClanRuleViolation("A moderator cannot remove another moderator.");
+        if (moderatorRole.equals(me.getRole()) && moderatorRole.equals(target.getRole())) throw new ClanAccessRefused("A moderator cannot remove another moderator.");
         target.setLeftAt(OffsetDateTime.now());
         //System.out.println("removed " + target.getUser().getDisplayName());
         events.record("clan_membership",target.getId(), "MemberRemoved", events.membershipPayload(target), actor);
@@ -79,8 +79,8 @@ public class MembershipService {
 
     @Transactional
     public void setRole(AppUser actor, Long userId, String role) {
-        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanRuleViolation("You are not in a clan."));
-        if (!ownerRole.equals(me.getRole())) throw new ClanRuleViolation("Only the owner can change roles.");//only the owner hands out or takes back the moderator role
+        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
+        if (!ownerRole.equals(me.getRole())) throw new ClanAccessRefused("Only the owner can change roles.");//only the owner hands out or takes back the moderator role
         if (!moderatorRole.equals(role) && !memberRole.equals(role)) throw new ClanRuleViolation("That role does not exist.");
         ClanMembership target = memberships.findActiveByClanIdAndUserId(me.getClan().getId(), userId).orElseThrow(() -> new ClanRuleViolation("That player is not in your clan."));
         if (target.getId().equals(me.getId())) throw new ClanRuleViolation("The owner keeps the owner role until it is transferred.");
@@ -90,8 +90,8 @@ public class MembershipService {
 
     // the membership of someone allowed to run the clan, owner or moderator, or the refusal to show
     public ClanMembership manager(AppUser actor, String refusal) {
-        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanRuleViolation("You are not in a clan."));
-        if (!ownerRole.equals(me.getRole()) && !moderatorRole.equals(me.getRole())) throw new ClanRuleViolation(refusal);
+        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
+        if (!ownerRole.equals(me.getRole()) && !moderatorRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
         //System.out.println("manager " + me.getRole());
         return me;
     }

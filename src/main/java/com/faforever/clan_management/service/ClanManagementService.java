@@ -177,8 +177,8 @@ public class ClanManagementService {
     }
 
     private ClanMembership owner(AppUser actor, String refusal) {
-        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanRuleViolation("You are not in a clan."));
-        if (!MembershipService.ownerRole.equals(me.getRole())) throw new ClanRuleViolation(refusal);
+        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
+        if (!MembershipService.ownerRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
         return me;
     }
 
