@@ -107,7 +107,7 @@ class MembershipServiceTest {
         ClanMembership target = Fixtures.membership(6L, clan, sam, "MODERATOR");
         given(memberships.findActiveByClanIdAndUserId(7L,2L)).willReturn(Optional.of(target));
         assertThatThrownBy(() -> service.removeMember(kai, 2L))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("cannot remove another moderator");
         assertThat(target.getLeftAt()).isNull();
     }
@@ -130,7 +130,7 @@ class MembershipServiceTest {
         Clan clan = Fixtures.clan(7L, "Bad Company", "BC", lee, false);
         given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L, clan, kai, "MODERATOR")));
         assertThatThrownBy(() -> service.setRole(kai, 2L, "MODERATOR"))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("Only the owner can change roles");
     }
 
@@ -145,5 +145,50 @@ class MembershipServiceTest {
         //System.out.println("role now " + target.getRole());
         assertThat(target.getRole()).isEqualTo("MODERATOR");
         verify(events).record(eq("clan_membership"), eq(6L), eq("MemberRoleChanged"),any(), eq(kai));
+    }
+
+    @Test
+    @DisplayName("someone in no clan cannot change roles, and that is an access refusal")
+    void outsiderCannotChangeRoles() {
+        AppUser zed = Fixtures.user(9L, "zed");
+        given(memberships.findActiveByUserId(9L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.setRole(zed,2L, "MODERATOR")).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
+    }
+
+    @Test
+    @DisplayName("leaving while in no clan is a broken rule, not an access refusal, since leaving takes no role")
+    void leavingWithNoClanIsARuleViolation() {
+        AppUser zed = Fixtures.user(9L, "zed");
+        given(memberships.findActiveByUserId(9L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.leave(zed)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
+    }
+
+    @Test
+    @DisplayName("nobody removes the owner, which is a rule about the clan and not about the caller")
+    void ownerCannotBeRemoved() {
+        Clan clan = Fixtures.clan(7L, "Bad Company","BC",lee, false);
+        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L,clan, kai, "MODERATOR")));
+        ClanMembership owner = Fixtures.membership(4L, clan, lee,"OWNER");
+        given(memberships.findActiveByClanIdAndUserId(7L, 3L)).willReturn(Optional.of(owner));
+        assertThatThrownBy(() -> service.removeMember(kai, 3L)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessageContaining("owner cannot be removed");
+        //System.out.println("owner still in " + owner.getLeftAt());
+        assertThat(owner.getLeftAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("a plain member or an outsider gets an access refusal, an owner or moderator gets their row")
+    void managerRefusesPlainMembersAndOutsiders() {
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", sam,false);
+        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L, clan, kai, "MEMBER")));
+        assertThatThrownBy(() -> service.manager(kai, "Only the owner and moderators can send invites."))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessage("Only the owner and moderators can send invites.");
+        given(memberships.findActiveByUserId(3L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.manager(lee, "unused")).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
+        given(memberships.findActiveByUserId(2L)).willReturn(Optional.of(Fixtures.membership(6L,clan, sam,"OWNER")));
+        //System.out.println("owner row " + service.manager(sam, "unused").getRole());
+        assertThat(service.manager(sam,"unused").getRole()).isEqualTo("OWNER");
+        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L,clan, kai, "MODERATOR")));
+        assertThat(service.manager(kai, "unused").getRole()).isEqualTo("MODERATOR");
     }
 }

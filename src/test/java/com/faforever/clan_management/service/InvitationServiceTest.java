@@ -57,7 +57,7 @@ class InvitationServiceTest {
     @Test
     @DisplayName("a plain member cannot send invites")
     void inviteRefusedForMember() {
-        given(membershipService.manager(eq(sam), anyString())).willThrow(new ClanRuleViolation("Only the owner and moderators can send invites."));
+        given(membershipService.manager(eq(sam), anyString())).willThrow(new ClanAccessRefused("Only the owner and moderators can send invites."));
         assertThatThrownBy(() -> service.invite(sam, "lee", null))
                 .isInstanceOf(ClanRuleViolation.class)
                 .hasMessageContaining("Only the owner and moderators");
@@ -120,7 +120,7 @@ class InvitationServiceTest {
     void acceptRefusesWrongPerson() {
         given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, clan, sam,kai, OffsetDateTime.now().plusDays(1))));
         assertThatThrownBy(() -> service.accept(Fixtures.user(3L, "lee"), 8L))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("not yours");
         verify(memberships, never()).save(any());
     }
@@ -180,7 +180,7 @@ class InvitationServiceTest {
         Clan other = Fixtures.clan(3L,"Other", "OTH",sam, false);
         given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, other, Fixtures.user(3L, "lee"), sam, OffsetDateTime.now().plusDays(1))));
         assertThatThrownBy(() -> service.revoke(kai,8L))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("another clan");
     }
 
@@ -202,7 +202,7 @@ class InvitationServiceTest {
     void moderatorRoleIsOwnerOnly() {
         given(membershipService.manager(eq(sam), anyString())).willReturn(Fixtures.membership(6L, clan, sam, "MODERATOR"));
         assertThatThrownBy(() -> service.invite(sam, "lee", "MODERATOR"))
-                .isInstanceOf(ClanRuleViolation.class)
+                .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("Only the owner can invite as moderator");
         verify(invitations, never()).save(any());
     }
@@ -234,5 +234,48 @@ class InvitationServiceTest {
         assertThat(lapsed.getState()).isEqualTo("EXPIRED");
         assertThat(fresh.getState()).isEqualTo("PENDING");
         verify(invitations).saveAndFlush(lapsed);
+    }
+
+    @Test
+    @DisplayName("an invite sent through another clan's path is refused before the player is looked up")
+    void invitePathMustBeTheCallersClan() {
+        given(membershipService.manager(eq(kai),anyString())).willReturn(ownerRow);
+        assertThatThrownBy(() -> service.invite(kai, 9L,"sam", null))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessageContaining("your own clan");
+        verify(users, never()).findByDisplayNameIgnoreCase(any());
+        verify(invitations,never()).save(any());
+    }
+
+    @Test
+    @DisplayName("an invite sent through the caller's own clan path goes out like any other")
+    void invitePathOfOwnClanSends() {
+        Clan big = Fixtures.clan(1000L, "Big Id", "BIG", kai, true); //an id past the small boxed range, so comparing the two by reference would refuse this
+        given(membershipService.manager(eq(kai), anyString())).willReturn(Fixtures.membership(5L, big, kai, "OWNER"));
+        given(users.findByDisplayNameIgnoreCase("sam")).willReturn(Optional.of(sam));
+        given(memberships.findActiveByClanIdAndUserId(1000L,2L)).willReturn(Optional.empty());
+        given(invitations.findByClanIdAndInviteeIdAndState(1000L,2L, "PENDING")).willReturn(Optional.empty());
+        given(invitations.save(any(ClanInvitation.class))).willAnswer(a -> a.getArgument(0));
+        ClanInvitation inv = service.invite(kai,Long.valueOf(1000L), "sam", "MEMBER");
+        //System.out.println("sent to " + inv.getInvitee().getDisplayName());
+        assertThat(inv.getState()).isEqualTo("PENDING");
+        assertThat(inv.getClan()).isSameAs(big);
+        verify(events).record(eq("clan_invitation"), any(), eq("InvitationCreated"), any(),eq(kai));
+    }
+
+    @Test
+    @DisplayName("a refusal about who is asking is an access refusal, a broken rule is not")
+    void accessRefusalsAreToldApart() {
+        given(invitations.findById(8L)).willReturn(Optional.of(Fixtures.invitation(8L, clan, sam, kai, OffsetDateTime.now().plusDays(1))));
+        assertThatThrownBy(() -> service.accept(Fixtures.user(3L, "lee"), 8L)).isInstanceOf(ClanAccessRefused.class);
+        given(membershipService.manager(eq(sam), anyString())).willReturn(Fixtures.membership(6L, clan,sam, "MODERATOR"));
+        assertThatThrownBy(() -> service.invite(sam, "lee", "MODERATOR")).isInstanceOf(ClanAccessRefused.class);
+        given(membershipService.manager(eq(kai), anyString())).willReturn(ownerRow);
+        given(users.findByDisplayNameIgnoreCase("nobody")).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.invite(kai, "nobody", null)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class);
+        assertThatThrownBy(() -> service.invite(kai, "sam", "ADMIRAL")).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessageContaining("role does not exist");
+        given(invitations.findById(99L)).willReturn(Optional.empty());
+        assertThatThrownBy(() -> service.revoke(kai, 99L)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessageContaining("does not exist");
+        assertThatThrownBy(() -> service.accept(sam, 99L)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessageContaining("does not exist");
     }
 }
