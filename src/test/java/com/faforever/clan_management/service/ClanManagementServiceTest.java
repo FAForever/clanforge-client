@@ -130,6 +130,20 @@ class ClanManagementServiceTest {
     }
 
     @Test
+    @DisplayName("the API path cannot be used to edit another clan")
+    void updateRefusesDifferentPathClan() {
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", kai, false);
+        given(membershipService.manager(eq(kai), anyString()))
+                .willReturn(Fixtures.membership(5L, clan, kai, "OWNER"));
+
+        assertThatThrownBy(() ->
+                service.update(kai, 9L, form("New Name", "NEW")))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessage("You can only edit your own clan.");
+        assertThat(clan.getName()).isEqualTo("Bad Company");
+    }
+
+    @Test
     @DisplayName("a moderator cannot delete the clan")
     void deleteRefusesModerator() {
         Clan clan = Fixtures.clan(7L, "Bad Company","BC",sam, false);
@@ -137,6 +151,20 @@ class ClanManagementServiceTest {
         assertThatThrownBy(() -> service.delete(kai))
                 .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("Only the owner can delete");
+        assertThat(clan.getDeletedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("the API path cannot be used to delete another clan")
+    void deleteRefusesDifferentPathClan() {
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", kai, false);
+        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(
+                Fixtures.membership(5L, clan, kai, "OWNER")
+        ));
+
+        assertThatThrownBy(() -> service.delete(kai, 9L))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessage("You can only delete your own clan.");
         assertThat(clan.getDeletedAt()).isNull();
     }
 

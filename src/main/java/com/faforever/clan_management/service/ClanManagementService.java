@@ -62,6 +62,19 @@ public class ClanManagementService {
     @Transactional
     public Clan update(AppUser actor, ClanForm form) {
         ClanMembership me = membershipService.manager(actor,"Only the owner and moderators can edit the clan.");
+        return update(me, actor, form);
+    }
+
+    @Transactional
+    public Clan update(AppUser actor, Long clanId, ClanForm form) {
+        ClanMembership me = membershipService.manager(actor,"Only the owner and moderators can edit the clan.");
+        if (!me.getClan().getId().equals(clanId)) {
+            throw new ClanAccessRefused("You can only edit your own clan.");
+        }
+        return update(me, actor, form);
+    }
+
+    private Clan update(ClanMembership me, AppUser actor, ClanForm form) {
         Clan clan = me.getClan();
         check(form, clan);
         clan.setName(form.getName().trim());
@@ -140,6 +153,19 @@ public class ClanManagementService {
     @Transactional
     public void delete(AppUser actor) {
         ClanMembership me = owner(actor, "Only the owner can delete the clan.");
+        delete(me, actor);
+    }
+
+    @Transactional
+    public void delete(AppUser actor, Long clanId) {
+        ClanMembership me = owner(actor, "Only the owner can delete the clan.");
+        if (!me.getClan().getId().equals(clanId)) {
+            throw new ClanAccessRefused("You can only delete your own clan.");
+        }
+        delete(me, actor);
+    }
+
+    private void delete(ClanMembership me, AppUser actor) {
         Clan clan = me.getClan();
         OffsetDateTime now = OffsetDateTime.now(); // a soft delete: the row stays for the history table, memberships close and open invites are revoked
         int gone = 0;
