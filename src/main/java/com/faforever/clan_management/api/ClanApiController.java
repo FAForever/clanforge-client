@@ -1,5 +1,7 @@
 package com.faforever.clan_management.api;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -84,6 +86,13 @@ public class ClanApiController {
                 clan,
                 membershipService.roster(clan)
         );
+    }
+
+    @GetMapping("/{id}/members")
+    public List<MemberResponse> getMembers(@PathVariable Long id) {
+        return membershipService.roster(visibleClan(id)).stream()
+                .map(MemberResponse::from)
+                .toList();
     }
 
     @PostMapping
