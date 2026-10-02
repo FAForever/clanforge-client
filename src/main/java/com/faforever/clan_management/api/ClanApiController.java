@@ -5,15 +5,22 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.Clan;
+import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanCard;
+import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.MembershipService;
 
@@ -25,13 +32,19 @@ public class ClanApiController {
     private static final int MAX_PAGE = 10_000;
     private final ClanService clanService;
     private final MembershipService membershipService;
+    private final ClanManagementService clanManagementService;
+    private final AppUserService appUserService;
 
     public ClanApiController(
             ClanService clanService,
-            MembershipService membershipService
+            MembershipService membershipService,
+            ClanManagementService clanManagementService,
+            AppUserService appUserService
     ) {
         this.clanService = clanService;
         this.membershipService = membershipService;
+        this.clanManagementService = clanManagementService;
+        this.appUserService = appUserService;
     }
 
     @GetMapping
@@ -63,13 +76,29 @@ public class ClanApiController {
 
     @GetMapping("/{id}")
     public ClanDetailResponse getClan(@PathVariable Long id) {
-        Clan clan = clanService.findVisibleClan(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Clan clan = visibleClan(id);
 
         return ClanDetailResponse.from(
                 clan,
                 membershipService.roster(clan)
         );
+    }
+
+    @PostMapping
+    public ResponseEntity<ClanDetailResponse> createClan(
+            @RequestBody ClanWriteRequest request,
+            Authentication authentication
+    ) {
+        AppUser actor = appUserService.require(authentication);
+        Clan clan = clanManagementService.create(actor, request.toForm());
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ClanDetailResponse.from(clan, membershipService.roster(clan))
+        );
+    }
+
+    private Clan visibleClan(Long id) {
+        return clanService.findVisibleClan(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 }

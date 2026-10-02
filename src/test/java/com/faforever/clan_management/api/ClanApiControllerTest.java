@@ -32,6 +32,7 @@ import com.faforever.clan_management.entity.ClanMembership;
 import com.faforever.clan_management.security.SecurityConfig;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanCard;
+import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.MemberCard;
 import com.faforever.clan_management.service.MembershipService;
@@ -51,6 +52,9 @@ class ClanApiControllerTest {
 
     @MockitoBean
     private AppUserService appUserService;
+
+    @MockitoBean
+    private ClanManagementService clanManagementService;
 
     @Test
     @DisplayName("anonymous users can retrieve a public clan as JSON")
