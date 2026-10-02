@@ -100,6 +100,25 @@ class MembershipServiceTest {
     }
 
     @Test
+    @DisplayName("the API path cannot be used to leave another clan")
+    void leaveRefusesDifferentPathClan() {
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", sam, false);
+        ClanMembership mine = Fixtures.membership(
+                5L,
+                clan,
+                kai,
+                "MEMBER"
+        );
+        given(memberships.findActiveByUserId(1L))
+                .willReturn(Optional.of(mine));
+
+        assertThatThrownBy(() -> service.leave(9L, kai))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessage("You can only leave your own clan.");
+        assertThat(mine.getLeftAt()).isNull();
+    }
+
+    @Test
     @DisplayName("a moderator cannot remove another moderator")
     void moderatorCannotRemoveModerator() {
         Clan clan = Fixtures.clan(7L,"Bad Company", "BC", lee,false);

@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.Clan;
+import com.faforever.clan_management.entity.ClanMembership;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanCard;
 import com.faforever.clan_management.service.ClanManagementService;
@@ -93,6 +94,27 @@ public class ClanApiController {
         return membershipService.roster(visibleClan(id)).stream()
                 .map(MemberResponse::from)
                 .toList();
+    }
+
+    @PostMapping("/{id}/join")
+    public MembershipResponse joinClan(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        ClanMembership membership = membershipService.join(
+                id,
+                appUserService.require(authentication)
+        );
+        return MembershipResponse.from(membership);
+    }
+
+    @PostMapping("/{id}/leave")
+    public ResponseEntity<Void> leaveClan(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        membershipService.leave(id, appUserService.require(authentication));
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping
