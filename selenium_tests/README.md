@@ -1,7 +1,7 @@
-# Selenium UI tests: My Clan and Create Clan
+# Selenium UI tests: Browse Clans, Create Clan, My Clan, Login and Invitations
 
-End-to-end browser tests (Python, Selenium 4, pytest) for `/clanhome` (My Clan)
-and `/create-clan` (Create Clan). They drive the real running application.
+End-to-end browser tests (Python, Selenium 4, pytest) for `/clans` (Browse Clans),
+`/create-clan` (Create Clan) and `/clanhome` (My Clan). They drive the real running application.
 
 ## Running
 
@@ -49,6 +49,48 @@ and doesn't rely on a clean database:
 Don't run the suite while you're using those three accounts for a demo.
 
 ## Tests
+
+**Login** (`test_login.py`, 5 tests)
+
+| Test | Checks |
+|---|---|
+| `test_login_button_opens_popup` | On Home (`/`) the popup starts closed, and Login opens it with the username field visible. `/login` opens it by itself, so it can't test the button |
+| `test_login_popup_closes_with_x` | On `/login` the popup is open, and × closes it |
+| `test_invalid_login_shows_error` | A wrong password shows "Invalid username or password.", and you stay signed out |
+| `test_valid_login_succeeds` | Signing in through the form lands on Browse Clans with the account menu showing |
+| `test_login_returns_user_to_protected_page` | Opening `/settings` signed out goes to login, and signing in returns you to `/settings` |
+
+**Invitations** (`test_invitations.py`, 5 tests). Each test gives `admin` a fresh clan and starts with `player` in no clan
+
+| Test | Checks |
+|---|---|
+| `test_manager_can_send_invitation` | "Invite sent to player.", and player is listed under Invites Sent as Pending, invited as Member |
+| `test_recipient_can_see_invitation` | player's inbox shows the clan, "Invited by admin as Member", and Accept/Decline |
+| `test_recipient_can_decline_invitation` | Declining the right row shows "Invitation declined." and removes it from player's inbox and admin's sent list |
+| `test_manager_can_revoke_invitation` | Revoking shows "Invitation revoked." and removes it from admin's sent list and player's inbox |
+| `test_recipient_can_accept_invitation` | Accepting goes to My Clan with "Welcome to <clan>.", and player is listed as Member |
+
+Acceptance Test B (clan creation and tag validation) is kept separately, in
+`acceptance_tests/test_b/`. It uses the same helpers and browser setup.
+
+**Browse Clans** (`test_browse_clans.py`, 10 tests, run signed out because the page is public)
+
+| Test | Checks |
+|---|---|
+| `test_page_loads_for_anonymous_visitor` | Title, active nav item, Sign In button, search placeholder, filter and sort options, the new "Most Members" default sort, card count and the "Showing X of Y · page P of N" caption |
+| `test_header_stats_agree_with_the_listing` | "Clans" equals the unfiltered total, and "Recruiting Now" equals the total with the Recruiting filter |
+| `test_search_by_name_shows_the_clan_card` | Searching "Paper Tigers": URL and search box keep the text; the card's tag, region, description, member count, badge, founded year and full-name tooltip |
+| `test_search_matches_tags_case_insensitively` | "sxc" finds Southern Cross [SXC], and every result contains the text in its name or tag |
+| `test_no_matches_shows_empty_state_and_clear_search_resets` | Empty state, no caption, and "Clear search" brings the full list back |
+| `test_sql_wildcards_in_search_are_matched_literally` | `%%%` and `___` are treated as plain text, not "match anything" |
+| `test_recruiting_filter_splits_open_and_invite_only_clans` | Recruiting shows only "Recruiting" badges and Not Recruiting only "Invite Only"; the choice persists; invite-only Jade Lotus appears in the right one |
+| `test_sort_by_members_then_by_name` | Member counts descend by default, names run A to Z under name sort, and switching back works |
+| `test_pagination_keeps_search_and_filters` | Next and Previous carry the filters, pages don't overlap, and the sort stays selected. With only one page, checks there's no pager |
+| `test_view_clan_opens_the_matching_detail_page` | View Clan opens the clan's page with the same member count, region and membership type, a sign-in prompt instead of Join, and a working "Back to clans" |
+
+The Browse Clans tests rely on the 12 demo clans from `seed_clans.sql` for exact
+checks. If they're missing, the tests add them through `docker exec`, or skip with
+a message telling you to run `seed_clans.cmd`.
 
 **Create Clan** (`test_create_clan.py`, 10 tests, 11 cases)
 
