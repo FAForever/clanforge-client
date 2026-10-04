@@ -70,8 +70,6 @@ Don't run the suite while you're using those three accounts for a demo.
 | `test_manager_can_revoke_invitation` | Revoking shows "Invitation revoked." and removes it from admin's sent list and player's inbox |
 | `test_recipient_can_accept_invitation` | Accepting goes to My Clan with "Welcome to <clan>.", and player is listed as Member |
 
-Acceptance Test B (clan creation and tag validation) is kept separately, in
-`acceptance_tests/test_b/`. It uses the same helpers and browser setup.
 
 **Browse Clans** (`test_browse_clans.py`, 10 tests, run signed out because the page is public)
 
