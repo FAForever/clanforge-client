@@ -47,8 +47,8 @@ class ClanMembersApiControllerTest {
     @Test
     @DisplayName("anyone can list the members of a public clan")
     void publicClanMembersAreReturned() throws Exception {
-        AppUser owner = user(1L, "kai");
-        AppUser member = user(2L, "sam");
+        AppUser owner = user(1L, "test-owner");
+        AppUser member = user(2L, "test-member");
         Clan clan = clan(7L, owner);
         given(clanService.findVisibleClan(7L)).willReturn(Optional.of(clan));
         given(membershipService.roster(clan)).willReturn(List.of(
@@ -59,10 +59,11 @@ class ClanMembersApiControllerTest {
         mockMvc.perform(get("/api/clans/7/members"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].displayName").value("kai"))
+                .andExpect(jsonPath("$[0].displayName").value("test-owner"))
                 .andExpect(jsonPath("$[0].role").value("OWNER"))
-                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[0].id").doesNotExist())
+                .andExpect(jsonPath("$[0].joinedAt").doesNotExist())
+                .andExpect(jsonPath("$[1].displayName").value("test-member"))
                 .andExpect(jsonPath("$[1].role").value("MEMBER"));
     }
 

@@ -56,8 +56,8 @@ class ClanCreateApiControllerTest {
     @MockitoBean
     private MembershipService membershipService;
 
-    private final AppUser kai = user(1L, "kai");
-    private final Clan clan = clan(7L, kai);
+    private final AppUser testOwner = user(1L, "test-owner");
+    private final Clan clan = clan(7L, testOwner);
 
     private static AppUser user(long id, String name) {
         AppUser user = new AppUser("sub-" + id, name, "local", null);
@@ -105,9 +105,9 @@ class ClanCreateApiControllerTest {
     @Test
     @DisplayName("creating passes every form field to the service and returns 201")
     void createClan() throws Exception {
-        given(users.require(any())).willReturn(kai);
+        given(users.require(any())).willReturn(testOwner);
         given(clanManagementService.create(any(), any())).willReturn(clan);
-        ClanMembership owner = new ClanMembership(clan, kai, "OWNER");
+        ClanMembership owner = new ClanMembership(clan, testOwner, "OWNER");
         given(membershipService.roster(clan))
                 .willReturn(List.of(new MemberCard(owner)));
 
@@ -142,7 +142,7 @@ class ClanCreateApiControllerTest {
     @Test
     @DisplayName("a create rule violation is returned as JSON 400")
     void createRuleViolationIsJson() throws Exception {
-        given(users.require(any())).willReturn(kai);
+        given(users.require(any())).willReturn(testOwner);
         given(clanManagementService.create(any(), any()))
                 .willThrow(new ClanRuleViolation("The clan tag is already in use."));
 

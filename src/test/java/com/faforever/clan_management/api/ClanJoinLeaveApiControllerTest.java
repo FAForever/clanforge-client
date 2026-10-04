@@ -51,9 +51,9 @@ class ClanJoinLeaveApiControllerTest {
     @MockitoBean
     private MembershipService membershipService;
 
-    private final AppUser kai = user(1L, "kai");
-    private final AppUser sam = user(2L, "sam");
-    private final Clan clan = clan(7L, kai);
+    private final AppUser testOwner = user(1L, "test-owner");
+    private final AppUser testMember = user(2L, "test-member");
+    private final Clan clan = clan(7L, testOwner);
 
     @Test
     @DisplayName("joining and leaving require a bearer token")
@@ -69,9 +69,9 @@ class ClanJoinLeaveApiControllerTest {
     @Test
     @DisplayName("joining returns the new membership")
     void joinClan() throws Exception {
-        given(users.require(any())).willReturn(sam);
-        ClanMembership membership = new ClanMembership(clan, sam, "MEMBER");
-        given(membershipService.join(7L, sam)).willReturn(membership);
+        given(users.require(any())).willReturn(testMember);
+        ClanMembership membership = new ClanMembership(clan, testMember, "MEMBER");
+        given(membershipService.join(7L, testMember)).willReturn(membership);
 
         mockMvc.perform(post("/api/clans/7/join")
                         .header(HttpHeaders.AUTHORIZATION, bearer("sub-2")))
@@ -85,23 +85,23 @@ class ClanJoinLeaveApiControllerTest {
     @Test
     @DisplayName("leaving checks the path clan and returns 204")
     void leaveClan() throws Exception {
-        given(users.require(any())).willReturn(sam);
+        given(users.require(any())).willReturn(testMember);
 
         mockMvc.perform(post("/api/clans/7/leave")
                         .header(HttpHeaders.AUTHORIZATION, bearer("sub-2")))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
-        verify(membershipService).leave(7L, sam);
+        verify(membershipService).leave(7L, testMember);
     }
 
     @Test
     @DisplayName("leaving a different clan id returns JSON 403")
     void leaveDifferentClanIsForbidden() throws Exception {
-        given(users.require(any())).willReturn(sam);
+        given(users.require(any())).willReturn(testMember);
         org.mockito.Mockito.doThrow(new ClanAccessRefused(
                 "You can only leave your own clan."
-        )).when(membershipService).leave(9L, sam);
+        )).when(membershipService).leave(9L, testMember);
 
         mockMvc.perform(post("/api/clans/9/leave")
                         .header(HttpHeaders.AUTHORIZATION, bearer("sub-2")))

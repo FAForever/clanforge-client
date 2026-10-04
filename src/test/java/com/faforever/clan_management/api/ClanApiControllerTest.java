@@ -96,8 +96,10 @@ class ClanApiControllerTest {
                 .andExpect(jsonPath("$.tag").value("BC"))
                 .andExpect(jsonPath("$.ownerId").value(10))
                 .andExpect(jsonPath("$.ownerDisplayName").value("admin"))
-                .andExpect(jsonPath("$.members[0].id").value(10))
+                .andExpect(jsonPath("$.members[0].displayName").value("admin"))
                 .andExpect(jsonPath("$.members[0].role").value("OWNER"))
+                .andExpect(jsonPath("$.members[0].id").doesNotExist())
+                .andExpect(jsonPath("$.members[0].joinedAt").doesNotExist())
                 .andExpect(jsonPath("$.motd").doesNotExist());
     }
 
