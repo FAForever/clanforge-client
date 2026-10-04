@@ -5,6 +5,8 @@ setlocal
 cd /d "%~dp0"
 if not exist selenium_run mkdir selenium_run
 set OUT=selenium_run
+set TESTS=%*
+if "%TESTS%"=="" set TESTS=selenium_tests
 echo started %date% %time%> %OUT%\status.txt
 
 echo [1/5] Starting the database (docker compose up -d)...
@@ -38,7 +40,7 @@ if errorlevel 1 (echo FAILED pip>> %OUT%\status.txt & echo pip failed, see %OUT%
 
 echo [5/5] Running the Selenium tests in a visible Chrome window...
 echo step5 pytest>> %OUT%\status.txt
-%OUT%\venv\Scripts\python.exe -m pytest selenium_tests --headed --slow 0.4 -p no:cacheprovider -rA --junitxml=%OUT%\results.xml > %OUT%\pytest.log 2>&1
+%OUT%\venv\Scripts\python.exe -m pytest %TESTS% --headed --slow 0.4 -p no:cacheprovider -rA --junitxml=%OUT%\results.xml > %OUT%\pytest.log 2>&1
 echo pytest exit %errorlevel%>> %OUT%\status.txt
 type %OUT%\pytest.log | findstr /r /c:"passed" /c:"failed" /c:"error"
 
