@@ -122,8 +122,7 @@ class MembershipServiceTest {
                 testMember,
                 "MEMBER"
         );
-        given(memberships.findActiveByUserId(11L))
-                .willReturn(Optional.of(mine));
+        holds(testMember, mine);
 
         assertThatThrownBy(() -> service.leave(9L, testMember))
                 .isInstanceOf(ClanAccessRefused.class)

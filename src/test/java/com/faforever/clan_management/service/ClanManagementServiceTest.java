@@ -200,7 +200,7 @@ class ClanManagementServiceTest {
     void deleteRefusesDifferentPathClan() {
         AppUser testOwner = Fixtures.user(10L, "test-owner");
         Clan clan = Fixtures.clan(7L, "Bad Company", "BC", testOwner, false);
-        given(memberships.findActiveByUserId(10L)).willReturn(Optional.of(
+        given(membershipService.lockedMembership(testOwner)).willReturn(Optional.of(
                 Fixtures.membership(5L, clan, testOwner, "OWNER")
         ));
 
