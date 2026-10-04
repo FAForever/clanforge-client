@@ -1,7 +1,5 @@
 """Selenium tests for signing in (the login popup on / and /login).
 
-Originally written by a teammate; integrated into the suite with these
-changes:
   * the "opens popup" test starts on / (Home). /login renders the popup
     already open (PageController sets showLogin), so starting there could
     never catch a broken Login button.
