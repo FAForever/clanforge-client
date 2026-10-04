@@ -136,7 +136,7 @@ public class ClanApiController {
             Authentication authentication
     ) {
         AppUser actor = appUserService.require(authentication);
-        Clan clan = clanManagementService.update(actor, id, request.toForm());
+        Clan clan = clanManagementService.patch(actor, id, request.toPatch());
         return ClanDetailResponse.from(clan, membershipService.roster(clan));
     }
 

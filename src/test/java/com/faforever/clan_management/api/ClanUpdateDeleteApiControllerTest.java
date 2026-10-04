@@ -35,6 +35,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.faforever.clan_management.service.ClanForm;
+import com.faforever.clan_management.service.ClanPatch;
+
+import org.mockito.ArgumentCaptor;
 
 @WebMvcTest(ClanApiController.class)
 @Import(SecurityConfig.class)
@@ -102,21 +108,40 @@ class ClanUpdateDeleteApiControllerTest {
     }
 
     @Test
-    @DisplayName("updating passes the path clan to the service")
+    @DisplayName("patching changes only the fields sent in the request")
     void updateClan() throws Exception {
         given(users.require(any())).willReturn(testOwner);
-        given(clanManagementService.update(any(), eq(7L), any()))
+        given(clanManagementService.patch(any(), eq(7L), any()))
                 .willReturn(clan);
         given(membershipService.roster(clan)).willReturn(List.of());
 
         mockMvc.perform(patch("/api/clans/7")
                         .header(HttpHeaders.AUTHORIZATION, bearer("sub-1"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Bad Company\",\"tag\":\"BC\"}"))
+                        .content("{\"description\":\"Updated description\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(7));
 
-        verify(clanManagementService).update(any(), eq(7L), any());
+        ArgumentCaptor<ClanPatch> patch = ArgumentCaptor.forClass(ClanPatch.class);
+        verify(clanManagementService).patch(eq(testOwner), eq(7L), patch.capture());
+
+        ClanForm existing = ClanForm.of(new Clan(
+                "Original name",
+                "OLD",
+                "Original description",
+                testOwner,
+                "PRIVATE",
+                true
+        ));
+        existing.setRegion("Oceania");
+        patch.getValue().applyTo(existing);
+
+        assertThat(existing.getName()).isEqualTo("Original name");
+        assertThat(existing.getTag()).isEqualTo("OLD");
+        assertThat(existing.getDescription()).isEqualTo("Updated description");
+        assertThat(existing.getRegion()).isEqualTo("Oceania");
+        assertThat(existing.isPublicClan()).isFalse();
+        assertThat(existing.isRequiresInvitation()).isTrue();
     }
 
     @Test
@@ -136,7 +161,7 @@ class ClanUpdateDeleteApiControllerTest {
     @DisplayName("using another clan id returns JSON 403")
     void differentClanIsForbidden() throws Exception {
         given(users.require(any())).willReturn(testOwner);
-        given(clanManagementService.update(any(), eq(9L), any()))
+        given(clanManagementService.patch(any(), eq(9L), any()))
                 .willThrow(new ClanAccessRefused(
                         "You can only edit your own clan."
                 ));

@@ -1,6 +1,7 @@
 package com.faforever.clan_management.api;
 
 import com.faforever.clan_management.service.ClanForm;
+import com.faforever.clan_management.service.ClanPatch;
 
 public record ClanWriteRequest(
         String name,
@@ -21,5 +22,16 @@ public record ClanWriteRequest(
                 requiresInvitation != null && requiresInvitation
         );
         return form;
+    }
+
+    public ClanPatch toPatch() {
+        return new ClanPatch(
+                name,
+                tag,
+                description,
+                region,
+                publicClan,
+                requiresInvitation
+        );
     }
 }

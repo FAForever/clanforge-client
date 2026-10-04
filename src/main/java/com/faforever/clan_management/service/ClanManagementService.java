@@ -74,6 +74,17 @@ public class ClanManagementService {
         return update(me, actor, form);
     }
 
+    @Transactional
+    public Clan patch(AppUser actor, Long clanId, ClanPatch patch) {
+        ClanMembership me = membershipService.manager(actor,"Only the owner and moderators can edit the clan.");
+        if (!me.getClan().getId().equals(clanId)) {
+            throw new ClanAccessRefused("You can only edit your own clan.");
+        }
+        ClanForm form = ClanForm.of(me.getClan());
+        patch.applyTo(form);
+        return update(me, actor, form);
+    }
+
     private Clan update(ClanMembership me, AppUser actor, ClanForm form) {
         Clan clan = me.getClan();
         check(form, clan);
