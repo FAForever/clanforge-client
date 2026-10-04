@@ -64,12 +64,44 @@ public class MembershipService {
     }
 
     @Transactional
-    public void leave(AppUser user) {
-        ClanMembership m = lockedMembership(user).orElseThrow(() -> new ClanRuleViolation("You are not in a clan."));
-        if (ownerRole.equals(m.getRole())) throw new ClanRuleViolation("Transfer ownership or delete the clan before leaving it."); // the owner leaves by handing the clan over or deleting it, never by walking out
-        m.setLeftAt(OffsetDateTime.now());
-        events.record("clan_membership", m.getId(), "MemberLeft", events.membershipPayload(m), user);
+public void leave(AppUser user) {
+    ClanMembership membership = lockedMembership(user)
+            .orElseThrow(() ->
+                    new ClanRuleViolation("You are not in a clan."));
+    leave(membership, user);
+}
+
+@Transactional
+public void leave(Long clanId, AppUser user) {
+    ClanMembership membership = lockedMembership(user)
+            .orElseThrow(() ->
+                    new ClanRuleViolation("You are not in a clan."));
+
+    if (!membership.getClan().getId().equals(clanId)) {
+        throw new ClanAccessRefused(
+                "You can only leave your own clan."
+        );
     }
+
+    leave(membership, user);
+}
+
+private void leave(ClanMembership membership, AppUser user) {
+    if (ownerRole.equals(membership.getRole())) {
+        throw new ClanRuleViolation(
+                "Transfer ownership or delete the clan before leaving it."
+        );
+    }
+
+    membership.setLeftAt(OffsetDateTime.now());
+    events.record(
+            "clan_membership",
+            membership.getId(),
+            "MemberLeft",
+            events.membershipPayload(membership),
+            user
+    );
+}
 
     // the owner can remove anyone but themselves, a moderator only ordinary members
     @Transactional

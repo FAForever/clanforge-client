@@ -31,6 +31,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 //the rules around creating, editing, deleting and handing over a clan, with the database mocked away
 @ExtendWith(MockitoExtension.class)
 class ClanManagementServiceTest {
@@ -130,6 +132,59 @@ class ClanManagementServiceTest {
     }
 
     @Test
+    @DisplayName("the API path cannot be used to edit another clan")
+    void updateRefusesDifferentPathClan() {
+        AppUser testOwner = Fixtures.user(10L, "test-owner");
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", testOwner, false);
+        given(membershipService.manager(eq(testOwner), anyString()))
+                .willReturn(Fixtures.membership(5L, clan, testOwner, "OWNER"));
+
+        assertThatThrownBy(() ->
+                service.update(testOwner, 9L, form("New Name", "NEW")))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessage("You can only edit your own clan.");
+        assertThat(clan.getName()).isEqualTo("Bad Company");
+    }
+
+    @Test
+    @DisplayName("a partial update preserves fields that were not changed")
+    void patchPreservesUnchangedFields() {
+        AppUser testOwner = Fixtures.user(10L, "test-owner");
+        Clan clan = new Clan(
+                "Bad Company",
+                "BC",
+                "Original description",
+                testOwner,
+                "PRIVATE",
+                true
+        );
+        ReflectionTestUtils.setField(clan, "id", 7L);
+        clan.setRegion("Oceania");
+        given(membershipService.manager(eq(testOwner), anyString()))
+                .willReturn(Fixtures.membership(5L, clan, testOwner, "OWNER"));
+
+        service.patch(
+                testOwner,
+                7L,
+                new ClanPatch(
+                        null,
+                        null,
+                        "Updated description",
+                        null,
+                        null,
+                        null
+                )
+        );
+
+        assertThat(clan.getName()).isEqualTo("Bad Company");
+        assertThat(clan.getTag()).isEqualTo("BC");
+        assertThat(clan.getDescription()).isEqualTo("Updated description");
+        assertThat(clan.getRegion()).isEqualTo("Oceania");
+        assertThat(clan.getVisibility()).isEqualTo("PRIVATE");
+        assertThat(clan.isRequiresInvitation()).isTrue();
+    }
+
+    @Test
     @DisplayName("a moderator cannot delete the clan")
     void deleteRefusesModerator() {
         Clan clan = Fixtures.clan(7L, "Bad Company","BC",sam, false);
@@ -137,6 +192,21 @@ class ClanManagementServiceTest {
         assertThatThrownBy(() -> service.delete(kai))
                 .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("Only the owner can delete");
+        assertThat(clan.getDeletedAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("the API path cannot be used to delete another clan")
+    void deleteRefusesDifferentPathClan() {
+        AppUser testOwner = Fixtures.user(10L, "test-owner");
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", testOwner, false);
+        given(membershipService.lockedMembership(testOwner)).willReturn(Optional.of(
+                Fixtures.membership(5L, clan, testOwner, "OWNER")
+        ));
+
+        assertThatThrownBy(() -> service.delete(testOwner, 9L))
+                .isInstanceOf(ClanAccessRefused.class)
+                .hasMessage("You can only delete your own clan.");
         assertThat(clan.getDeletedAt()).isNull();
     }
 
