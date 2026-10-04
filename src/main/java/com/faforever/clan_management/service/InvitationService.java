@@ -82,6 +82,12 @@ public class InvitationService {
 
     @Transactional
     public ClanMembership accept(AppUser user, Long id) {
+        Optional<Long> clanId = invitations.findClanIdByIdAndInviteeId(id, user.getId(), OffsetDateTime.now()); //the clock open() uses below, not the database's
+        if (clanId.isPresent()) { // an open invitation of the caller's, so the two refusals it could still meet come here, in the order they come below, only sooner
+            if (!invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(id, "ACTIVE")) throw new ClanRuleViolation("That clan is no longer taking members.");
+            if (memberships.existsByUserIdAndLeftAtIsNull(user.getId())) throw new ClanRuleViolation("Leave your current clan before accepting an invite.");
+            membershipService.lockClan(clanId.get()); //locked before the invitation is read, so a delete running now finishes first and the revoke it wrote is what gets read
+        }
         ClanInvitation inv = open(user, id);
         Clan clan = inv.getClan();  // accepting joins the clan in the same transaction, one active membership per person is the database rule this leans on
         if (clan.getDeletedAt() != null || !"ACTIVE".equals(clan.getStatus())) throw new ClanRuleViolation("That clan is no longer taking members.");
@@ -97,6 +103,7 @@ public class InvitationService {
 
     @Transactional
     public void decline(AppUser user, Long id) {
+        invitations.findClanIdByIdAndInviteeId(id,user.getId(), OffsetDateTime.now()).ifPresent(membershipService::lockClan); //the same lock accept takes, so a decline cannot overwrite a revoke from a delete
         ClanInvitation inv = open(user,id);
         inv.setState("DECLINED");
         inv.setRespondedAt(OffsetDateTime.now());
@@ -107,7 +114,7 @@ public class InvitationService {
     public void revoke(AppUser actor, Long id) {
         ClanMembership me = membershipService.manager(actor,"Only the owner and moderators can revoke invites.");
         ClanInvitation inv = invitations.findById(id).orElseThrow(() -> new ClanRuleViolation("That invitation does not exist."));
-        if (!inv.getClan().getId().equals(me.getClan().getId())) throw new ClanAccessRefused("That invitation belongs to another clan.");
+        if (!inv.getClan().getId().equals(me.getClan().getId())) throw new ClanRuleViolation("That invitation does not exist."); //another clans invitation reads the same as a missing one, so ids cannot be probed
         if (!"PENDING".equals(inv.getState())) throw new ClanRuleViolation("That invitation is no longer open.");
         inv.setState("REVOKED");
         inv.setRespondedAt(OffsetDateTime.now());
@@ -117,7 +124,7 @@ public class InvitationService {
 
     private ClanInvitation open(AppUser user,Long id) {
         ClanInvitation inv = invitations.findById(id).orElseThrow(() -> new ClanRuleViolation("That invitation does not exist.")); // an invitation the given person may still answer: theirs, pending, and not past its expiry
-        if (!inv.getInvitee().getId().equals(user.getId())) throw new ClanAccessRefused("That invitation is not yours.");
+        if (!inv.getInvitee().getId().equals(user.getId())) throw new ClanRuleViolation("That invitation does not exist."); // someone elses invitation reads the same as a missing one
         if (!"PENDING".equals(inv.getState())) throw new ClanRuleViolation("That invitation is no longer open.");
         if (!inv.getExpiresAt().isAfter(OffsetDateTime.now())) throw new ClanRuleViolation("That invitation has expired.");
         return inv;

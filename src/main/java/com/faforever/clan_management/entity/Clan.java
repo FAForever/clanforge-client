@@ -2,6 +2,8 @@ package com.faforever.clan_management.entity;
 
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,6 +16,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "clan")
+@DynamicUpdate
 public class Clan {
 
     @Id
@@ -149,6 +152,10 @@ public class Clan {
 
     public String getStatus() {
         return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getTagColor() {

@@ -45,6 +45,22 @@ class NotificationServiceTest {
     }
 
     @Test
+    @DisplayName("an administrator's action reads as one sentence with no name, and the clan update it wrote stays quiet")
+    void adminActionsNameNobody() {
+        NotificationService s = service();
+        AppUser admin = Fixtures.user(1L, "Admin Person");
+        assertThat(s.sentence(new ClanEvent("clan", 7L,"ClanUpdated","{\"name\": \"Good Company\", \"moderationAction\": \"RENAME\"}", admin))).isNull();
+        assertThat(s.sentence(new ClanEvent("clan", 7L, "ClanUpdated", "{\"name\": \"Good Company\"}", sam))).isEqualTo("Sam updated the clan details.");
+        assertThat(s.sentence(new ClanEvent("clan", 7L,"ModerationActionPerformed", "{\"action\": \"SUSPEND\", \"reason\": \"offensive name\"}",admin))).isEqualTo("An administrator suspended the clan.");
+        assertThat(s.sentence(new ClanEvent("clan", 7L, "ModerationActionPerformed", "{\"action\": \"UNSUSPEND\"}", admin))).isEqualTo("An administrator lifted the clan's suspension.");
+        assertThat(s.sentence(new ClanEvent("clan", 7L,"ModerationActionPerformed","{\"action\": \"RENAME\"}", admin))).isEqualTo("An administrator renamed the clan.");
+        assertThat(s.sentence(new ClanEvent("clan", 7L, "ModerationActionPerformed", "{\"action\": \"RETAG\"}", admin))).isEqualTo("An administrator changed the clan tag.");
+        assertThat(s.sentence(new ClanEvent("clan", 7L, "ModerationActionPerformed", "{\"action\": \"RESTORE\"}", admin))).isNull();
+        assertThat(s.sentence(new ClanEvent("clan", 7L,"ModerationActionPerformed", "not json", admin))).isNull();
+        //System.out.println("admin sentences ok");
+    }
+
+    @Test
     @DisplayName("the bell lists the clan's latest rows in order and skips the silent ones")
     void forClanSkipsSilentRows() {
         given(events.findLatestForClan(7L, 5)).willReturn(List.of(

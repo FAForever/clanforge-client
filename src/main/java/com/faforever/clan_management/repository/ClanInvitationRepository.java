@@ -33,4 +33,12 @@ public interface ClanInvitationRepository extends JpaRepository<ClanInvitation, 
     List<ClanInvitation> findByClanIdAndState(Long clanId, String state);
 
     Optional<ClanInvitation> findByClanIdAndInviteeIdAndState(Long clanId, Long inviteeId, String state);
+
+    //just the clan of an invitation sent to this person, so that clan can be locked before the invitation itself is read, and nobody else's answer ever waits on it
+    //pending and unexpired only, so an invitation answered long ago is no way onto the lock either
+    @Query("select i.clan.id from ClanInvitation i where i.id = :id and i.invitee.id = :userId and i.state = 'PENDING' and i.expiresAt > :now")
+    Optional<Long> findClanIdByIdAndInviteeId(@Param("id") Long id, @Param("userId") Long userId, @Param("now") OffsetDateTime now);
+
+    //whether the clan behind an invitation still takes members, asked before the lock so an accept that will be refused never waits on it
+    boolean existsByIdAndClanStatusAndClanDeletedAtIsNull(Long id,String status);
 }

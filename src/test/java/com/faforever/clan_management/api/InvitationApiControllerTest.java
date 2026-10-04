@@ -116,7 +116,10 @@ class InvitationApiControllerTest {
                 .andExpect(jsonPath("$.inviterDisplayName").value("kai"))
                 .andExpect(jsonPath("$.role").value("MODERATOR"))
                 .andExpect(jsonPath("$.state").value("PENDING"))
-                .andExpect(jsonPath("$.expiresAt").exists());
+                .andExpect(jsonPath("$.clanName").value("Bad Company"))
+                .andExpect(jsonPath("$.inviterId").value(1))
+                .andExpect(jsonPath("$.expiresAt").value(org.hamcrest.Matchers.startsWith(java.time.LocalDate.now().plusDays(7).toString()))) //a week out, the invitations own expiry and not its creation
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.startsWith(java.time.LocalDate.now().toString())));
         ArgumentCaptor<Authentication> who = ArgumentCaptor.forClass(Authentication.class);
         verify(users).require(who.capture());
         //System.out.println("caller " + who.getValue().getName());
@@ -151,10 +154,10 @@ class InvitationApiControllerTest {
         mockMvc.perform(post("/api/clans/9/invite").header(HttpHeaders.AUTHORIZATION,bearer("sub-2")).contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"kai\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("You can only invite players to your own clan."));
-        given(invitations.accept(sam, 8L)).willThrow(new ClanAccessRefused("That invitation is not yours."));
+        given(invitations.accept(sam, 8L)).willThrow(new ClanAccessRefused("Only the owner can invite as moderator."));
         mockMvc.perform(post("/api/invitations/8/accept").header(HttpHeaders.AUTHORIZATION, bearer("sub-2")))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("That invitation is not yours."));
+                .andExpect(jsonPath("$.message").value("Only the owner can invite as moderator."));
     }
 
     @Test

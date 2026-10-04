@@ -37,6 +37,7 @@ public class AppUserService {
             return Optional.empty();
         }
         String subject = auth.getName(); //what hydra will send as sub
+        if (subject == null || subject.isBlank()) return Optional.empty();
         //System.out.println("subject " + subject);
         return Optional.of(users.findByOidcSubject(subject).orElseGet(() -> users.save(new AppUser(subject, subject, "local", null))));
     }
