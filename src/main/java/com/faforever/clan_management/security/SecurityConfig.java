@@ -1,6 +1,7 @@
 package com.faforever.clan_management.security;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +24,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -51,7 +53,9 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
-            ObjectProvider<JwtDecoder> jwtDecoders
+            ObjectProvider<JwtDecoder> jwtDecoders,
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole,
+            @Value("${clan.api.max-body-bytes:65536}") long maxBody
     ) throws Exception {
         http.securityMatcher("/api/**")
             .authorizeHttpRequests(auth -> auth
@@ -60,6 +64,9 @@ public class SecurityConfig {
                         "/api/clans",
                         "/api/clans/**"
                 ).permitAll()
+                // Everything under /api/admin is for administrators only. The
+                // role arrives in the token, see TokenRoles.
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_" + adminRole.trim())
                 .anyRequest().authenticated()
             )
             .csrf(csrf -> csrf.disable())
@@ -67,13 +74,17 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(
-                        new BearerTokenAuthenticationEntryPoint()));
+                        new BearerTokenAuthenticationEntryPoint()))
+            // A JSON body has no size cap of its own, so the API sets one.
+            .addFilterBefore(new ApiBodyLimit(maxBody), BearerTokenAuthenticationFilter.class);
 
         JwtDecoder jwtDecoder = jwtDecoders.getIfAvailable();
 
         if (jwtDecoder != null) {
             http.oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.decoder(jwtDecoder)));
+                .jwt(jwt -> jwt
+                    .decoder(jwtDecoder)
+                    .jwtAuthenticationConverter(new ApiTokenConverter())));
         }
 
         return http.build();

@@ -141,6 +141,15 @@ public class ClanManagementService {
     public void delete(AppUser actor) {
         ClanMembership me = owner(actor, "Only the owner can delete the clan.");
         Clan clan = me.getClan();
+        int gone = close(clan);
+        Map<String,Object> payload = events.clanPayload(clan);
+        payload.put("membersRemoved",gone);
+        events.record("clan", clan.getId(),"ClanDeleted", payload, actor);
+        //System.out.println("deleted " + clan.getTag() + " " + gone);
+    }
+
+    //what deleting does to the rows, shared by the owner deleting their clan and an administrator deleting any clan
+    int close(Clan clan) {
         OffsetDateTime now = OffsetDateTime.now(); // a soft delete: the row stays for the history table, memberships close and open invites are revoked
         int gone = 0;
         for (ClanMembership m : memberships.findRoster(clan.getId())) {
@@ -153,10 +162,7 @@ public class ClanManagementService {
         }
         clan.setDeletedAt(now);
         clan.touch();
-        Map<String,Object> payload = events.clanPayload(clan);
-        payload.put("membersRemoved", gone);
-        events.record("clan", clan.getId(),"ClanDeleted", payload, actor);
-        //System.out.println("deleted " + clan.getTag() + " " + gone);
+        return gone;
     }
 
     // the old owner stays on as a moderator, matching what the settings page promised
@@ -177,7 +183,7 @@ public class ClanManagementService {
     }
 
     private ClanMembership owner(AppUser actor, String refusal) {
-        ClanMembership me = memberships.findActiveByUserId(actor.getId()).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
+        ClanMembership me = membershipService.lockedMembership(actor).orElseThrow(() -> new ClanAccessRefused("You are not in a clan.")); //the clan locked before the role is read, see lockedMembership
         if (!MembershipService.ownerRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
         return me;
     }
@@ -185,15 +191,42 @@ public class ClanManagementService {
     private void check(ClanForm form, Clan self) {
         String name = form.getName() == null ? "" : form.getName().trim();
         String tag = form.getTag() == null ? "" : form.getTag().trim();//name and tag rules, then the two uniqueness checks the database also enforces, so the person sees a sentence instead of a stack trace
+        nameShape(name);
+        tagShape(tag);
+        if (!regions.accepts(form.getRegion())) throw new ClanRuleViolation("Pick a region from the list.");
+        nameFree(name, self);
+        tagFree(tag, self);
+        //System.out.println("checked " + name + " " + tag);
+    }
+
+    //the name rules on their own, for an administrator renaming a clan that is not theirs
+    void checkName(String name, Clan self) {
+        nameShape(name);
+        nameFree(name, self);
+    }
+
+    void checkTag(String tag, Clan self) {
+        tagShape(tag);
+        tagFree(tag,self);
+    }
+
+    private void nameShape(String name) {
         if (name.isEmpty()) throw new ClanRuleViolation("Give the clan a name.");
         if (name.length() > nameMax) throw new ClanRuleViolation("Clan names are " + nameMax + " characters at most.");
+    }
+
+    private void tagShape(String tag) {
         if (!tagRule.accepts(tag)) throw new ClanRuleViolation("Clan tag must be " + tagRule.getHint() + ".");
-        if (!regions.accepts(form.getRegion())) throw new ClanRuleViolation("Pick a region from the list.");
+    }
+
+    private void nameFree(String name,Clan self) {
         Optional<Clan> sameName = clans.findByNameIgnoreCaseAndDeletedAtIsNull(name);
         if (sameName.isPresent() && (self == null || !sameName.get().getId().equals(self.getId()))) throw new ClanRuleViolation("The clan name '" + name + "' is already in use.");
+    }
+
+    private void tagFree(String tag, Clan self) {
         Optional<Clan> sameTag = clans.findByTagIgnoreCaseAndDeletedAtIsNull(tag);
         if (sameTag.isPresent() && (self == null || !sameTag.get().getId().equals(self.getId()))) throw new ClanRuleViolation("The clan tag '" + tag + "' is already in use.");
-        //System.out.println("checked " + name + " " + tag);
     }
 
     private String blankToNull(String s) {

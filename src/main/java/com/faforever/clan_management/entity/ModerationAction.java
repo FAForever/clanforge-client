@@ -2,6 +2,9 @@ package com.faforever.clan_management.entity;
 
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,6 +39,8 @@ public class ModerationAction {
     @JoinColumn(name = "report_id")
     private ClanReport report;
 
+    //bound as json rather than varchar, postgres refuses a plain string into a jsonb column
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String previous;
 
@@ -43,6 +48,16 @@ public class ModerationAction {
     private OffsetDateTime performedAt;
 
     protected ModerationAction() {
+    }
+
+    public ModerationAction(Clan clan, AppUser moderator, String action, String reason, ClanReport report, String previous) {
+        this.clan = clan;
+        this.moderator = moderator;
+        this.action = action;
+        this.reason = reason;
+        this.report = report;
+        this.previous = previous;
+        this.performedAt = OffsetDateTime.now();
     }
 
     public Long getId() {

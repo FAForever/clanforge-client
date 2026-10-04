@@ -133,7 +133,7 @@ class ClanManagementServiceTest {
     @DisplayName("a moderator cannot delete the clan")
     void deleteRefusesModerator() {
         Clan clan = Fixtures.clan(7L, "Bad Company","BC",sam, false);
-        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L,clan, kai,"MODERATOR")));
+        given(membershipService.lockedMembership(kai)).willReturn(Optional.of(Fixtures.membership(5L,clan, kai,"MODERATOR")));
         assertThatThrownBy(() -> service.delete(kai))
                 .isInstanceOf(ClanAccessRefused.class)
                 .hasMessageContaining("Only the owner can delete");
@@ -144,7 +144,7 @@ class ClanManagementServiceTest {
     @DisplayName("someone in no clan cannot delete one, and that is an access refusal")
     void deleteRefusesOutsider() {
         AppUser zed = Fixtures.user(9L, "zed");
-        given(memberships.findActiveByUserId(9L)).willReturn(Optional.empty());
+        given(membershipService.lockedMembership(zed)).willReturn(Optional.empty());
         assertThatThrownBy(() -> service.delete(zed)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
         verify(clans, never()).save(any());
     }
@@ -156,7 +156,7 @@ class ClanManagementServiceTest {
         ClanMembership mine = Fixtures.membership(5L, clan, kai, "OWNER");
         ClanMembership theirs = Fixtures.membership(6L, clan, sam, "MEMBER");
         ClanInvitation open = Fixtures.invitation(8L, clan,Fixtures.user(3L,"lee"), kai, java.time.OffsetDateTime.now().plusDays(3));
-        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(mine));
+        given(membershipService.lockedMembership(kai)).willReturn(Optional.of(mine));
         given(memberships.findRoster(7L)).willReturn(List.of(mine, theirs));
         given(invitations.findByClanIdAndState(7L,"PENDING")).willReturn(List.of(open));
         given(events.clanPayload(clan)).willReturn(new LinkedHashMap<>());
@@ -169,10 +169,25 @@ class ClanManagementServiceTest {
     }
 
     @Test
+    @DisplayName("an owner whose clan an administrator deleted while they waited for the lock can neither delete it again nor hand it over")
+    void ownerRefusedOnceTheClanIsGone() {
+        Clan clan = Fixtures.clan(7L, "Bad Company", "BC", kai, false);
+        given(membershipService.lockedMembership(kai)).willReturn(Optional.empty()); //the clan went while the lock was awaited
+        assertThatThrownBy(() -> service.delete(kai)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
+        assertThatThrownBy(() -> service.transferOwnership(kai, 2L)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
+        //System.out.println("owner row left " + mine.getLeftAt());
+        assertThat(clan.getDeletedAt()).isNull();
+        assertThat(clan.getOwner()).isSameAs(kai);
+        verify(memberships,never()).findRoster(any());
+        verify(memberships, never()).findActiveByUserId(any()); //the owner row is only ever read under the lock
+        verify(events, never()).record(any(),any(), any(), any(),any());
+    }
+
+    @Test
     @DisplayName("ownership can only go to a current member")
     void transferRefusesNonMember() {
         Clan clan = Fixtures.clan(7L, "Bad Company", "BC",kai, false);
-        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(Fixtures.membership(5L, clan, kai,"OWNER")));
+        given(membershipService.lockedMembership(kai)).willReturn(Optional.of(Fixtures.membership(5L, clan, kai,"OWNER")));
         given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.empty());
         assertThatThrownBy(() -> service.transferOwnership(kai,2L))
                 .isInstanceOf(ClanRuleViolation.class)
@@ -186,7 +201,7 @@ class ClanManagementServiceTest {
         Clan clan = Fixtures.clan(7L, "Bad Company", "BC", kai, false);
         ClanMembership mine = Fixtures.membership(5L, clan, kai,"OWNER");
         ClanMembership theirs = Fixtures.membership(6L, clan,sam, "MEMBER");
-        given(memberships.findActiveByUserId(1L)).willReturn(Optional.of(mine));
+        given(membershipService.lockedMembership(kai)).willReturn(Optional.of(mine));
         given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.of(theirs));
         given(events.clanPayload(clan)).willReturn(new LinkedHashMap<>());
         service.transferOwnership(kai, 2L);
@@ -237,5 +252,23 @@ class ClanManagementServiceTest {
         f.setRegion("Mars");
         assertThatThrownBy(() -> service.create(kai, f)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("region");
         verify(clans, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("the name and tag checks an administrator uses refuse a taken name or tag and let the clan keep its own")
+    void checkNameAndTagOnTheirOwn() {
+        Clan mine = Fixtures.clan(7L,"Bad Company", "BC",kai, false);
+        Clan theirs = Fixtures.clan(8L, "Good Company", "GC",sam, false);
+        given(clans.findByNameIgnoreCaseAndDeletedAtIsNull("good company")).willReturn(Optional.of(theirs));
+        given(clans.findByNameIgnoreCaseAndDeletedAtIsNull("bad company")).willReturn(Optional.of(mine));
+        given(clans.findByTagIgnoreCaseAndDeletedAtIsNull("gc")).willReturn(Optional.of(theirs));
+        given(clans.findByTagIgnoreCaseAndDeletedAtIsNull("bc")).willReturn(Optional.of(mine));
+        assertThatThrownBy(() -> service.checkName("good company", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already in use");
+        assertThatThrownBy(() -> service.checkTag("gc", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already in use");
+        assertThatThrownBy(() -> service.checkName("", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("Give the clan a name");
+        assertThatThrownBy(() -> service.checkTag("TOOLONG", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("1 to 3");
+        service.checkName("bad company",mine);
+        service.checkTag("bc", mine);
+        //System.out.println("own name and tag pass");
     }
 }

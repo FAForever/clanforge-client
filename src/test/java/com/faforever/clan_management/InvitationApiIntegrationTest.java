@@ -21,11 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.Clan;
+import com.faforever.clan_management.entity.ClanInvitation;
 import com.faforever.clan_management.repository.AppUserRepository;
+import com.faforever.clan_management.repository.ClanInvitationRepository;
 import com.faforever.clan_management.repository.ClanEventRepository;
 import com.faforever.clan_management.repository.ClanRepository;
 import com.faforever.clan_management.service.ClanForm;
 import com.faforever.clan_management.service.ClanManagementService;
+import com.faforever.clan_management.service.InvitationService;
 import com.faforever.clan_management.service.MembershipService;
 
 import tools.jackson.databind.ObjectMapper;
@@ -58,6 +61,12 @@ class InvitationApiIntegrationTest {
     private MembershipService memberships;
     @Autowired
     private ObjectMapper json;
+    @Autowired
+    private InvitationService invitationService;
+    @Autowired
+    private ClanInvitationRepository invitationRows;
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
@@ -144,6 +153,11 @@ class InvitationApiIntegrationTest {
         mockMvc.perform(post("/api/clans/" + clan.getId() + "/invite").header(HttpHeaders.AUTHORIZATION,bearer(owner.getOidcSubject())).contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"nobody_" + stamp + "\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("No player named 'nobody_" + stamp + "'."));
+        MvcResult theirs = mockMvc.perform(post("/api/clans/" + clan.getId() + "/invite").header(HttpHeaders.AUTHORIZATION, bearer(owner.getOidcSubject())).contentType(MediaType.APPLICATION_JSON).content("{\"username\":\"" + outsider.getDisplayName()+"\"}")).andExpect(status().isCreated()).andReturn();
+        long theirsId = json.readTree(theirs.getResponse().getContentAsString()).path("id").asLong();
+        mockMvc.perform(post("/api/invitations/" + theirsId + "/accept").header(HttpHeaders.AUTHORIZATION, bearer(owner.getOidcSubject()))) //the owner trying the outsiders invitation
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("That invitation does not exist."));
         mockMvc.perform(post("/api/invitations/999999999/accept").header(HttpHeaders.AUTHORIZATION, bearer(outsider.getOidcSubject())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("That invitation does not exist."));
@@ -160,5 +174,23 @@ class InvitationApiIntegrationTest {
         mockMvc.perform(get("/api/invitations").header(HttpHeaders.AUTHORIZATION,bearer(sub))).andExpect(status().isOk());
         //System.out.println("row " + id + " for " + sub);
         assertThat(users.findByOidcSubject(sub).orElseThrow().getId()).isEqualTo(id);
+    }
+
+    @Test
+    @DisplayName("the clan behind an invitation is handed out for locking only to its invitee and only while it is open")
+    void lockLookupSeesOnlyOpenInvitations() {
+        String stamp = Long.toString(System.nanoTime());
+        AppUser owner = users.save(new AppUser("lk-owner-"+stamp, "lk_owner_" + stamp, "local", null));
+        AppUser invitee = users.save(new AppUser("lk-invitee-" + stamp,"lk_invitee_"+stamp, "local", null));
+        Clan clan = clanOwnedBy(owner, stamp);
+        ClanInvitation inv = invitationService.invite(owner, invitee.getDisplayName(), null);
+        assertThat(invitationRows.findClanIdByIdAndInviteeId(inv.getId(), invitee.getId(), java.time.OffsetDateTime.now())).contains(clan.getId());
+        assertThat(invitationRows.findClanIdByIdAndInviteeId(inv.getId(), owner.getId(), java.time.OffsetDateTime.now())).isEmpty(); //not the invitee
+        invitationService.decline(invitee, inv.getId());
+        //System.out.println("declined " + inv.getId());
+        assertThat(invitationRows.findClanIdByIdAndInviteeId(inv.getId(), invitee.getId(),java.time.OffsetDateTime.now())).isEmpty(); //answered, so no way onto the lock
+        ClanInvitation lapsed = invitationService.invite(owner,invitee.getDisplayName(), null);
+        jdbc.update("update clan_invitation set expires_at = now() - interval '1 minute' where id = ?", lapsed.getId()); //still pending, but past its expiry
+        assertThat(invitationRows.findClanIdByIdAndInviteeId(lapsed.getId(), invitee.getId(), java.time.OffsetDateTime.now())).isEmpty();
     }
 }

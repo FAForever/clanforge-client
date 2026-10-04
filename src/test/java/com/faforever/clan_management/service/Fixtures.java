@@ -8,6 +8,7 @@ import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.entity.ClanInvitation;
 import com.faforever.clan_management.entity.ClanMembership;
+import com.faforever.clan_management.entity.ClanReport;
 
 //entities with ids, which only the database hands out, so the unit tests set them by reflection
 final class Fixtures {
@@ -38,5 +39,11 @@ final class Fixtures {
         ClanInvitation i = new ClanInvitation(clan, invitee, inviter, expiresAt, "MEMBER");
         ReflectionTestUtils.setField(i, "id", id);
         return i;
+    }
+
+    static ClanReport report(long id,Clan clan, AppUser reporter, String category) {
+        ClanReport r = new ClanReport(clan, reporter,category,"reported by the test");
+        ReflectionTestUtils.setField(r, "id", id);
+        return r;
     }
 }
