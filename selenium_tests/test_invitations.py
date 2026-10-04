@@ -1,293 +1,156 @@
+"""Selenium tests for the Invitations page (/invitations).
+
+  * the shared setup (free player, fresh clan for admin, send an invite)
+    lives in one fixture and one helper instead of being repeated per test.
+  * Accept / Decline / Revoke press the button in the row for THIS test's
+    clan or player, not the first matching button on the page.
+  * each action checks the app's confirmation message, and decline/revoke
+    are checked from both sides (admin's sent list and player's inbox).
+  * admin and player are taken out of their clans again at the end.
+
+Accounts (dev profile): admin owns a fresh clan and sends invites; player
+receives them. player must be in no clan, or the invite cannot be accepted.
+"""
+
+import pytest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from helpers import (
-    wait,
-    login,
-    ensure_not_in_clan,
     create_clan,
-    text_of,
+    ensure_not_in_clan,
+    flash_error,
+    flash_notice,
+    login,
     path_of,
+    text_of,
+    wait,
 )
 
+MANAGER, INVITEE = "admin", "player"
 
-# ---------------------------------------------------------
-# Test 1: Manager can send an invitation
-# ---------------------------------------------------------
 
-def test_manager_can_send_invitation(driver, base_url):
-    # Make sure player is available to receive an invitation.
-    login(driver, base_url, "player")
-    ensure_not_in_clan(driver, base_url)
+# --------------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------------
 
-    # Make sure admin can create a fresh clan.
-    login(driver, base_url, "admin")
-    ensure_not_in_clan(driver, base_url)
-
-    clan_name, clan_tag = create_clan(
-        driver,
-        base_url,
-        description="Clan used for Selenium invitation testing."
-    )
-
-    # Open Invitations page.
+def open_invitations(driver, base_url):
     driver.get(base_url + "/invitations")
-
-    # Enter the player username.
-    username = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inviteUsername"))
-    )
-    username.send_keys("player")
-
-    # Send the invitation.
-    driver.find_element(
-        By.CSS_SELECTOR,
-        ".invite-form button[type='submit']"
-    ).click()
-
-    # Check the sent list.
-    sent_list = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "sentList"))
-    )
-
-    wait(driver).until(
-        lambda d: "player" in text_of(sent_list).lower()
-    )
-
-    assert "player" in text_of(sent_list).lower()
+    wait(driver).until(EC.presence_of_element_located((By.ID, "inboxList")))
 
 
-# ---------------------------------------------------------
-# Test 2: Recipient can see an invitation
-# ---------------------------------------------------------
+def row_in(driver, list_id, text):
+    """The invite row in #inboxList / #sentList whose name contains `text`, or None."""
+    for row in driver.find_elements(By.CSS_SELECTOR, f"#{list_id} .invite-row"):
+        if text.lower() in text_of(row.find_element(By.CSS_SELECTOR, ".invite-row-name")).lower():
+            return row
+    return None
 
-def test_recipient_can_see_invitation(driver, base_url):
-    # Player must not already be in a clan.
-    login(driver, base_url, "player")
+
+def send_invite(driver, base_url, username):
+    """As the signed-in manager, invite `username` through the form."""
+    open_invitations(driver, base_url)
+    box = wait(driver).until(EC.presence_of_element_located((By.ID, "inviteUsername")))
+    box.send_keys(username)
+    driver.find_element(By.CSS_SELECTOR, ".invite-form button[type='submit']").click()
+    wait(driver).until(lambda d: flash_notice(d) or flash_error(d))
+    assert flash_error(driver) is None, flash_error(driver)
+    return flash_notice(driver)
+
+
+@pytest.fixture
+def invite_clan(driver, base_url):
+    """A fresh clan owned by admin, with player in no clan. Returns its name."""
+    login(driver, base_url, INVITEE)
     ensure_not_in_clan(driver, base_url)
-
-    # Admin creates a fresh clan.
-    login(driver, base_url, "admin")
+    login(driver, base_url, MANAGER)
     ensure_not_in_clan(driver, base_url)
-
-    clan_name, clan_tag = create_clan(
-        driver,
-        base_url,
-        description="Clan used for Selenium invitation testing."
-    )
-
-    # Admin sends an invitation to player.
-    driver.get(base_url + "/invitations")
-
-    username = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inviteUsername"))
-    )
-    username.send_keys("player")
-
-    driver.find_element(
-        By.CSS_SELECTOR,
-        ".invite-form button[type='submit']"
-    ).click()
-
-    # Switch to player.
-    login(driver, base_url, "player")
-    driver.get(base_url + "/invitations")
-
-    inbox = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inboxList"))
-    )
-
-    # The clan that invited player should appear in the inbox.
-    wait(driver).until(
-        lambda d: clan_name in text_of(inbox)
-    )
-
-    assert clan_name in text_of(inbox)
+    name, _tag = create_clan(driver, base_url, description="Clan used for Selenium invitation testing.")
+    return name
 
 
-# ---------------------------------------------------------
-# Test 3: Recipient can decline an invitation
-# ---------------------------------------------------------
-
-def test_recipient_can_decline_invitation(driver, base_url):
-    # Player must be free to receive an invitation.
-    login(driver, base_url, "player")
-    ensure_not_in_clan(driver, base_url)
-
-    # Admin creates a clan.
-    login(driver, base_url, "admin")
-    ensure_not_in_clan(driver, base_url)
-
-    clan_name, clan_tag = create_clan(
-        driver,
-        base_url,
-        description="Clan used for Selenium invitation testing."
-    )
-
-    # Admin sends invitation.
-    driver.get(base_url + "/invitations")
-
-    username = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inviteUsername"))
-    )
-    username.send_keys("player")
-
-    driver.find_element(
-        By.CSS_SELECTOR,
-        ".invite-form button[type='submit']"
-    ).click()
-
-    # Switch to player.
-    login(driver, base_url, "player")
-    driver.get(base_url + "/invitations")
-
-    inbox = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inboxList"))
-    )
-
-    wait(driver).until(
-        lambda d: clan_name in text_of(inbox)
-    )
-
-    # Decline the invitation.
-    decline_button = wait(driver).until(
-        EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "form[action$='/decline'] button")
-        )
-    )
-    decline_button.click()
-
-    # Invitation should disappear from the inbox.
-    wait(driver).until(
-        lambda d: clan_name not in text_of(
-            d.find_element(By.ID, "inboxList")
-        )
-    )
-
-    assert clan_name not in text_of(
-        driver.find_element(By.ID, "inboxList")
-    )
+@pytest.fixture(scope="module", autouse=True)
+def _tidy_up(driver, base_url):
+    yield
+    for user in (INVITEE, MANAGER):
+        try:
+            login(driver, base_url, user)
+            ensure_not_in_clan(driver, base_url)
+        except Exception:  # noqa: BLE001 - cleanup must not hide results
+            pass
+    driver.delete_all_cookies()
 
 
-# ---------------------------------------------------------
-# Test 4: Manager can revoke an invitation
-# ---------------------------------------------------------
+# --------------------------------------------------------------------------
+# Tests
+# --------------------------------------------------------------------------
 
-def test_manager_can_revoke_invitation(driver, base_url):
-    # Player must be free to receive an invitation.
-    login(driver, base_url, "player")
-    ensure_not_in_clan(driver, base_url)
+def test_manager_can_send_invitation(driver, base_url, invite_clan):
+    notice = send_invite(driver, base_url, INVITEE)
+    assert notice == f"Invite sent to {INVITEE}."
 
-    # Admin creates a clan.
-    login(driver, base_url, "admin")
-    ensure_not_in_clan(driver, base_url)
-
-    clan_name, clan_tag = create_clan(
-        driver,
-        base_url,
-        description="Clan used for Selenium invitation testing."
-    )
-
-    # Admin sends invitation.
-    driver.get(base_url + "/invitations")
-
-    username = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inviteUsername"))
-    )
-    username.send_keys("player")
-
-    driver.find_element(
-        By.CSS_SELECTOR,
-        ".invite-form button[type='submit']"
-    ).click()
-
-    # Confirm player appears in sent invitations.
-    sent_list = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "sentList"))
-    )
-
-    wait(driver).until(
-        lambda d: "player" in text_of(sent_list).lower()
-    )
-
-    # Revoke the invitation.
-    revoke_button = wait(driver).until(
-        EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "form[action$='/revoke'] button")
-        )
-    )
-    revoke_button.click()
-
-    # Player should disappear from sent invitations.
-    wait(driver).until(
-        lambda d: "player" not in text_of(
-            d.find_element(By.ID, "sentList")
-        ).lower()
-    )
-
-    assert "player" not in text_of(
-        driver.find_element(By.ID, "sentList")
-    ).lower()
+    row = row_in(driver, "sentList", INVITEE)
+    assert row is not None, "player should be listed under Invites Sent"
+    assert text_of(row.find_element(By.CSS_SELECTOR, ".invite-status")) == "Pending"
+    assert text_of(row.find_element(By.CSS_SELECTOR, ".invite-row-meta")).startswith("Invited as Member")
 
 
-# ---------------------------------------------------------
-# Test 5: Recipient can accept an invitation
-# ---------------------------------------------------------
+def test_recipient_can_see_invitation(driver, base_url, invite_clan):
+    send_invite(driver, base_url, INVITEE)
 
-def test_recipient_can_accept_invitation(driver, base_url):
-    # Player must not already belong to a clan.
-    login(driver, base_url, "player")
-    ensure_not_in_clan(driver, base_url)
+    login(driver, base_url, INVITEE)
+    open_invitations(driver, base_url)
+    row = row_in(driver, "inboxList", invite_clan)
+    assert row is not None, f"{invite_clan} should be in player's inbox"
+    assert f"Invited by {MANAGER} as Member" in text_of(row.find_element(By.CSS_SELECTOR, ".invite-row-meta"))
+    assert row.find_elements(By.CSS_SELECTOR, "form[action$='/accept'] button")
+    assert row.find_elements(By.CSS_SELECTOR, "form[action$='/decline'] button")
 
-    # Admin creates a fresh clan.
-    login(driver, base_url, "admin")
-    ensure_not_in_clan(driver, base_url)
 
-    clan_name, clan_tag = create_clan(
-        driver,
-        base_url,
-        description="Clan used for Selenium invitation testing."
-    )
+def test_recipient_can_decline_invitation(driver, base_url, invite_clan):
+    send_invite(driver, base_url, INVITEE)
 
-    # Admin sends invitation to player.
-    driver.get(base_url + "/invitations")
+    login(driver, base_url, INVITEE)
+    open_invitations(driver, base_url)
+    row = row_in(driver, "inboxList", invite_clan)
+    assert row is not None
+    row.find_element(By.CSS_SELECTOR, "form[action$='/decline'] button").click()
 
-    username = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inviteUsername"))
-    )
-    username.send_keys("player")
+    wait(driver).until(lambda d: flash_notice(d) == "Invitation declined.")
+    assert row_in(driver, "inboxList", invite_clan) is None
+    # The manager no longer sees it as pending either.
+    login(driver, base_url, MANAGER)
+    open_invitations(driver, base_url)
+    assert row_in(driver, "sentList", INVITEE) is None
 
-    driver.find_element(
-        By.CSS_SELECTOR,
-        ".invite-form button[type='submit']"
-    ).click()
 
-    # Switch to player.
-    login(driver, base_url, "player")
-    driver.get(base_url + "/invitations")
+def test_manager_can_revoke_invitation(driver, base_url, invite_clan):
+    send_invite(driver, base_url, INVITEE)
 
-    inbox = wait(driver).until(
-        EC.presence_of_element_located((By.ID, "inboxList"))
-    )
+    row = row_in(driver, "sentList", INVITEE)
+    assert row is not None
+    row.find_element(By.CSS_SELECTOR, "form[action$='/revoke'] button").click()
 
-    wait(driver).until(
-        lambda d: clan_name in text_of(inbox)
-    )
+    wait(driver).until(lambda d: flash_notice(d) == "Invitation revoked.")
+    assert row_in(driver, "sentList", INVITEE) is None
+    # It has gone from the player's inbox too.
+    login(driver, base_url, INVITEE)
+    open_invitations(driver, base_url)
+    assert row_in(driver, "inboxList", invite_clan) is None
 
-    # Accept the invitation.
-    accept_button = wait(driver).until(
-        EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "form[action$='/accept'] button")
-        )
-    )
-    accept_button.click()
 
-    # The controller redirects a successful acceptance to /clanhome.
-    wait(driver).until(
-        lambda d: path_of(d) == "/clanhome"
-    )
+def test_recipient_can_accept_invitation(driver, base_url, invite_clan):
+    send_invite(driver, base_url, INVITEE)
 
-    assert path_of(driver) == "/clanhome"
+    login(driver, base_url, INVITEE)
+    open_invitations(driver, base_url)
+    row = row_in(driver, "inboxList", invite_clan)
+    assert row is not None
+    row.find_element(By.CSS_SELECTOR, "form[action$='/accept'] button").click()
 
-    # Verify the player is now viewing the clan they joined.
-    assert clan_name in driver.page_source
+    # InvitationController sends an accepted invite to My Clan.
+    wait(driver).until(lambda d: path_of(d) == "/clanhome")
+    assert flash_notice(driver) == f"Welcome to {invite_clan}."
+    assert text_of(driver.find_element(By.CSS_SELECTOR, ".clan-name")) == invite_clan
+    me_row = driver.find_element(By.CSS_SELECTOR, f".member-row[data-name='{INVITEE}']")
+    assert text_of(me_row.find_element(By.CSS_SELECTOR, ".member-role")) == "Member"
