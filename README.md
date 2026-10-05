@@ -248,17 +248,17 @@ APPLICATION FAILED TO START
 
 ## Project status
 
-**Working:** PostgreSQL with Flyway migrations, the 1,477-clan FAForever import, clan
-browsing and detail pages, clan creation, invitations, membership and roles, clan
-settings, a read-only REST endpoint (`GET /api/clans/{id}`) that returns a clan and
-its roster as JSON, OIDC sign-in via ORY Hydra, security headers and
-Content-Security-Policy, login rate limiting, containerisation, and CI.
+**Working:** PostgreSQL with Flyway migrations, the FAForever data import with 1,477
+clans, clan browsing and detail pages, clan creation, invitations, membership and
+roles, clan settings, a documented REST API for clan browsing and management,
+membership, invitations, reports and administration, OIDC sign in through ORY Hydra,
+security headers, CSP, login rate limiting, containers and CI.
 
-**Not yet built:** the rest of the REST API (listing clans, and any write operations
-such as create, join or role changes), a platform-wide administration interface for
-site moderators — administering a single clan already works, for its owner and
-moderators — and a production login provider. Hydra ships no login page, so a deployed
-build needs either the FAForever provider or an application that owns that page.
+**Not yet built:** a web interface for site moderators. The administration REST
+endpoints exist and clan owners and moderators can already manage their own clans.
+The project also needs a production login provider. Hydra does not include a login
+page, so deployment requires either the FAForever provider or an application that
+owns that page.
 
 ## Licence
 
