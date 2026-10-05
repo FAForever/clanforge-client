@@ -99,7 +99,14 @@ public class SecurityConfig {
             // ERROR dispatch, and since Spring Security 6 the filter chain applies to
             // ERROR dispatches too - so denying it turns every anonymous 404 into an
             // access-denied response and hides the real status.
-            .requestMatchers("/", "/login", "/error").permitAll()
+            .requestMatchers(
+                    "/",
+                    "/login",
+                    "/error",
+                    "/v3/api-docs/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**"
+            ).permitAll()
             // Reading clans is public. Joining one is a POST and needs a signed-in user.
             .requestMatchers(
                     HttpMethod.GET,
