@@ -56,9 +56,13 @@ services:
       URLS_CONSENT: http://localhost:3000/consent
       URLS_LOGOUT: http://localhost:3000/logout
       LOG_LEVEL: info
+    # 127.0.0.1 only, like every port in these files. The admin port matters most:
+    # it can register clients and accept logins, so anyone who reached it could
+    # mint a sign-in for any subject. The containers here use hydra:4444 and
+    # hydra:4445 on the compose network, which this does not affect.
     ports:
-      - "4444:4444"   # public: authorisation, token, discovery
-      - "4445:4445"   # admin: client registration, introspection
+      - "127.0.0.1:4444:4444"   # public: authorisation, token, discovery
+      - "127.0.0.1:4445:4445"   # admin: client registration, introspection
     depends_on:
       hydra-migrate:
         condition: service_completed_successfully
@@ -72,7 +76,7 @@ services:
       HYDRA_ADMIN_URL: http://hydra:4445
       PORT: "3000"
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - hydra
     restart: unless-stopped

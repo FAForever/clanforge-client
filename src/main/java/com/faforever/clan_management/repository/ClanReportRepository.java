@@ -36,4 +36,10 @@ public interface ClanReportRepository extends JpaRepository<ClanReport, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from ClanReport r where r.clan.id = :clanId and r.state = 'OPEN' order by r.id")
     List<ClanReport> lockOpenForClan(@Param("clanId") Long clanId);
+
+    //the same open reports for a page to show, newest first and without a lock, with the reporter loaded since the page reads it
+    @Query("select r from ClanReport r join fetch r.reporter where r.clan.id = :clanId and r.state = 'OPEN' order by r.createdAt desc, r.id desc")
+    List<ClanReport> findOpenForClan(@Param("clanId") Long clanId);
+
+    long countByState(String state);
 }

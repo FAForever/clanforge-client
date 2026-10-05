@@ -21,14 +21,20 @@ public class TokenRoles implements Converter<Jwt, Collection<GrantedAuthority>> 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
         List<GrantedAuthority> out = new ArrayList<>(scopes.convert(jwt));
-        Object ext = jwt.getClaim("ext"); //a token from another provider has no ext at all, or one of another shape, and then there are simply no roles
+        out.addAll(roles(jwt.getClaim("ext"))); //a token from another provider has no ext at all, or one of another shape, and then there are simply no roles
+        //System.out.println("authorities " + out);
+        return out;
+    }
+
+    // the ROLE_ authorities an ext claim carries, read here for an api token and by OidcRoles for a browser sign-in
+    static List<GrantedAuthority> roles(Object ext) {
+        List<GrantedAuthority> out = new ArrayList<>();
         if (ext instanceof Map<?,?> map && map.get("roles") instanceof Collection<?> roles) {
             for (Object r : roles) {
                 String name = r instanceof String s ? s.trim() : ""; //trimmed first, so a name of nothing but control characters is no role at all
                 if (!name.isEmpty()) out.add(new SimpleGrantedAuthority("ROLE_" + name));
             }
         }
-        //System.out.println("authorities " + out);
         return out;
     }
 }

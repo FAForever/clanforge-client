@@ -988,3 +988,316 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 /* descriptions and the message of the day keep their line breaks */
 .clan-card-desc, .clan-desc, .motd-text, .invite-row-note{ white-space:pre-line; }
+
+
+/* ================================================================
+   7. ADMIN CONSOLE
+   ================================================================ */
+/* ================================================================
+   ADMIN CONSOLE — the clan list, one clan's dossier and the report
+   queue. Built from the shared pieces above (page hero, panel, form
+   fields, danger zone, member rows, browse controls) plus its own:
+   the console kicker and tabs, status pills, list rows, report rows
+   and the moderation timeline. Status colours: green for active or
+   resolved, the accent for suspended or open, red for deleted.
+   ================================================================ */
+:root{
+  --ok:      #4fbf87;
+  --ok-soft: rgba(79,191,135,.1);
+}
+
+/* the admin link in the top bar, here and in clanforge.css */
+.nav-link-admin{ display:inline-flex; align-items:center; gap:6px; }
+.nav-link-admin .icon{ width:15px; height:15px; color:var(--accent); }
+.popover-link-admin{ color:var(--accent-bright); }
+
+/* ============================================================
+   CONSOLE KICKER + STATS
+   ============================================================ */
+.console-kicker{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--font-mono); font-size:.68rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent-bright);
+  padding:5px 12px; margin-bottom:14px;
+  border:1px solid var(--accent-dim); background:rgba(240,121,30,.07);
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% 100%,0 100%,0 var(--cut-sm));
+}
+.console-dot{
+  width:7px; height:7px; border-radius:50%; background:var(--accent);
+  box-shadow:0 0 8px var(--accent);
+  animation:console-pulse 1.8s ease-in-out infinite;
+}
+@keyframes console-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.3; } }
+
+.admin-stats .stat.is-ok .stat-value{ color:var(--ok); }
+.admin-stats .stat.is-warn .stat-value{ color:var(--accent-bright); }
+.admin-stats .stat.is-danger .stat-value{ color:var(--danger); }
+.stat-link{ text-decoration:none; color:inherit; transition:color .15s ease; }
+.stat-link:hover .stat-label{ color:var(--accent-bright); }
+.stat-link.is-hot .stat-value{ color:var(--accent-bright); text-shadow:0 0 16px rgba(240,121,30,.55); }
+
+/* ============================================================
+   CONSOLE TABS
+   ============================================================ */
+.console-tabs{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:28px 24px 0;
+}
+.console-tabs-inner{ display:flex; gap:4px; border-bottom:1px solid var(--border-steel); }
+.console-tab{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font-display); font-weight:600; font-size:.9rem; letter-spacing:.03em;
+  color:var(--text-secondary); text-decoration:none;
+  padding:10px 16px; margin-bottom:-1px;
+  border-bottom:2px solid transparent;
+  transition:color .15s ease, border-color .15s ease, background-color .15s ease;
+}
+.console-tab .icon{ width:16px; height:16px; color:var(--text-tertiary); transition:color .15s ease; }
+.console-tab:hover{ color:var(--text-primary); background:var(--bg-panel); }
+.console-tab.is-active{ color:var(--text-primary); border-bottom-color:var(--accent); }
+.console-tab.is-active .icon{ color:var(--accent); }
+
+.tab-count{
+  font-family:var(--font-mono); font-size:.64rem; font-weight:600; line-height:1.5;
+  padding:1px 8px; border-radius:20px;
+  background:var(--bg-panel-raised); color:var(--text-tertiary); border:1px solid var(--border-steel);
+}
+.tab-count.is-hot{ background:var(--accent); color:#1a0f05; border-color:var(--accent); }
+.panel-count{ margin-left:auto; letter-spacing:normal; }
+
+/* the report queue's state switch */
+.admin-filters{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:22px 24px 0;
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.filter-chip{
+  font-family:var(--font-mono); font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  text-decoration:none; color:var(--text-secondary);
+  padding:7px 14px; background:var(--bg-inset); border:1px solid var(--border-steel);
+  clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px);
+  transition:color .15s ease, border-color .15s ease;
+}
+.filter-chip:hover{ color:var(--text-primary); border-color:var(--accent-dim); }
+.filter-chip.is-active{ background:var(--accent); border-color:var(--accent); color:#1a0f05; }
+
+/* ============================================================
+   STATUS PILLS
+   ============================================================ */
+.status-pill, .state-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:.62rem; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+  padding:3px 9px 3px 8px; border-radius:20px; border:1px solid; white-space:nowrap;
+}
+.status-pill::before, .state-pill::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.status-pill.is-active, .state-pill.is-resolved{ color:var(--ok); border-color:rgba(79,191,135,.35); background:var(--ok-soft); }
+.status-pill.is-suspended, .state-pill.is-open{ color:var(--accent-bright); border-color:var(--accent-dim); background:rgba(240,121,30,.1); }
+.status-pill.is-suspended::before, .state-pill.is-open::before{ box-shadow:0 0 7px var(--accent); }
+.status-pill.is-deleted{ color:var(--danger); border-color:rgba(236,106,95,.4); background:rgba(236,106,95,.08); }
+.state-pill.is-dismissed{ color:var(--text-tertiary); border-color:var(--border-steel); background:var(--bg-panel-raised); }
+
+.vis-tag{
+  font-family:var(--font-mono); font-size:.6rem; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--text-tertiary); border:1px solid var(--border-steel); padding:2px 7px; white-space:nowrap;
+}
+
+/* ============================================================
+   CLAN LIST
+   ============================================================ */
+.admin-list{ padding:6px 0; }
+.admin-list-head, .admin-row{
+  display:grid;
+  grid-template-columns:44px minmax(0,2.4fr) minmax(0,1.3fr) minmax(0,1.1fr) 84px 20px;
+  align-items:center; gap:16px;
+  padding:12px 22px;
+}
+.admin-list-head{
+  font-family:var(--font-mono); font-size:.64rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--text-tertiary); padding-top:16px; padding-bottom:10px;
+}
+.admin-list-head-clan{ grid-column:1 / span 2; }
+.admin-row{
+  text-decoration:none; color:inherit;
+  border-top:1px solid var(--border-steel-soft);
+  transition:background-color .15s ease, box-shadow .15s ease;
+}
+.admin-row:hover, .admin-row:focus-visible{ background:var(--bg-panel-raised); box-shadow:inset 3px 0 0 var(--accent); }
+.admin-row:focus-visible{ outline-offset:-2px; }
+.admin-badge{ width:44px; height:44px; font-size:.68rem; }
+.admin-row-id{ min-width:0; }
+.admin-row-name{
+  display:block; font-family:var(--font-display); font-weight:700; font-size:.98rem; letter-spacing:.02em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.admin-row-meta{
+  display:block; font-family:var(--font-mono); font-size:.72rem; color:var(--text-tertiary);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.admin-row-status{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.admin-row-owner{ font-size:.85rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.admin-row-members .stat-value{ font-size:.95rem; }
+.admin-row-go{ color:var(--text-tertiary); transition:transform .15s ease, color .15s ease; }
+.admin-row:hover .admin-row-go{ color:var(--accent); transform:translateX(3px); }
+.admin-row.is-deleted .admin-row-name{ color:var(--text-tertiary); text-decoration:line-through; text-decoration-color:rgba(236,106,95,.6); }
+.admin-row.is-deleted .admin-badge{ opacity:.45; filter:grayscale(1); }
+
+.pager{ display:flex; gap:12px; justify-content:center; margin-top:18px; }
+
+/* ============================================================
+   DOSSIER
+   ============================================================ */
+.back-link{
+  display:inline-flex; align-items:center; gap:6px; margin-bottom:18px;
+  font-family:var(--font-display); font-size:.82rem; letter-spacing:.03em;
+  color:var(--text-tertiary); text-decoration:none; transition:color .15s ease;
+}
+.back-link:hover{ color:var(--accent-bright); }
+.back-link .icon{ width:15px; height:15px; }
+.back-link + .console-kicker{ display:flex; width:max-content; }
+
+.dossier-head{ display:flex; align-items:center; gap:18px; margin-bottom:24px; }
+.dossier-badge{ width:78px; height:78px; font-size:1.05rem; flex-shrink:0; }
+.dossier-badge.is-deleted{ opacity:.5; filter:grayscale(1); }
+.dossier-id{ min-width:0; }
+.dossier-title{ margin-bottom:8px; overflow-wrap:anywhere; }
+.dossier-meta{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.dossier-ref{ font-family:var(--font-mono); font-size:.78rem; color:var(--text-tertiary); }
+
+.dossier-layout{
+  position:relative; z-index:1;
+  max-width:1440px; margin:0 auto;
+  padding:24px 24px 60px;
+  display:grid; grid-template-columns:minmax(0,1fr) 370px; gap:20px; align-items:start;
+}
+.dossier-main, .dossier-side{ display:flex; flex-direction:column; gap:20px; min-width:0; }
+.dossier-side .panel:nth-child(2){ animation-delay:.06s; }
+.dossier-side .panel:nth-child(3){ animation-delay:.12s; }
+
+.dossier-desc{
+  color:var(--text-secondary); font-size:.88rem; line-height:1.65; white-space:pre-line; overflow-wrap:anywhere;
+  padding:12px 14px; margin-bottom:20px;
+  background:var(--bg-inset); border-left:3px solid var(--border-steel);
+}
+.dossier-facts{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:16px 20px; margin:0; }
+.dossier-facts dt{ font-size:.66rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
+.dossier-facts dd{ margin:0; font-size:.9rem; overflow-wrap:anywhere; }
+.is-danger-text{ color:var(--danger); }
+.quiet-state{ color:var(--text-tertiary); font-size:.85rem; line-height:1.55; }
+
+.admin-roster{ max-height:360px; overflow-y:auto; margin:0 -10px; }
+.admin-member-role{ margin-left:auto; }
+
+/* ============================================================
+   MODERATION TIMELINE
+   ============================================================ */
+.timeline{ position:relative; margin:0; padding:0 0 0 28px; list-style:none; } /* an ol, which the reset above leaves numbered */
+.timeline::before{
+  content:""; position:absolute; left:7px; top:8px; bottom:8px; width:1px;
+  background:linear-gradient(var(--border-steel), var(--border-steel-soft));
+}
+.timeline-item{ position:relative; padding-bottom:22px; }
+.timeline-item:last-child{ padding-bottom:0; }
+.timeline-node{
+  position:absolute; left:-27px; top:4px; width:14px; height:14px;
+  transform:rotate(45deg);
+  background:var(--bg-panel); border:2px solid var(--accent);
+}
+.timeline-item.is-ok .timeline-node{ border-color:var(--ok); }
+.timeline-item.is-warn .timeline-node{ border-color:var(--accent-bright); background:rgba(240,121,30,.2); box-shadow:0 0 10px rgba(240,121,30,.45); }
+.timeline-item.is-danger .timeline-node{ border-color:var(--danger); background:rgba(236,106,95,.2); }
+.timeline-title{ font-family:var(--font-display); font-weight:600; font-size:.98rem; letter-spacing:.02em; margin-bottom:3px; }
+.timeline-before{ font-family:var(--font-mono); font-weight:500; font-size:.76rem; color:var(--text-tertiary); margin-left:8px; overflow-wrap:anywhere; }
+.timeline-reason{
+  font-size:.85rem; color:var(--text-secondary); font-style:italic; line-height:1.55;
+  white-space:pre-line; overflow-wrap:anywhere; margin-bottom:4px;
+}
+.timeline-meta{ font-family:var(--font-mono); font-size:.7rem; color:var(--text-tertiary); }
+
+/* ============================================================
+   REPORT ROWS
+   ============================================================ */
+.report-row{
+  display:flex; align-items:flex-start; gap:16px;
+  padding:16px 22px; border-top:1px solid var(--border-steel-soft);
+}
+.admin-list .report-row:first-child{ border-top:none; }
+.panel > .report-row{ padding-left:0; padding-right:0; }
+.panel-title + .report-row, .quiet-state + .report-row{ border-top:none; padding-top:0; }
+.report-row-main{ flex:1; min-width:0; }
+.report-row-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:7px; }
+.category-chip{
+  font-family:var(--font-mono); font-size:.6rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--accent-bright); background:rgba(240,121,30,.08); border:1px solid var(--accent-dim);
+  padding:3px 8px; clip-path:polygon(5px 0,100% 0,100% 100%,0 100%,0 5px);
+}
+.report-row-clan{ font-family:var(--font-display); font-weight:700; letter-spacing:.02em; text-decoration:none; overflow-wrap:anywhere; transition:color .15s ease; }
+.report-row-clan:hover{ color:var(--accent-bright); }
+.report-row-ref{ font-family:var(--font-mono); font-size:.72rem; color:var(--text-tertiary); }
+.report-row-reason{
+  font-size:.86rem; color:var(--text-secondary); font-style:italic; line-height:1.55;
+  border-left:2px solid var(--border-steel); padding-left:10px; margin-bottom:7px;
+  white-space:pre-line; overflow-wrap:anywhere;
+}
+.report-row-meta{ font-family:var(--font-mono); font-size:.7rem; color:var(--text-tertiary); }
+.report-row-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; }
+.report-row-actions form{ margin:0; }
+
+.queue-clear{ text-align:center; padding:48px 24px; }
+.queue-clear-icon{
+  width:56px; height:56px; margin:0 auto 18px;
+  display:grid; place-items:center;
+  background:var(--bg-panel-raised); border:1px solid rgba(79,191,135,.4);
+  clip-path:polygon(0 12px,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);
+}
+.queue-clear-icon .icon{ width:26px; height:26px; color:var(--ok); }
+.queue-clear-title{ font-family:var(--font-display); font-size:1.25rem; font-weight:700; margin-bottom:6px; }
+.queue-clear-text{ color:var(--text-tertiary); font-size:.88rem; }
+
+/* ============================================================
+   ACTION PANELS
+   ============================================================ */
+.action-panel form + form{ margin-top:20px; padding-top:20px; border-top:1px solid var(--border-steel-soft); }
+.action-panel .form-field{ margin-bottom:12px; }
+.action-panel .form-field textarea{ min-height:66px; }
+.action-panel .btn-block{ margin-top:4px; }
+.action-title{ font-family:var(--font-display); font-weight:600; font-size:.88rem; letter-spacing:.03em; margin-bottom:12px; }
+.action-lede{ font-size:.8rem; color:var(--text-tertiary); line-height:1.55; margin-bottom:14px; }
+.action-note{ margin:0; }
+
+.btn-sm{ padding:7px 12px; font-size:.78rem; }
+.btn-ghost{ background:transparent; color:var(--text-secondary); border:1px solid var(--border-steel); }
+.btn-ghost:hover{ color:var(--text-primary); border-color:var(--text-tertiary); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1160px){
+  .dossier-layout{ grid-template-columns:1fr; }
+}
+
+@media (max-width:900px){
+  .admin-list-head{ display:none; }
+  .admin-row{ grid-template-columns:44px minmax(0,1fr) 20px; gap:6px 14px; padding:14px 18px; }
+  .admin-row > .admin-badge{ grid-row:1 / span 3; }
+  .admin-row-id, .admin-row-status, .admin-row-owner{ grid-column:2; }
+  .admin-row-members{ display:none; }
+  .admin-row-go{ grid-column:3; grid-row:1 / span 3; }
+  .report-row{ flex-direction:column; gap:12px; }
+  .report-row-actions{ justify-content:flex-start; }
+}
+
+@media (max-width:760px){
+  .console-tabs{ padding:22px 16px 0; }
+  .admin-filters{ padding:18px 16px 0; }
+  .dossier-layout{ padding:20px 16px 48px; gap:16px; }
+  .dossier-head{ align-items:flex-start; }
+  .dossier-badge{ width:60px; height:60px; font-size:.9rem; }
+  .admin-list .report-row{ padding-left:18px; padding-right:18px; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .console-dot{ animation:none; }
+  .admin-row, .admin-row-go{ transition:none; }
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<meta name="robots" content="noindex">
+<title>Clan Moderation · Admin · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('admin')}"></header>
+
+<!-- ============================================================
+     CONSOLE HERO
+     ============================================================ -->
+<section class="page-hero">
+  <p th:replace="~{fragments/admin :: kicker}"></p>
+  <h1 class="page-title">Clan Moderation</h1>
+  <p class="page-subtitle">Every clan on Clanforge, public, private and deleted. Anything you do here is written to the clan's moderation history.</p>
+  <div class="page-stats admin-stats">
+    <div class="stat"><span class="stat-value" th:text="${#numbers.formatInteger(overview.clans, 1, 'COMMA')}">0</span><span class="stat-label">Total Clans</span></div>
+    <div class="stat is-ok"><span class="stat-value" th:text="${#numbers.formatInteger(overview.active, 1, 'COMMA')}">0</span><span class="stat-label">Active</span></div>
+    <div class="stat is-warn"><span class="stat-value" th:text="${#numbers.formatInteger(overview.suspended, 1, 'COMMA')}">0</span><span class="stat-label">Suspended</span></div>
+    <div class="stat is-danger"><span class="stat-value" th:text="${#numbers.formatInteger(overview.deleted, 1, 'COMMA')}">0</span><span class="stat-label">Deleted</span></div>
+    <a class="stat stat-link" th:classappend="${overview.openReports > 0} ? 'is-hot'" th:href="@{/admin/reports}">
+      <span class="stat-value" th:text="${overview.openReports}">0</span><span class="stat-label">Open Reports &rarr;</span>
+    </a>
+  </div>
+</section>
+
+<nav th:replace="~{fragments/admin :: tabs('clans')}"></nav>
+
+<!-- ============================================================
+     SEARCH / FILTER
+     ============================================================ -->
+<form class="browse-controls" th:action="@{/admin/clans}" method="get">
+  <div class="clan-search" role="search">
+    <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+    <label class="sr-only" for="adminSearch">Search every clan by name or tag</label>
+    <input type="search" id="adminSearch" name="q" th:value="${q}" placeholder="Search by name or tag, private and deleted clans included…" autocomplete="off">
+  </div>
+  <select class="sort-select" id="adminFilter" name="filter" aria-label="Filter by status">
+    <option value="all" th:selected="${filter == 'all'}">All Clans</option>
+    <option value="active" th:selected="${filter == 'active'}">Active</option>
+    <option value="suspended" th:selected="${filter == 'suspended'}">Suspended</option>
+    <option value="deleted" th:selected="${filter == 'deleted'}">Deleted</option>
+  </select>
+  <button type="submit" class="btn btn-secondary">Search</button>
+</form>
+
+<!-- ============================================================
+     CLAN LIST
+     ============================================================ -->
+<main class="browse-main">
+  <div th:replace="~{fragments/topbar :: flash}"></div>
+
+  <section class="panel admin-list" th:unless="${#lists.isEmpty(clans)}">
+    <div class="admin-list-head" aria-hidden="true">
+      <span class="admin-list-head-clan">Clan</span><span>Status</span><span>Owner</span><span>Members</span><span></span>
+    </div>
+    <a class="admin-row" th:each="card : ${clans}" th:with="c=${card.clan}"
+       th:classappend="${c.deletedAt != null} ? 'is-deleted'"
+       th:href="@{/admin/clans/{id}(id=${c.id})}">
+      <span class="clan-badge admin-badge" th:text="${#strings.isEmpty(c.tag)} ? '—' : ${c.tag}">TAG</span>
+      <span class="admin-row-id">
+        <span class="admin-row-name" th:text="${#strings.isEmpty(c.name)} ? '(unnamed)' : ${c.name}">Clan name</span>
+        <span class="admin-row-meta" th:text="'[' + ${c.tag} + '] · #' + ${c.id} + ' · since ' + ${#temporals.format(c.createdAt, 'yyyy')}">[TAG] · #1</span>
+      </span>
+      <span class="admin-row-status">
+        <span th:replace="~{fragments/admin :: statusPill(${c})}"></span>
+        <span class="vis-tag" th:text="${c.visibility == 'PUBLIC'} ? 'Public' : 'Private'">Public</span>
+      </span>
+      <span class="admin-row-owner" th:text="${c.owner.displayName}">owner</span>
+      <span class="admin-row-members"><span class="stat-value" th:text="${card.memberCount}">0</span><span class="stat-label">Members</span></span>
+      <svg class="icon admin-row-go" aria-hidden="true"><use href="#icon-chevron-right"></use></svg>
+    </a>
+  </section>
+
+  <p class="empty-state is-visible" th:if="${#lists.isEmpty(clans)}">No clans match. <a class="link-btn" th:href="@{/admin/clans}">Clear search</a></p>
+  <p class="showing-caption" th:unless="${#lists.isEmpty(clans)}">
+    Showing <span th:text="${#lists.size(clans)}">0</span>
+    of <span th:text="${#numbers.formatInteger(totalClans, 1, 'COMMA')}">0</span> clans
+    &middot; page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+  </p>
+  <nav class="pager" aria-label="Pages">
+    <a class="btn btn-secondary" th:if="${hasPrevious}" th:href="@{/admin/clans(page=${currentPage - 1},q=${q},filter=${filter})}">Previous</a>
+    <a class="btn btn-secondary" th:if="${hasNext}" th:href="@{/admin/clans(page=${currentPage + 1},q=${q},filter=${filter})}">Next</a>
+  </nav>
+</main>
+
+<script th:src="@{/js/site.js}"></script>
+</body>
+</html>

@@ -46,7 +46,14 @@ the terminal to stop it.
 The `dev` profile adds three in-memory accounts, `admin` / `admin`,
 `player` / `player` and `guest` / `guest`, and nothing else. `@Profile("dev")` keeps
 them out of any deployed build. Three accounts let one person show both sides of an
-invitation, a join or a transfer from two windows.
+invitation, a join or a transfer from two windows. `admin` is also a site
+administrator, so it can open the admin console at <http://localhost:8080/admin>.
+
+Because those passwords are public, a `dev` run listens on this machine only
+(`127.0.0.1`), and every port the compose files publish is bound to `127.0.0.1` as
+well. Nobody else on the same network, a campus wifi for instance, can reach the app,
+the database or Hydra. To show the app on another device on purpose, start it with
+`SERVER_ADDRESS=0.0.0.0`, and only on a network you trust.
 
 ### Signing in with OpenID Connect
 
@@ -79,6 +86,21 @@ A `hydra-init` container registers the application as an OAuth2 client and warms
 Hydra JWKS endpoint. The warm-up matters: Hydra generates its token-signing keys
 lazily on first request, taking about two seconds, and Spring gives up waiting while
 verifying the ID token, so without it the very first sign-in always fails.
+
+### The admin console
+
+Site moderators get an admin console at `/admin`. It lists every clan, private and
+deleted ones included, and shows each clan's moderation history and the report queue.
+From it a moderator can suspend, rename, retag or delete a clan, and dismiss reports.
+Every action is written to the clan's moderation history, and an action can answer
+an open report, which closes it.
+
+An administrator is anyone holding the role named by `clan.admin.role` (`ADMIN_CLAN`
+by default, which is what FAForever calls it). Through the provider the role comes
+from `ext.roles`, the same claim the REST API reads from a bearer token. It is taken
+from the ID token, and from the access token when that is a JWT the application can
+verify. Locally, the `dev` profile's `admin` account holds the role. Hydra's reference
+login app hands out no roles, so `foo@bar.com` is not an administrator.
 
 ### Running the application in Docker
 
@@ -250,15 +272,13 @@ APPLICATION FAILED TO START
 
 **Working:** PostgreSQL with Flyway migrations, the 1,477-clan FAForever import, clan
 browsing and detail pages, clan creation, invitations, membership and roles, clan
-settings, a read-only REST endpoint (`GET /api/clans/{id}`) that returns a clan and
-its roster as JSON, OIDC sign-in via ORY Hydra, security headers and
-Content-Security-Policy, login rate limiting, containerisation, and CI.
+settings, a REST API for clans, membership, invitations and reports, clan reports and
+the admin console for site moderators, OIDC sign-in via ORY Hydra, security headers
+and Content-Security-Policy, login rate limiting, containerisation, and CI.
 
-**Not yet built:** the rest of the REST API (listing clans, and any write operations
-such as create, join or role changes), a platform-wide administration interface for
-site moderators — administering a single clan already works, for its owner and
-moderators — and a production login provider. Hydra ships no login page, so a deployed
-build needs either the FAForever provider or an application that owns that page.
+**Not yet built:** OpenAPI documentation for the REST API, and a production login
+provider. Hydra ships no login page, so a deployed build needs either the FAForever
+provider or an application that owns that page.
 
 ## Licence
 

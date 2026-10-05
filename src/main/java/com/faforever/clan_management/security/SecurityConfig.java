@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -93,7 +94,9 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-            ObjectProvider<ClientRegistrationRepository> clientRegistrations) throws Exception {
+            ObjectProvider<ClientRegistrationRepository> clientRegistrations,
+            ObjectProvider<JwtDecoder> jwtDecoders,
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole) throws Exception {
         http.authorizeHttpRequests(auth -> auth
             // /error must stay permitted. Spring forwards unhandled 404s to it as an
             // ERROR dispatch, and since Spring Security 6 the filter chain applies to
@@ -109,6 +112,10 @@ public class SecurityConfig {
             // static assets must be reachable anonymously or the public clan
             // pages render without their stylesheet
             .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+            // The administration pages, the browser twin of /api/admin: the same role,
+            // read from the sign-in by OidcRoles (or held by the dev admin account).
+            // AdminController asks AdminAccess again before anything runs.
+            .requestMatchers("/admin", "/admin/**").hasAuthority("ROLE_" + adminRole.trim())
             .anyRequest().authenticated()
         );
 
@@ -156,6 +163,10 @@ public class SecurityConfig {
         if (clientRegistrations.getIfAvailable() != null) {
             http.oauth2Login(oidc -> oidc
                 .loginPage("/login")
+                // carry the provider's ext.roles into the session, so an administrator
+                // signing in on the website holds the admin role here as well
+                .userInfoEndpoint(info -> info
+                    .oidcUserService(new OidcRoles(new OidcUserService(), jwtDecoders.getIfAvailable())))
                 .successHandler(onSuccess));
         }
 
@@ -184,10 +195,13 @@ public class SecurityConfig {
     // Run locally with: ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
     @Bean
     @Profile("dev")
-    public UserDetailsService devUserDetailsService(PasswordEncoder passwordEncoder) {
+    public UserDetailsService devUserDetailsService(PasswordEncoder passwordEncoder,
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole) {
+        // admin is a site administrator as well, so the admin pages can be shown
+        // locally without a provider that hands out the role
         UserDetails testUser = User.withUsername("admin")
             .password(passwordEncoder.encode("admin"))
-            .roles("USER")
+            .roles("USER", adminRole.trim())
             .build();
         // Two more accounts so a demo can show both sides of an invitation, a
         // join, a removal or a transfer from two browser windows.
