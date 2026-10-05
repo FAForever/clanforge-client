@@ -1,18 +1,24 @@
 //SPDX-License-Identifier: MIT
 package com.faforever.clan_management.api;
 
+import java.util.List;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.service.AdminAccess;
 import com.faforever.clan_management.service.AdminService;
 import com.faforever.clan_management.service.ReportService;
 
-// the administration listings, the bearer chain already turns away anyone without the admin role and AdminAccess asks again
+// the administration listings and the moderation actions on a clan; the bearer chain already turns away anyone without the admin role and AdminAccess asks again
 @RestController
 @RequestMapping("/api/admin")
 public class AdminApiController {
@@ -41,6 +47,47 @@ public class AdminApiController {
         access.require(auth);
         //System.out.println("admin reports " + state + " " + page);
         return ReportPageResponse.from(reports.byState(state, PageRequest.of(clamp(page), pageSize)));
+    }
+
+    // The actions. Each records a moderation row and answers with it. AdminService
+    // locks the clan, so two administrators acting at once are serialised there, and
+    // a refused action (unknown clan, already suspended, invalid name/tag, a report
+    // about another clan) surfaces as the service's 400 through ApiErrorHandler.
+    @PostMapping("/clans/{id}/suspend")
+    public ModerationActionResponse suspend(@PathVariable Long id, @RequestBody AdminActionRequest body, Authentication auth) {
+        AppUser admin = access.require(auth);
+        return ModerationActionResponse.from(admins.suspend(admin, id, body.reason(), body.reportId()));
+    }
+
+    @PostMapping("/clans/{id}/unsuspend")
+    public ModerationActionResponse unsuspend(@PathVariable Long id, @RequestBody AdminActionRequest body, Authentication auth) {
+        AppUser admin = access.require(auth);
+        return ModerationActionResponse.from(admins.unsuspend(admin, id, body.reason()));
+    }
+
+    @PostMapping("/clans/{id}/rename")
+    public ModerationActionResponse rename(@PathVariable Long id, @RequestBody AdminActionRequest body, Authentication auth) {
+        AppUser admin = access.require(auth);
+        return ModerationActionResponse.from(admins.rename(admin, id, body.name(), body.reason(), body.reportId()));
+    }
+
+    @PostMapping("/clans/{id}/retag")
+    public ModerationActionResponse retag(@PathVariable Long id, @RequestBody AdminActionRequest body, Authentication auth) {
+        AppUser admin = access.require(auth);
+        return ModerationActionResponse.from(admins.retag(admin, id, body.tag(), body.reason(), body.reportId()));
+    }
+
+    @PostMapping("/clans/{id}/delete")
+    public ModerationActionResponse delete(@PathVariable Long id, @RequestBody AdminActionRequest body, Authentication auth) {
+        AppUser admin = access.require(auth);
+        return ModerationActionResponse.from(admins.delete(admin, id, body.reason(), body.reportId()));
+    }
+
+    // The moderation history of one clan, newest first, so an admin can review what has been done before acting.
+    @GetMapping("/clans/{id}/history")
+    public List<ModerationActionResponse> history(@PathVariable Long id, Authentication auth) {
+        access.require(auth);
+        return admins.history(id).stream().map(ModerationActionResponse::from).toList();
     }
 
     //a crafted ?page cannot ask the database for an enormous offset

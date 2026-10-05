@@ -29,6 +29,7 @@ import org.springframework.web.filter.FormContentFilter;
 import com.faforever.clan_management.entity.AppUser;
 import com.faforever.clan_management.entity.Clan;
 import com.faforever.clan_management.entity.ClanReport;
+import com.faforever.clan_management.entity.ModerationAction;
 import com.faforever.clan_management.security.SecurityConfig;
 import com.faforever.clan_management.service.AdminAccess;
 import com.faforever.clan_management.service.AdminService;
@@ -258,5 +259,103 @@ class ReportAdminApiControllerTest {
     void formBodiesAreNotReadAhead() {
         //System.out.println("form filters " + context.getBeansOfType(FormContentFilter.class).keySet());
         assertThat(context.getBeansOfType(FormContentFilter.class)).isEmpty();
+    }
+
+    // --- the moderation actions on a clan (suspend/unsuspend/rename/retag/delete) and its history ---
+
+    private ModerationAction action(long id, String kind) {
+        ModerationAction a = new ModerationAction(clan, admin, kind, "cleaning up", null, "{}");
+        ReflectionTestUtils.setField(a, "id", id);
+        return a;
+    }
+
+    @Test
+    @DisplayName("every action route is 401 without a token and never reaches the service")
+    void actionsClosedWithoutToken() throws Exception {
+        mockMvc.perform(post("/api/admin/clans/7/suspend").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/admin/clans/7/delete").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/admin/clans/7/history")).andExpect(status().isUnauthorized());
+        verifyNoInteractions(admins);
+    }
+
+    @Test
+    @DisplayName("every action route is 403 for a valid token without the admin role, and no service is asked")
+    void actionsNeedTheRole() throws Exception {
+        String plain = bearer("sub-2", false);
+        mockMvc.perform(post("/api/admin/clans/7/suspend").header(HttpHeaders.AUTHORIZATION, plain).contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/admin/clans/7/rename").header(HttpHeaders.AUTHORIZATION, plain).contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"X\"}")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/clans/7/history").header(HttpHeaders.AUTHORIZATION, plain)).andExpect(status().isForbidden());
+        verifyNoInteractions(admins);
+    }
+
+    @Test
+    @DisplayName("suspending hands the clan, reason and report to the service and answers with the moderation row")
+    void suspendAnswersWithTheRow() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        given(admins.suspend(admin, 7L, "slur in the tag", 3L)).willReturn(action(11L, "SUSPEND"));
+        mockMvc.perform(post("/api/admin/clans/7/suspend").header(HttpHeaders.AUTHORIZATION, bearer("sub-1", true)).contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"slur in the tag\",\"reportId\":3}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(11))
+                .andExpect(jsonPath("$.clanId").value(7))
+                .andExpect(jsonPath("$.clanTag").value("BC"))
+                .andExpect(jsonPath("$.action").value("SUSPEND"))
+                .andExpect(jsonPath("$.moderatorDisplayName").value("admin"))
+                .andExpect(jsonPath("$.performedAt").exists());
+        verify(admins).suspend(admin, 7L, "slur in the tag", 3L);
+    }
+
+    @Test
+    @DisplayName("renaming, retagging and unsuspending pass their value and reason through to the service")
+    void renameRetagUnsuspendPassTheValue() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        String token = bearer("sub-1", true);
+        given(admins.rename(eq(admin), eq(7L), eq("Clean Name"), any(), any())).willReturn(action(12L, "RENAME"));
+        given(admins.retag(eq(admin), eq(7L), eq("GGG"), any(), any())).willReturn(action(13L, "RETAG"));
+        given(admins.unsuspend(eq(admin), eq(7L), any())).willReturn(action(14L, "UNSUSPEND"));
+        mockMvc.perform(post("/api/admin/clans/7/rename").header(HttpHeaders.AUTHORIZATION, token).contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Clean Name\",\"reason\":\"offensive\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.action").value("RENAME"));
+        mockMvc.perform(post("/api/admin/clans/7/retag").header(HttpHeaders.AUTHORIZATION, token).contentType(MediaType.APPLICATION_JSON).content("{\"tag\":\"GGG\",\"reason\":\"offensive\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.action").value("RETAG"));
+        mockMvc.perform(post("/api/admin/clans/7/unsuspend").header(HttpHeaders.AUTHORIZATION, token).contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"appeal granted\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.action").value("UNSUSPEND"));
+        verify(admins).rename(admin, 7L, "Clean Name", "offensive", null);
+        verify(admins).retag(admin, 7L, "GGG", "offensive", null);
+        verify(admins).unsuspend(admin, 7L, "appeal granted");
+    }
+
+    @Test
+    @DisplayName("an action the service refuses, such as suspending an already suspended clan, is 400 with its sentence")
+    void refusedActionIsBadRequest() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        given(admins.suspend(eq(admin), eq(7L), any(), any())).willThrow(new ClanRuleViolation("That clan is already suspended."));
+        mockMvc.perform(post("/api/admin/clans/7/suspend").header(HttpHeaders.AUTHORIZATION, bearer("sub-1", true)).contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"dup\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("That clan is already suspended."));
+    }
+
+    @Test
+    @DisplayName("deleting answers with the moderation row, and the history lists a clan's actions newest first")
+    void deleteAndHistory() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        String token = bearer("sub-1", true);
+        given(admins.delete(eq(admin), eq(7L), any(), any())).willReturn(action(15L, "DELETE"));
+        given(admins.history(7L)).willReturn(List.of(action(15L, "DELETE"), action(11L, "SUSPEND")));
+        mockMvc.perform(post("/api/admin/clans/7/delete").header(HttpHeaders.AUTHORIZATION, token).contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"spam ring\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.action").value("DELETE"));
+        mockMvc.perform(get("/api/admin/clans/7/history").header(HttpHeaders.AUTHORIZATION, token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].action").value("DELETE"))
+                .andExpect(jsonPath("$[1].action").value("SUSPEND"));
+        verify(admins).history(7L);
+    }
+
+    @Test
+    @DisplayName("an unreadable body on an admin action is 400 with a message, not a 500, and the service is left untouched")
+    void actionWithUnreadableBodyIsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/admin/clans/7/suspend").header(HttpHeaders.AUTHORIZATION, bearer("sub-1", true)).contentType(MediaType.APPLICATION_JSON).content("{\"reason\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The request body could not be read as the JSON this route takes."));
+        verifyNoInteractions(admins);
     }
 }
