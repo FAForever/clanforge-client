@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/* the label over every admin page title, so nobody mistakes the console for the public site */-->
+<p th:fragment="kicker" class="console-kicker"><span class="console-dot" aria-hidden="true"></span>Admin Console · Restricted</p>
+
+<!--/* the two sections of the console. active is clans or reports, overview supplies the open report count */-->
+<nav th:fragment="tabs(active)" class="console-tabs" aria-label="Admin sections">
+  <div class="console-tabs-inner">
+    <a class="console-tab" th:classappend="${active == 'clans'} ? 'is-active'" th:attr="aria-current=${active == 'clans'} ? 'page' : null" th:href="@{/admin/clans}">
+      <svg class="icon" aria-hidden="true"><use href="#icon-crest"></use></svg>Clans
+      <span class="tab-count" th:text="${#numbers.formatInteger(overview.clans, 1, 'COMMA')}">0</span>
+    </a>
+    <a class="console-tab" th:classappend="${active == 'reports'} ? 'is-active'" th:attr="aria-current=${active == 'reports'} ? 'page' : null" th:href="@{/admin/reports}">
+      <svg class="icon" aria-hidden="true"><use href="#icon-flag"></use></svg>Reports
+      <span class="tab-count" th:classappend="${overview.openReports > 0} ? 'is-hot'" th:text="${overview.openReports}">0</span>
+    </a>
+  </div>
+</nav>
+
+<!--/* a clan's state in one pill: deleted wins over the status column, which a deleted clan keeps */-->
+<span th:fragment="statusPill(c)" class="status-pill"
+      th:classappend="${c.deletedAt != null} ? 'is-deleted' : (${c.status == 'SUSPENDED'} ? 'is-suspended' : 'is-active')"
+      th:text="${c.deletedAt != null} ? 'Deleted' : (${c.status == 'SUSPENDED'} ? 'Suspended' : 'Active')">Active</span>
+
+<!--/* the open report an action answers, if any. Only shown when the clan has open reports; the action then marks it resolved */-->
+<div th:fragment="reportPicker(fieldId, reports)" class="form-field" th:unless="${#lists.isEmpty(reports)}">
+  <label th:for="${fieldId}">Answers report</label>
+  <select th:id="${fieldId}" name="reportId">
+    <option value="">No report</option>
+    <option th:each="r : ${reports}" th:value="${r.id}"
+            th:text="'#' + ${r.id} + ' · ' + ${#strings.capitalize(#strings.toLowerCase(#strings.replace(r.category, '_', ' ')))}">#1 · Offensive name</option>
+  </select>
+  <p class="field-hint">The report is marked resolved by this action.</p>
+</div>
+
+</body>
+</html>

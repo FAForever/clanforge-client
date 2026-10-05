@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<meta name="robots" content="noindex">
+<title>Report Queue · Admin · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('admin')}"></header>
+
+<!-- ============================================================
+     QUEUE HERO
+     ============================================================ -->
+<section class="page-hero">
+  <p th:replace="~{fragments/admin :: kicker}"></p>
+  <h1 class="page-title">Report Queue</h1>
+  <p class="page-subtitle">What players have flagged about clan names, tags and content. Act on the clan to resolve a report, or dismiss it if nothing is wrong.</p>
+  <div class="page-stats admin-stats">
+    <div class="stat" th:classappend="${overview.openReports > 0} ? 'is-warn'"><span class="stat-value" th:text="${overview.openReports}">0</span><span class="stat-label">Open</span></div>
+    <div class="stat is-ok"><span class="stat-value" th:text="${overview.resolvedReports}">0</span><span class="stat-label">Resolved</span></div>
+    <div class="stat"><span class="stat-value" th:text="${overview.dismissedReports}">0</span><span class="stat-label">Dismissed</span></div>
+  </div>
+</section>
+
+<nav th:replace="~{fragments/admin :: tabs('reports')}"></nav>
+
+<nav class="admin-filters" aria-label="Report state">
+  <a class="filter-chip" th:classappend="${state == 'OPEN'} ? 'is-active'" th:href="@{/admin/reports(state='OPEN')}">Open</a>
+  <a class="filter-chip" th:classappend="${state == 'RESOLVED'} ? 'is-active'" th:href="@{/admin/reports(state='RESOLVED')}">Resolved</a>
+  <a class="filter-chip" th:classappend="${state == 'DISMISSED'} ? 'is-active'" th:href="@{/admin/reports(state='DISMISSED')}">Dismissed</a>
+  <a class="filter-chip" th:classappend="${state == 'ALL'} ? 'is-active'" th:href="@{/admin/reports(state='ALL')}">All</a>
+</nav>
+
+<!-- ============================================================
+     REPORTS
+     ============================================================ -->
+<main class="browse-main">
+  <div th:replace="~{fragments/topbar :: flash}"></div>
+
+  <section class="panel admin-list" th:unless="${#lists.isEmpty(reports)}">
+    <article class="report-row" th:each="r : ${reports}">
+      <div class="report-row-main">
+        <p class="report-row-head">
+          <span class="category-chip" th:text="${#strings.replace(r.category, '_', ' ')}">OFFENSIVE NAME</span>
+          <a class="report-row-clan" th:href="@{/admin/clans/{id}(id=${r.clan.id})}"
+             th:text="${(#strings.isEmpty(r.clan.name) ? '(unnamed)' : r.clan.name) + ' [' + r.clan.tag + ']'}">Clan [TAG]</a>
+          <span class="report-row-ref" th:text="'#' + ${r.id}">#1</span>
+        </p>
+        <p class="report-row-reason" th:text="${r.reason}">reason</p>
+        <p class="report-row-meta">
+          <span th:text="'reported by ' + ${r.reporter.displayName} + ' · ' + ${#temporals.format(r.createdAt, 'd MMM yyyy, HH:mm')}">reported by …</span>
+          <span th:if="${r.resolvedAt != null}"
+                th:text="' · ' + ${#strings.toLowerCase(r.state)} + (${r.resolvedBy != null} ? ' by ' + ${r.resolvedBy.displayName} : '') + ' on ' + ${#temporals.format(r.resolvedAt, 'd MMM yyyy')}">· resolved by …</span>
+        </p>
+      </div>
+      <div class="report-row-actions">
+        <span class="state-pill" th:classappend="'is-' + ${#strings.toLowerCase(r.state)}" th:text="${r.state}">OPEN</span>
+        <a class="btn btn-secondary btn-sm" th:href="@{/admin/clans/{id}(id=${r.clan.id})}">Review Clan</a>
+        <form th:if="${r.state == 'OPEN'}" th:action="@{/admin/reports/{id}/dismiss(id=${r.id})}" method="post"
+              th:data-confirm="|Dismiss report #${r.id}? It is closed without any action on the clan.|">
+          <button type="submit" class="btn btn-ghost btn-sm">Dismiss</button>
+        </form>
+      </div>
+    </article>
+  </section>
+
+  <div class="panel queue-clear" th:if="${#lists.isEmpty(reports)}">
+    <span class="queue-clear-icon"><svg class="icon" aria-hidden="true"><use href="#icon-check"></use></svg></span>
+    <p class="queue-clear-title" th:text="${state == 'OPEN'} ? 'The queue is clear' : 'Nothing here'">The queue is clear</p>
+    <p class="queue-clear-text" th:text="${state == 'OPEN'} ? 'No report is waiting for an administrator.' : 'No reports in this state yet.'">No report is waiting.</p>
+  </div>
+
+  <p class="showing-caption" th:unless="${#lists.isEmpty(reports)}">
+    Showing <span th:text="${#lists.size(reports)}">0</span>
+    of <span th:text="${totalReports}">0</span> reports
+    &middot; page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+  </p>
+  <nav class="pager" aria-label="Pages">
+    <a class="btn btn-secondary" th:if="${hasPrevious}" th:href="@{/admin/reports(page=${currentPage - 1},state=${state})}">Previous</a>
+    <a class="btn btn-secondary" th:if="${hasNext}" th:href="@{/admin/reports(page=${currentPage + 1},state=${state})}">Next</a>
+  </nav>
+</main>
+
+<script th:src="@{/js/site.js}"></script>
+</body>
+</html>

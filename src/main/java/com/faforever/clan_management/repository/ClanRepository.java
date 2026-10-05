@@ -25,6 +25,11 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
 
     long countByVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(String visibility);
 
+    // the admin console's figures: live clans by status, and the deleted ones
+    long countByStatusAndDeletedAtIsNull(String status);
+
+    long countByDeletedAtIsNotNull();
+
     Optional<Clan> findByIdAndDeletedAtIsNull(Long id);
 
     // Yes or no questions about a live clan that load no entity, so a request

@@ -60,6 +60,11 @@ public class ReportService {
         return reports.findByStateNewestFirst(wanted, pageable);
     }
 
+    // the open reports on one clan, for the admin page about it
+    public List<ClanReport> openFor(Long clanId) {
+        return reports.findOpenForClan(clanId);
+    }
+
     //settled once, by whoever acted on it or threw it out
     @Transactional
     public ClanReport close(AppUser admin,Long reportId, boolean dismissed) {

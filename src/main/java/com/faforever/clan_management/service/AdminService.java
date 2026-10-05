@@ -65,6 +65,12 @@ public class AdminService {
         return actions.findByClanIdOrderByPerformedAtDesc(clanId);
     }
 
+    // the admin console's figures, one count query each
+    public AdminOverview overview() {
+        return new AdminOverview(clans.count(), clans.countByStatusAndDeletedAtIsNull("ACTIVE"), clans.countByStatusAndDeletedAtIsNull("SUSPENDED"), clans.countByDeletedAtIsNotNull(),
+                reports.countByState("OPEN"), reports.countByState("RESOLVED"), reports.countByState("DISMISSED"));
+    }
+
     //a suspended clan takes no new members, MembershipService.join and InvitationService.accept both read the status
     @Transactional
     public ModerationAction suspend(AppUser admin, Long clanId, String reason, Long reportId) {
