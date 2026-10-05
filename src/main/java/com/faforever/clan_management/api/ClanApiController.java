@@ -29,8 +29,15 @@ import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.MembershipService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/clans")
+@Tag(name = "Clans", description = "Browse clans and manage clan membership and settings.")
 public class ClanApiController {
 
     private static final int PAGE_SIZE = 20;
@@ -53,6 +60,7 @@ public class ClanApiController {
     }
 
     @GetMapping
+    @Operation(summary = "List public clans")
     public ClanPageResponse getClans(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "") String q,
@@ -80,6 +88,8 @@ public class ClanApiController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get a public clan")
+    @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
     public ClanDetailResponse getClan(@PathVariable Long id) {
         Clan clan = visibleClan(id);
 
@@ -90,6 +100,8 @@ public class ClanApiController {
     }
 
     @GetMapping("/{id}/members")
+    @Operation(summary = "List members of a public clan")
+    @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
     public List<MemberResponse> getMembers(@PathVariable Long id) {
         return membershipService.roster(visibleClan(id)).stream()
                 .map(MemberResponse::from)
@@ -97,6 +109,16 @@ public class ClanApiController {
     }
 
     @PostMapping("/{id}/join")
+    @Operation(
+            summary = "Join a clan",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Membership created"),
+            @ApiResponse(responseCode = "400", description = "Membership rule rejected the request"),
+            @ApiResponse(responseCode = "401", description = "Bearer token is missing or invalid"),
+            @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
+    })
     public MembershipResponse joinClan(
             @PathVariable Long id,
             Authentication authentication
@@ -109,6 +131,17 @@ public class ClanApiController {
     }
 
     @PostMapping("/{id}/leave")
+    @Operation(
+            summary = "Leave a clan",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Membership ended"),
+            @ApiResponse(responseCode = "400", description = "Membership rule rejected the request"),
+            @ApiResponse(responseCode = "401", description = "Bearer token is missing or invalid"),
+            @ApiResponse(responseCode = "403", description = "The caller cannot leave this clan"),
+            @ApiResponse(responseCode = "404", description = "Clan is deleted or missing")
+    })
     public ResponseEntity<Void> leaveClan(
             @PathVariable Long id,
             Authentication authentication
@@ -118,6 +151,15 @@ public class ClanApiController {
     }
 
     @PostMapping
+    @Operation(
+            summary = "Create a clan",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Clan created"),
+            @ApiResponse(responseCode = "400", description = "Clan data breaks a validation rule"),
+            @ApiResponse(responseCode = "401", description = "Bearer token is missing or invalid")
+    })
     public ResponseEntity<ClanDetailResponse> createClan(
             @RequestBody ClanWriteRequest request,
             Authentication authentication
@@ -130,6 +172,17 @@ public class ClanApiController {
     }
 
     @PatchMapping("/{id}")
+    @Operation(
+            summary = "Update the caller's clan",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Clan updated"),
+            @ApiResponse(responseCode = "400", description = "Clan data breaks a validation rule"),
+            @ApiResponse(responseCode = "401", description = "Bearer token is missing or invalid"),
+            @ApiResponse(responseCode = "403", description = "The caller cannot manage this clan"),
+            @ApiResponse(responseCode = "404", description = "Clan is deleted or missing")
+    })
     public ClanDetailResponse updateClan(
             @PathVariable Long id,
             @RequestBody ClanWriteRequest request,
@@ -141,6 +194,16 @@ public class ClanApiController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Delete the caller's clan",
+            security = @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Clan deleted"),
+            @ApiResponse(responseCode = "401", description = "Bearer token is missing or invalid"),
+            @ApiResponse(responseCode = "403", description = "The caller cannot manage this clan"),
+            @ApiResponse(responseCode = "404", description = "Clan is deleted or missing")
+    })
     public ResponseEntity<Void> deleteClan(
             @PathVariable Long id,
             Authentication authentication
