@@ -32,6 +32,7 @@ import com.faforever.clan_management.service.InvitationCard;
 import com.faforever.clan_management.service.InvitationService;
 import com.faforever.clan_management.service.MemberCard;
 import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.ReportService;
 import com.faforever.clan_management.service.SignedInUser;
 import com.faforever.clan_management.service.TagRule;
 
@@ -68,6 +69,8 @@ class ManagementPagesTest {
     private ClanManagementService management;
     @MockitoBean
     private InvitationService invitations;
+    @MockitoBean
+    private ReportService reportService;
     @MockitoBean
     private ClanService clanService;
     @MockitoBean
@@ -123,6 +126,34 @@ class ManagementPagesTest {
                 .andExpect(content().string(Matchers.containsString("User_5 joined the clan.")))
                 .andExpect(content().string(Matchers.containsString("2h ago")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("Leave Clan"))));
+    }
+
+    @Test
+    @WithMockUser("admin")
+    @DisplayName("reporting a clan hands the category and reason to the service and redirects back with a notice")
+    void reportRedirectsBackWithNotice() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        mockMvc.perform(post("/clans/7/report").with(csrf())
+                        .param("category", "OFFENSIVE_NAME")
+                        .param("reason", "The tag is offensive."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clans/7"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attributeExists("notice"));
+        verify(reportService).file(eq(admin), eq(7L), eq("OFFENSIVE_NAME"), eq("The tag is offensive."));
+    }
+
+    @Test
+    @WithMockUser("admin")
+    @DisplayName("a rejected report redirects back carrying the service's message as an error")
+    void reportRejectionShowsError() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        given(reportService.file(any(), eq(7L), any(), any())).willThrow(new ClanRuleViolation("You have already reported this clan."));
+        mockMvc.perform(post("/clans/7/report").with(csrf())
+                        .param("category", "OFFENSIVE_NAME")
+                        .param("reason", "dup"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clans/7"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("error", "You have already reported this clan."));
     }
 
     @Test

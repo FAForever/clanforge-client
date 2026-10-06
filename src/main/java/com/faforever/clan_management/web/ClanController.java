@@ -31,6 +31,7 @@ import com.faforever.clan_management.service.ClanRuleViolation;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.MemberCard;
 import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.ReportService;
 import com.faforever.clan_management.service.SignedInUser;
 
 @Controller
@@ -45,12 +46,14 @@ public class ClanController {
     private final MembershipService membershipService;
     private final AppUserService userService;
     private final ClanManagementService clanManagementService;
+    private final ReportService reportService;
 
-    public ClanController(ClanService clanService, MembershipService membershipService, AppUserService userService, ClanManagementService clanManagementService) {
+    public ClanController(ClanService clanService, MembershipService membershipService, AppUserService userService, ClanManagementService clanManagementService, ReportService reportService) {
         this.clanService = clanService;
         this.membershipService = membershipService;
         this.userService = userService;
         this.clanManagementService = clanManagementService;
+        this.reportService = reportService;
     }
 
     @GetMapping("/clans")
@@ -126,5 +129,21 @@ public class ClanController {
             flash.addFlashAttribute("error", e.getMessage());
             return "redirect:/clans/" + id;
         }
+    }
+
+    // A signed-in user flags a clan for the moderators. ReportService enforces who may
+    // report, the three categories, and one open report per person per clan.
+    @PostMapping("/clans/{id}/report")
+    public String report(@PathVariable Long id,
+                         @RequestParam(defaultValue = "") String category,
+                         @RequestParam(defaultValue = "") String reason,
+                         Authentication auth, RedirectAttributes flash) {
+        try {
+            reportService.file(userService.require(auth), id, category, reason);
+            flash.addFlashAttribute("notice", "Thanks — your report has been sent to the moderators.");
+        } catch (ClanRuleViolation e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/clans/" + id;
     }
 }
