@@ -25,6 +25,15 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
 
     long countByVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(String visibility);
 
+    // The public-facing views hide a suspended clan the same way they hide a deleted one, so
+    // the detail page and the browse stats take the status too. The browse search itself does
+    // the same filter inside searchVisible / searchVisibleByMembers below.
+    Optional<Clan> findByIdAndVisibilityAndStatusAndDeletedAtIsNull(Long id, String visibility, String status);
+
+    long countByVisibilityAndStatusAndDeletedAtIsNull(String visibility, String status);
+
+    long countByVisibilityAndRequiresInvitationFalseAndStatusAndDeletedAtIsNull(String visibility, String status);
+
     // the admin console's figures: live clans by status, and the deleted ones
     long countByStatusAndDeletedAtIsNull(String status);
 
@@ -61,13 +70,13 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
     // requiresInvitation means both open and invite-only clans.
     @Query(value = """
            select c from Clan c
-           where c.visibility = :visibility and c.deletedAt is null
+           where c.visibility = :visibility and c.deletedAt is null and c.status = 'ACTIVE'
              and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
              and (:requiresInvitation is null or c.requiresInvitation = :requiresInvitation)
            """,
            countQuery = """
            select count(c) from Clan c
-           where c.visibility = :visibility and c.deletedAt is null
+           where c.visibility = :visibility and c.deletedAt is null and c.status = 'ACTIVE'
              and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
              and (:requiresInvitation is null or c.requiresInvitation = :requiresInvitation)
            """)
@@ -78,14 +87,14 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
     // property cannot express. Pass an unsorted Pageable.
     @Query(value = """
            select c from Clan c
-           where c.visibility = :visibility and c.deletedAt is null
+           where c.visibility = :visibility and c.deletedAt is null and c.status = 'ACTIVE'
              and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
              and (:requiresInvitation is null or c.requiresInvitation = :requiresInvitation)
            order by (select count(m.id) from ClanMembership m where m.clan = c and m.leftAt is null) desc, lower(c.name) asc
            """,
            countQuery = """
            select count(c) from Clan c
-           where c.visibility = :visibility and c.deletedAt is null
+           where c.visibility = :visibility and c.deletedAt is null and c.status = 'ACTIVE'
              and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
              and (:requiresInvitation is null or c.requiresInvitation = :requiresInvitation)
            """)
