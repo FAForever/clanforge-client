@@ -89,7 +89,10 @@ public class ClanApiController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a public clan")
-    @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Clan found"),
+            @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
+    })
     public ClanDetailResponse getClan(@PathVariable Long id) {
         Clan clan = visibleClan(id);
 
@@ -101,7 +104,10 @@ public class ClanApiController {
 
     @GetMapping("/{id}/members")
     @Operation(summary = "List members of a public clan")
-    @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Members returned"),
+            @ApiResponse(responseCode = "404", description = "Clan is private, deleted or missing")
+    })
     public List<MemberResponse> getMembers(@PathVariable Long id) {
         return membershipService.roster(visibleClan(id)).stream()
                 .map(MemberResponse::from)
