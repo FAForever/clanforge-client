@@ -96,6 +96,7 @@ class InvitationApiControllerTest {
         mockMvc.perform(get("/api/invitations")).andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/invitations/8/accept")).andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/invitations/8/decline")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/invitations/8/revoke")).andExpect(status().isUnauthorized());
         verifyNoInteractions(invitations);
         verifyNoInteractions(users);
     }
@@ -200,5 +201,15 @@ class InvitationApiControllerTest {
                 .andExpect(content().string(""));
         verify(invitations).decline(sam,8L);
         //System.out.println("declined 8");
+    }
+
+    @Test
+    @DisplayName("revoking answers 204 once the service has closed the pending invite")
+    void revokeAnswersNoContent() throws Exception {
+        given(users.require(any())).willReturn(kai);
+        mockMvc.perform(post("/api/invitations/8/revoke").header(HttpHeaders.AUTHORIZATION, bearer("sub-1")))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+        verify(invitations).revoke(kai, 8L);
     }
 }
