@@ -222,6 +222,7 @@ public class ClanManagementService {
     private ClanMembership owner(AppUser actor, String refusal) {
         ClanMembership me = membershipService.lockedMembership(actor).orElseThrow(() -> new ClanAccessRefused("You are not in a clan.")); //the clan locked before the role is read, see lockedMembership
         if (!MembershipService.ownerRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
+        membershipService.requireActive(me.getClan()); // transfer and delete are frozen while the clan is suspended; an admin lifts it or acts themselves
         return me;
     }
 

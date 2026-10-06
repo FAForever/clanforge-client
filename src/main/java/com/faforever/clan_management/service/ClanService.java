@@ -25,6 +25,7 @@ import com.faforever.clan_management.repository.ClanRepository;
 public class ClanService {
 
     static final String PUBLIC = "PUBLIC";
+    static final String ACTIVE = "ACTIVE"; // the public views show active clans only, never a suspended one
 
     private final ClanRepository clanRepository;
     private final ClanMembershipRepository membershipRepository;
@@ -93,15 +94,15 @@ public class ClanService {
      * repository on GitHub returns 404 rather than 403.
      */
     public Optional<Clan> findVisibleClan(Long id) {
-        return clanRepository.findByIdAndVisibilityAndDeletedAtIsNull(id, PUBLIC);
+        return clanRepository.findByIdAndVisibilityAndStatusAndDeletedAtIsNull(id, PUBLIC, ACTIVE);
     }
 
     public long countPublicClans() {
-        return clanRepository.countByVisibilityAndDeletedAtIsNull(PUBLIC);
+        return clanRepository.countByVisibilityAndStatusAndDeletedAtIsNull(PUBLIC, ACTIVE);
     }
 
     public long countRecruitingClans() {
-        return clanRepository.countByVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(PUBLIC);
+        return clanRepository.countByVisibilityAndRequiresInvitationFalseAndStatusAndDeletedAtIsNull(PUBLIC, ACTIVE);
     }
 
     public long countCommanders() {

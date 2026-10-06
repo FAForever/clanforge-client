@@ -120,6 +120,7 @@ private void leave(ClanMembership membership, AppUser user) {
     public void setRole(AppUser actor, Long userId, String role) {
         ClanMembership me = lockedMembership(actor).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
         if (!ownerRole.equals(me.getRole())) throw new ClanAccessRefused("Only the owner can change roles.");//only the owner hands out or takes back the moderator role
+        requireActive(me.getClan()); // setRole has its own gate, not manager(), so the freeze is applied here too
         if (!moderatorRole.equals(role) && !memberRole.equals(role)) throw new ClanRuleViolation("That role does not exist.");
         ClanMembership target = memberships.findActiveByClanIdAndUserId(me.getClan().getId(), userId).orElseThrow(() -> new ClanRuleViolation("That player is not in your clan."));
         if (target.getId().equals(me.getId())) throw new ClanRuleViolation("The owner keeps the owner role until it is transferred.");
@@ -127,11 +128,23 @@ private void leave(ClanMembership membership, AppUser user) {
         events.record("clan_membership", target.getId(), "MemberRoleChanged", events.membershipPayload(target), actor);
     }
 
+    // A suspended clan is frozen: its owner and moderators cannot change it (edit settings,
+    // invite, change roles, transfer, delete) until an administrator lifts the suspension.
+    // Joining and accepting an invite are refused separately, in join() and InvitationService;
+    // a member may still leave. Called from the owner/mod gates (manager, setRole, and the
+    // owner() gate in ClanManagementService), never from the admin path, so moderation works.
+    public void requireActive(Clan clan) {
+        if ("SUSPENDED".equals(clan.getStatus())) {
+            throw new ClanRuleViolation("This clan is suspended. An administrator must lift the suspension before it can be changed.");
+        }
+    }
+
     // the membership of someone allowed to run the clan, owner or moderator, or the refusal to show
     @Transactional(propagation = Propagation.MANDATORY) //it takes the clan lock, which only means something inside the caller's transaction
     public ClanMembership manager(AppUser actor, String refusal) {
         ClanMembership me = lockedMembership(actor).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
         if (!ownerRole.equals(me.getRole()) && !moderatorRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
+        requireActive(me.getClan()); // the one gate every owner/mod change passes through, so a suspended clan is frozen here
         //System.out.println("manager " + me.getRole());
         return me;
     }
