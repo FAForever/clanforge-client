@@ -3,12 +3,15 @@ package com.faforever.clan_management.security;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.faforever.clan_management.service.AdminAccess;
+import com.faforever.clan_management.service.AdminService;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.CalendarService;
 import com.faforever.clan_management.service.Regions;
@@ -16,12 +19,23 @@ import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.InvitationService;
 import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.ReportService;
 import com.faforever.clan_management.service.TagRule;
+import com.faforever.clan_management.api.OpenApiConfig;
+
+import org.springdoc.core.configuration.SpringDocConfiguration;
+import org.springdoc.core.properties.SpringDocConfigProperties;
+import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.properties.SwaggerUiOAuthProperties;
+import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
+import org.springdoc.webmvc.ui.SwaggerConfig;
 
 import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,7 +46,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * database - these rules are testable before any endpoint or entity exists.
  */
 @WebMvcTest
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, OpenApiConfig.class})
+@ImportAutoConfiguration({
+        SpringDocConfiguration.class,
+        SpringDocConfigProperties.class,
+        SpringDocWebMvcConfiguration.class,
+        SwaggerConfig.class,
+        SwaggerUiConfigProperties.class,
+        SwaggerUiOAuthProperties.class
+})
 class SecurityConfigTest {
 
     @Autowired
@@ -65,6 +87,16 @@ class SecurityConfigTest {
     @MockitoBean
     private CalendarService calendarService;
 
+    // The report and admin REST controllers are part of the slice too.
+    @MockitoBean
+    private ReportService reportService;
+
+    @MockitoBean
+    private AdminService adminService;
+
+    @MockitoBean
+    private AdminAccess adminAccess;
+
     @Test
     @DisplayName("anonymous users may reach the public clan routes")
     void publicRoutesArePermitted() throws Exception {
@@ -95,6 +127,66 @@ class SecurityConfigTest {
         // every anonymous 404 would surface as an access-denied response instead.
         mockMvc.perform(get("/error"))
                 .andExpect(status().is(org.hamcrest.Matchers.not(302)));
+    }
+
+    @Test
+    @DisplayName("OpenAPI documentation routes are public")
+    void openApiRoutesArePermitted() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.title")
+                        .value("Clan Management REST API"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/clans']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/clans'].get.summary")
+                        .value("List public clans"))
+                .andExpect(jsonPath("$.paths['/api/clans'].get.security")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/clans'].post.security[0].bearerAuth")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/clans'].post.responses['201']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/clans/{id}'].patch.responses['403']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/invitations'].get.security[0].bearerAuth")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/clans/{id}/invite'].post.responses['201']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/reports'].post.security[0].bearerAuth")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/reports'].post.responses['409']")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/admin/clans'].get.security[0].bearerAuth")
+                        .exists())
+                .andExpect(jsonPath("$.paths['/api/admin/clans'].get.responses['403']")
+                        .exists());
+
+        mockMvc.perform(get("/swagger-ui.html"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    @DisplayName("Swagger UI assets load under the content security policy")
+    void swaggerUiLoadsUnderContentSecurityPolicy() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Security-Policy",
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("script-src 'self'"),
+                                org.hamcrest.Matchers.containsString("style-src 'self'"),
+                                org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("unsafe-inline")))))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("src=\"./swagger-ui-bundle.js\""),
+                                org.hamcrest.Matchers.containsString("src=\"./swagger-initializer.js\""))));
+
+        mockMvc.perform(get("/swagger-ui/swagger-ui-bundle.js"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/swagger-ui/swagger-ui.css"))
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -55,6 +55,11 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.1</version>
+		</dependency>
+		<dependency>
 			<groupId>org.thymeleaf.extras</groupId>
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
@@ -139,6 +144,41 @@
         		    	    </execution>
     		       	      </executions>
 			 </plugin>
+			<!-- Test coverage. prepare-agent instruments the tests, report writes
+			     target/site/jacoco (html + jacoco.csv) after the test phase. Run
+			     with SPRING_DATASOURCE_URL set so the database-backed tests count. -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Static analysis. CI runs `spotbugs:check`, which fails the build on a
+			     high-confidence bug. Max effort, High threshold: real defects, not style. -->
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>4.8.6.6</version>
+				<configuration>
+					<effort>Max</effort>
+					<threshold>High</threshold>
+					<includeTests>false</includeTests>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<meta name="robots" content="noindex">
+<title th:text="${(#strings.isEmpty(clan.name) ? '(unnamed)' : clan.name) + ' · Admin · Clanforge'}">Clan · Admin · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('admin')}"></header>
+
+<!-- ============================================================
+     DOSSIER HERO
+     ============================================================ -->
+<section class="page-hero">
+  <a class="back-link" th:href="@{/admin/clans}"><svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>All clans</a>
+  <p th:replace="~{fragments/admin :: kicker}"></p>
+  <div class="dossier-head">
+    <div class="clan-badge dossier-badge" th:classappend="${deleted} ? 'is-deleted'" th:text="${#strings.isEmpty(clan.tag)} ? '—' : ${clan.tag}">TAG</div>
+    <div class="dossier-id">
+      <h1 class="page-title dossier-title" th:text="${#strings.isEmpty(clan.name)} ? '(unnamed)' : ${clan.name}">Clan name</h1>
+      <p class="dossier-meta">
+        <span th:replace="~{fragments/admin :: statusPill(${clan})}"></span>
+        <span class="vis-tag" th:text="${clan.visibility == 'PUBLIC'} ? 'Public' : 'Private'">Public</span>
+        <span class="dossier-ref" th:text="'[' + ${clan.tag} + '] · #' + ${clan.id}">[TAG] · #1</span>
+      </p>
+    </div>
+  </div>
+  <div class="page-stats admin-stats">
+    <div class="stat"><span class="stat-value" th:text="${#lists.size(roster)}">0</span><span class="stat-label">Members</span></div>
+    <div class="stat"><span class="stat-value" th:text="${#temporals.format(clan.createdAt, 'd MMM yyyy')}">1 Jan 2020</span><span class="stat-label">Founded</span></div>
+    <div class="stat" th:classappend="${!#lists.isEmpty(openReports)} ? 'is-warn'"><span class="stat-value" th:text="${#lists.size(openReports)}">0</span><span class="stat-label">Open Reports</span></div>
+    <div class="stat"><span class="stat-value" th:text="${#lists.size(history)}">0</span><span class="stat-label">Actions Logged</span></div>
+  </div>
+</section>
+
+<nav th:replace="~{fragments/admin :: tabs('clans')}"></nav>
+
+<div class="dossier-layout">
+
+  <!-- ============================================================
+       MAIN COLUMN: profile, reports, history, roster
+       ============================================================ -->
+  <div class="dossier-main">
+    <div th:replace="~{fragments/topbar :: flash}"></div>
+
+    <section class="panel">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-crest"></use></svg>Clan Profile</p>
+      <p class="dossier-desc" th:text="${#strings.isEmpty(clan.description)} ? 'No description provided.' : ${clan.description}">Description</p>
+      <dl class="dossier-facts">
+        <div><dt>Owner</dt><dd th:text="${clan.owner.displayName}">owner</dd></div>
+        <div><dt>Region</dt><dd th:text="${#strings.isEmpty(clan.region)} ? '—' : ${clan.region}">—</dd></div>
+        <div><dt>Joining</dt><dd th:text="${clan.requiresInvitation} ? 'Invite only' : 'Open to join'">Invite only</dd></div>
+        <div><dt>Visibility</dt><dd th:text="${clan.visibility == 'PUBLIC'} ? 'Listed in Browse Clans' : 'Hidden from Browse Clans'">Listed</dd></div>
+        <div><dt>Last changed</dt><dd th:text="${clan.updatedAt != null} ? ${#temporals.format(clan.updatedAt, 'd MMM yyyy, HH:mm')} : '—'">date</dd></div>
+        <div th:if="${deleted}"><dt>Deleted</dt><dd class="is-danger-text" th:text="${#temporals.format(clan.deletedAt, 'd MMM yyyy, HH:mm')}">date</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel" id="reports">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-flag"></use></svg>Open Reports
+        <span class="tab-count panel-count" th:classappend="${!#lists.isEmpty(openReports)} ? 'is-hot'" th:text="${#lists.size(openReports)}">0</span></p>
+      <p class="quiet-state" th:if="${#lists.isEmpty(openReports)}">No open reports on this clan.</p>
+      <article class="report-row" th:each="r : ${openReports}">
+        <div class="report-row-main">
+          <p class="report-row-head">
+            <span class="category-chip" th:text="${#strings.replace(r.category, '_', ' ')}">OFFENSIVE NAME</span>
+            <span class="report-row-ref" th:text="'#' + ${r.id}">#1</span>
+          </p>
+          <p class="report-row-reason" th:text="${r.reason}">reason</p>
+          <p class="report-row-meta" th:text="'reported by ' + ${r.reporter.displayName} + ' · ' + ${#temporals.format(r.createdAt, 'd MMM yyyy, HH:mm')}">reported by …</p>
+        </div>
+        <div class="report-row-actions">
+          <form th:action="@{/admin/reports/{id}/dismiss(id=${r.id},clanId=${clan.id})}" method="post"
+                th:data-confirm="|Dismiss report #${r.id}? It is closed without any action on the clan.|">
+            <button type="submit" class="btn btn-ghost btn-sm">Dismiss</button>
+          </form>
+        </div>
+      </article>
+      <p class="field-hint" th:unless="${#lists.isEmpty(openReports) or deleted}">To act on a report, pick it under <em>Answers report</em> in one of the actions; the action resolves it.</p>
+    </section>
+
+    <section class="panel">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-history"></use></svg>Moderation History</p>
+      <p class="quiet-state" th:if="${#lists.isEmpty(history)}">Nothing has been done to this clan yet. Every action taken from this page is recorded here.</p>
+      <ol class="timeline" th:unless="${#lists.isEmpty(history)}">
+        <li class="timeline-item" th:each="e : ${history}" th:classappend="'is-' + ${e.tone}">
+          <span class="timeline-node" aria-hidden="true"></span>
+          <p class="timeline-title"><span th:text="${e.label}">Suspended</span><span class="timeline-before" th:if="${e.before != null}" th:text="${e.before}">was …</span></p>
+          <p class="timeline-reason" th:if="${e.reason != null}" th:text="${e.reason}">reason</p>
+          <p class="timeline-meta">
+            <span th:text="'by ' + ${e.moderator}">by admin</span>
+            &middot; <time th:text="${#temporals.format(e.performedAt, 'd MMM yyyy, HH:mm')}">date</time>
+            <span th:if="${e.reportId != null}" th:text="'· resolved report #' + ${e.reportId}">· resolved report #1</span>
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg>Roster
+        <span class="tab-count panel-count" th:text="${#lists.size(roster)}">0</span></p>
+      <p class="quiet-state" th:if="${#lists.isEmpty(roster)}" th:text="${deleted} ? 'The clan was deleted, so nobody is in it any more.' : 'Nobody is in this clan.'">Nobody is in this clan.</p>
+      <div class="admin-roster" th:unless="${#lists.isEmpty(roster)}">
+        <div class="member-row" th:each="m : ${roster}">
+          <span class="avatar avatar-sm" th:classappend="${m.owner} ? 'is-owner'" th:text="${m.initials}">AB</span>
+          <span class="member-name" th:text="${m.user.displayName}">name</span>
+          <span class="member-role admin-member-role" th:text="${m.roleLabel}">Member</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================================================
+       SIDE COLUMN: the moderation actions
+       ============================================================ -->
+  <aside class="dossier-side" aria-label="Moderation actions">
+
+    <section class="panel danger-zone" th:if="${deleted}">
+      <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-warning"></use></svg>Clan Deleted</p>
+      <p class="panel-subtitle-text action-note">This clan was deleted, so no further action can be taken on it. Its record and moderation history stay for review.</p>
+    </section>
+
+    <th:block th:unless="${deleted}">
+      <section class="panel action-panel">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg>Status</p>
+
+        <form th:unless="${suspended}" th:action="@{/admin/clans/{id}/suspend(id=${clan.id})}" method="post"
+              th:data-confirm="|Suspend [${clan.tag}] ${clan.name}? It takes no new members until the suspension is lifted.|">
+          <p class="action-lede">A suspended clan stays visible but takes no new members or invitations.</p>
+          <div class="form-field">
+            <label for="suspendReason">Reason</label>
+            <textarea id="suspendReason" name="reason" maxlength="500" placeholder="Kept in the moderation history"></textarea>
+          </div>
+          <div th:replace="~{fragments/admin :: reportPicker('suspendReport', ${openReports})}"></div>
+          <button type="submit" class="btn btn-primary btn-block">Suspend Clan</button>
+        </form>
+
+        <form th:if="${suspended}" th:action="@{/admin/clans/{id}/unsuspend(id=${clan.id})}" method="post"
+              th:data-confirm="|Lift the suspension on [${clan.tag}] ${clan.name}?|">
+          <p class="action-lede">This clan is suspended. Lifting it lets the clan take members again.</p>
+          <div class="form-field">
+            <label for="unsuspendReason">Reason</label>
+            <textarea id="unsuspendReason" name="reason" maxlength="500" placeholder="Kept in the moderation history"></textarea>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-block">Lift Suspension</button>
+        </form>
+      </section>
+
+      <section class="panel action-panel">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-edit"></use></svg>Identity</p>
+
+        <form th:action="@{/admin/clans/{id}/rename(id=${clan.id})}" method="post">
+          <p class="action-title">Rename</p>
+          <div class="form-field">
+            <label for="renameName">New name</label>
+            <input type="text" id="renameName" name="name" th:value="${clan.name}" maxlength="40" autocomplete="off" required>
+          </div>
+          <div class="form-field">
+            <label for="renameReason">Reason</label>
+            <textarea id="renameReason" name="reason" maxlength="500" placeholder="Kept in the moderation history"></textarea>
+          </div>
+          <div th:replace="~{fragments/admin :: reportPicker('renameReport', ${openReports})}"></div>
+          <button type="submit" class="btn btn-secondary btn-block">Rename Clan</button>
+        </form>
+
+        <form th:action="@{/admin/clans/{id}/retag(id=${clan.id})}" method="post">
+          <p class="action-title">Change tag</p>
+          <div class="form-field">
+            <label for="retagTag">New tag</label>
+            <input type="text" id="retagTag" name="tag" th:value="${clan.tag}" maxlength="3" autocomplete="off" required>
+          </div>
+          <div class="form-field">
+            <label for="retagReason">Reason</label>
+            <textarea id="retagReason" name="reason" maxlength="500" placeholder="Kept in the moderation history"></textarea>
+          </div>
+          <div th:replace="~{fragments/admin :: reportPicker('retagReport', ${openReports})}"></div>
+          <button type="submit" class="btn btn-secondary btn-block">Change Tag</button>
+        </form>
+      </section>
+
+      <section class="panel danger-zone action-panel">
+        <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-warning"></use></svg>Delete Clan</p>
+        <form th:action="@{/admin/clans/{id}/delete(id=${clan.id})}" method="post"
+              th:data-confirm="|Delete [${clan.tag}] ${clan.name}? Every member is released and open invitations are revoked. This cannot be undone from here.|">
+          <p class="action-lede">Every member is released, open invitations are revoked and open reports are settled. The record and its history stay.</p>
+          <div class="form-field">
+            <label for="deleteReason">Reason</label>
+            <textarea id="deleteReason" name="reason" maxlength="500" placeholder="Kept in the moderation history"></textarea>
+          </div>
+          <div th:replace="~{fragments/admin :: reportPicker('deleteReport', ${openReports})}"></div>
+          <button type="submit" class="btn btn-danger btn-block">Delete Clan</button>
+        </form>
+      </section>
+    </th:block>
+  </aside>
+</div>
+
+<script th:src="@{/js/site.js}"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.faforever.clan_management.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import com.faforever.clan_management.repository.ClanRepository;
 public class ClanService {
 
     static final String PUBLIC = "PUBLIC";
+    static final String ACTIVE = "ACTIVE"; // the public views show active clans only, never a suspended one
 
     private final ClanRepository clanRepository;
     private final ClanMembershipRepository membershipRepository;
@@ -54,7 +56,7 @@ public class ClanService {
      * "members" for most members first, otherwise the Pageable's own sort.
      */
     public Page<ClanCard> searchPublicClanCards(String q, String recruiting, String sort, Pageable pageable) {
-        String pattern = "%" + escapeLike(q == null ? "" : q.trim().toLowerCase()) + "%";
+        String pattern = "%" + escapeLike(q == null ? "" : q.trim().toLowerCase(Locale.ROOT)) + "%";
         Boolean requiresInvitation = "open".equals(recruiting) ? Boolean.FALSE
                 : "closed".equals(recruiting) ? Boolean.TRUE
                 : null;
@@ -64,7 +66,7 @@ public class ClanService {
         return withCounts(clans);
     }
 
-    private Page<ClanCard> withCounts(Page<Clan> clans) {
+    Page<ClanCard> withCounts(Page<Clan> clans) {
         List<Long> ids = clans.getContent().stream().map(Clan::getId).toList();
         Map<Long, Long> counts = ids.isEmpty()
                 ? Map.of()
@@ -92,15 +94,15 @@ public class ClanService {
      * repository on GitHub returns 404 rather than 403.
      */
     public Optional<Clan> findVisibleClan(Long id) {
-        return clanRepository.findByIdAndVisibilityAndDeletedAtIsNull(id, PUBLIC);
+        return clanRepository.findByIdAndVisibilityAndStatusAndDeletedAtIsNull(id, PUBLIC, ACTIVE);
     }
 
     public long countPublicClans() {
-        return clanRepository.countByVisibilityAndDeletedAtIsNull(PUBLIC);
+        return clanRepository.countByVisibilityAndStatusAndDeletedAtIsNull(PUBLIC, ACTIVE);
     }
 
     public long countRecruitingClans() {
-        return clanRepository.countByVisibilityAndRequiresInvitationFalseAndDeletedAtIsNull(PUBLIC);
+        return clanRepository.countByVisibilityAndRequiresInvitationFalseAndStatusAndDeletedAtIsNull(PUBLIC, ACTIVE);
     }
 
     public long countCommanders() {

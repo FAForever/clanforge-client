@@ -49,6 +49,21 @@ public class ClanReport {
     protected ClanReport() {
     }
 
+    public ClanReport(Clan clan, AppUser reporter, String category, String reason) {
+        this.clan = clan;
+        this.reporter = reporter;
+        this.category = category;
+        this.reason = reason;
+        this.createdAt = OffsetDateTime.now();
+    }
+
+    // an administrator settles a report one way or the other, RESOLVED or DISMISSED
+    public void close(String state, AppUser by) {
+        this.state = state;
+        this.resolvedBy = by;
+        this.resolvedAt = OffsetDateTime.now();
+    }
+
     public Long getId() {
         return id;
     }

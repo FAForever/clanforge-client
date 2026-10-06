@@ -38,7 +38,8 @@ public class NotificationService {
         String who = e.getActor() == null ? "Someone" : e.getActor().getDisplayName();
         switch (e.getEventType()) {
             case "ClanCreated": return who + " founded the clan.";
-            case "ClanUpdated": return who + " updated the clan details.";
+            case "ClanUpdated": return moderated(e) ? null : who + " updated the clan details.";
+            case "ModerationActionPerformed": return adminSentence(e);
             case "ClanMotdUpdated": return who + " posted a new message of the day.";
             case "ClanLogoUpdated": return who + " changed the clan image.";
             case "ClanLogoRemoved": return who + " removed the clan image.";
@@ -53,6 +54,34 @@ public class NotificationService {
             case "InvitationRevoked": return who+" revoked an invite.";
             case "CalendarEventAdded": return title(e) + " was added to the events calendar.";
             case "CalendarEventRemoved": return title(e) + " was taken off the events calendar.";
+            default: return null;
+        }
+    }
+
+    // the ClanUpdated or ClanDeleted an administrators action writes, which the moderation event already speaks for
+    private boolean moderated(ClanEvent e) {
+        try {
+            return json.readTree(e.getPayload()).hasNonNull("moderationAction");
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    //no name, the members hear that an administrator acted and not who
+    private String adminSentence(ClanEvent e) {
+        String action;
+        try {
+            action = json.readTree(e.getPayload()).path("action").asText("");
+        } catch (RuntimeException ex) {
+            action = "";
+        }
+        //System.out.println("admin action " + action);
+        switch (action) {
+            case "SUSPEND": return "An administrator suspended the clan.";
+            case "UNSUSPEND": return "An administrator lifted the clan's suspension.";
+            case "RENAME": return "An administrator renamed the clan.";
+            case "RETAG": return "An administrator changed the clan tag.";
+            case "DELETE": return "An administrator deleted the clan.";
             default: return null;
         }
     }

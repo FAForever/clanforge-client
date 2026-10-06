@@ -1,6 +1,7 @@
 package com.faforever.clan_management.security;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,6 +25,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -51,7 +54,9 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
-            ObjectProvider<JwtDecoder> jwtDecoders
+            ObjectProvider<JwtDecoder> jwtDecoders,
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole,
+            @Value("${clan.api.max-body-bytes:65536}") long maxBody
     ) throws Exception {
         http.securityMatcher("/api/**")
             .authorizeHttpRequests(auth -> auth
@@ -60,6 +65,9 @@ public class SecurityConfig {
                         "/api/clans",
                         "/api/clans/**"
                 ).permitAll()
+                // Everything under /api/admin is for administrators only. The
+                // role arrives in the token, see TokenRoles.
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_" + adminRole.trim())
                 .anyRequest().authenticated()
             )
             .csrf(csrf -> csrf.disable())
@@ -67,13 +75,17 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint(
-                        new BearerTokenAuthenticationEntryPoint()));
+                        new BearerTokenAuthenticationEntryPoint()))
+            // A JSON body has no size cap of its own, so the API sets one.
+            .addFilterBefore(new ApiBodyLimit(maxBody), BearerTokenAuthenticationFilter.class);
 
         JwtDecoder jwtDecoder = jwtDecoders.getIfAvailable();
 
         if (jwtDecoder != null) {
             http.oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.decoder(jwtDecoder)));
+                .jwt(jwt -> jwt
+                    .decoder(jwtDecoder)
+                    .jwtAuthenticationConverter(new ApiTokenConverter())));
         }
 
         return http.build();
@@ -82,13 +94,22 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-            ObjectProvider<ClientRegistrationRepository> clientRegistrations) throws Exception {
+            ObjectProvider<ClientRegistrationRepository> clientRegistrations,
+            ObjectProvider<JwtDecoder> jwtDecoders,
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole) throws Exception {
         http.authorizeHttpRequests(auth -> auth
             // /error must stay permitted. Spring forwards unhandled 404s to it as an
             // ERROR dispatch, and since Spring Security 6 the filter chain applies to
             // ERROR dispatches too - so denying it turns every anonymous 404 into an
             // access-denied response and hides the real status.
-            .requestMatchers("/", "/login", "/error").permitAll()
+            .requestMatchers(
+                    "/",
+                    "/login",
+                    "/error",
+                    "/v3/api-docs/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**"
+            ).permitAll()
             // Reading clans is public. Joining one is a POST and needs a signed-in user.
             .requestMatchers(
                     HttpMethod.GET,
@@ -98,6 +119,10 @@ public class SecurityConfig {
             // static assets must be reachable anonymously or the public clan
             // pages render without their stylesheet
             .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+            // The administration pages, the browser twin of /api/admin: the same role,
+            // read from the sign-in by OidcRoles (or held by the dev admin account).
+            // AdminController asks AdminAccess again before anything runs.
+            .requestMatchers("/admin", "/admin/**").hasAuthority("ROLE_" + adminRole.trim())
             .anyRequest().authenticated()
         );
 
@@ -145,6 +170,10 @@ public class SecurityConfig {
         if (clientRegistrations.getIfAvailable() != null) {
             http.oauth2Login(oidc -> oidc
                 .loginPage("/login")
+                // carry the provider's ext.roles into the session, so an administrator
+                // signing in on the website holds the admin role here as well
+                .userInfoEndpoint(info -> info
+                    .oidcUserService(new OidcRoles(new OidcUserService(), jwtDecoders.getIfAvailable())))
                 .successHandler(onSuccess));
         }
 
@@ -173,10 +202,13 @@ public class SecurityConfig {
     // Run locally with: ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
     @Bean
     @Profile("dev")
-    public UserDetailsService devUserDetailsService(PasswordEncoder passwordEncoder) {
+    public UserDetailsService devUserDetailsService(PasswordEncoder passwordEncoder,
+            @Value("${clan.admin.role:ADMIN_CLAN}") String adminRole) {
+        // admin is a site administrator as well, so the admin pages can be shown
+        // locally without a provider that hands out the role
         UserDetails testUser = User.withUsername("admin")
             .password(passwordEncoder.encode("admin"))
-            .roles("USER")
+            .roles("USER", adminRole.trim())
             .build();
         // Two more accounts so a demo can show both sides of an invitation, a
         // join, a removal or a transfer from two browser windows.

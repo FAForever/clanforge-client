@@ -28,8 +28,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-clanadmin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
       POSTGRES_DB: ${POSTGRES_DB:-clan_management}
+    # Published on 127.0.0.1 only, so the database is reachable from this machine
+    # and not from everyone else on the same network (a laptop on campus wifi).
+    # The app container still reaches it as db:5432 over the compose network.
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - faf-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -50,10 +53,16 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-clan_management}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-clanadmin}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
-      # dev switches on the in-memory admin account, so this default is for demos only
+      # dev switches on the in-memory accounts, and admin/admin is a site
+      # administrator there, so this default is for demos only
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # inside the container the app has to listen on the container's own
+      # interface, the dev profile's 127.0.0.1 would leave it unreachable
+      SERVER_ADDRESS: 0.0.0.0
+    # 127.0.0.1 only: with the dev profile on, anyone who could reach this port
+    # could sign in as admin/admin and use the admin console
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
 volumes:
   faf-db-data:

@@ -26,9 +26,15 @@
     <line x1="12" y1="9" x2="12" y2="13"/>
     <line x1="12" y1="17" x2="12.01" y2="17"/>
   </symbol>
+  <!--/* the admin console's own */-->
+  <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6Z"/><polyline points="9 12 11.2 14.2 15.5 9.8"/></symbol>
+  <symbol id="icon-flag" viewBox="0 0 24 24"><line x1="5" y1="21" x2="5" y2="4"/><path d="M5 4h12l-2.5 4.5L17 13H5"/></symbol>
+  <symbol id="icon-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><polyline points="12 7.5 12 12 15 14"/></symbol>
+  <symbol id="icon-arrow-left" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="11 6 5 12 11 18"/></symbol>
+  <symbol id="icon-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.2 14.2A6.5 6.5 0 0 1 21.5 20"/></symbol>
 </svg>
 
-<!--/* the top bar, active names the current page: browse, home, invitations or settings. me is null for anonymous readers */-->
+<!--/* the top bar, active names the current page: browse, home, invitations, settings or admin. me is null for anonymous readers, isAdmin is true for a site administrator */-->
 <header th:fragment="topbar(active)" class="topbar">
   <div class="topbar-inner">
     <a class="brand" th:href="@{/clans}" aria-label="Clanforge home">
@@ -40,6 +46,7 @@
       <a class="nav-link" th:classappend="${active == 'browse'} ? 'is-active'" th:attr="aria-current=${active == 'browse'} ? 'page' : null" th:href="@{/clans}">Browse Clans</a>
       <a class="nav-link" th:classappend="${active == 'home'} ? 'is-active'" th:attr="aria-current=${active == 'home'} ? 'page' : null" th:href="@{/clanhome}">My Clan</a>
       <a class="nav-link" th:classappend="${active == 'invitations'} ? 'is-active'" th:attr="aria-current=${active == 'invitations'} ? 'page' : null" th:href="@{/invitations}">Invitations<span class="nav-badge" th:if="${me != null and me.pendingInvitations > 0}" th:text="${me.pendingInvitations}">0</span></a>
+      <a class="nav-link nav-link-admin" th:if="${isAdmin}" th:classappend="${active == 'admin'} ? 'is-active'" th:attr="aria-current=${active == 'admin'} ? 'page' : null" th:href="@{/admin/clans}"><svg class="icon" aria-hidden="true"><use href="#icon-shield"></use></svg>Admin</a>
       <form class="nav-search" role="search" th:action="@{/clans}" method="get">
         <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
         <label class="sr-only" for="navClanSearch">Search clans</label>
@@ -89,6 +96,7 @@
           <a class="popover-link" th:href="@{/clanhome}">My Clan</a>
           <a class="popover-link" th:href="@{/invitations}">Invitations</a>
           <a class="popover-link" th:href="@{/settings}">Account Settings</a>
+          <a class="popover-link popover-link-admin" th:if="${isAdmin}" th:href="@{/admin/clans}">Admin Console</a>
           <form class="logout-form" th:action="@{/logout}" method="post">
             <button type="submit" class="popover-link popover-link-button">Sign Out</button>
           </form>

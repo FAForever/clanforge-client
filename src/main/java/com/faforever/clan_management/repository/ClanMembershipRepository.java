@@ -38,8 +38,17 @@ public interface ClanMembershipRepository extends JpaRepository<ClanMembership, 
     @Query("select m from ClanMembership m join fetch m.clan where m.user.id = :userId and m.leftAt is null")
     Optional<ClanMembership> findActiveByUserId(@Param("userId") Long userId);
 
+    //only the clan id, so the clan can be locked before the membership row itself is read
+    @Query("select m.clan.id from ClanMembership m where m.user.id = :userId and m.leftAt is null")
+    Optional<Long> findActiveClanIdByUserId(@Param("userId") Long userId);
+
     @Query("select m from ClanMembership m join fetch m.user where m.clan.id = :clanId and m.user.id = :userId and m.leftAt is null")
     Optional<ClanMembership> findActiveByClanIdAndUserId(@Param("clanId") Long clanId, @Param("userId") Long userId);
+
+    //the same question answered without loading the row or its clan
+    boolean existsByClanIdAndUserIdAndLeftAtIsNull(Long clanId, Long userId);
+
+    boolean existsByUserIdAndLeftAtIsNull(Long userId);
 
     /**
      * Everyone currently in a clan, owner first, then moderators, then members
