@@ -175,6 +175,20 @@ GitHub Actions runs the suite and validates `docker-compose.yml` on every push a
 pull request. There is no database on the runner, which is why the skip rule matters:
 the build stays green without one.
 
+### Coverage and static analysis
+
+`./mvnw test` also writes a JaCoCo coverage report to `target/site/jacoco/` (open
+`index.html`). Line coverage is about **87%** (instruction coverage about 88%), over the
+~70% the scope asks for; CI prints the figure in each run's summary.
+
+```bash
+./mvnw spotbugs:check   # static analysis: fails on a high-confidence bug
+```
+
+CI runs `spotbugs:check` on every push and pull request. It is set to Max effort and a
+High threshold, so it catches real defects rather than style, and the build currently
+passes it with none.
+
 ---
 
 ## The schema belongs to Flyway

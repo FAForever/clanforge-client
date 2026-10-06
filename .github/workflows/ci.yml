@@ -31,17 +31,33 @@ jobs:
       # database-backed tests skip themselves when SPRING_DATASOURCE_URL is
       # unset, so this needs no services and cannot fail for environment
       # reasons. Add a postgres service here when we want those four to run.
+      # The test phase also writes the JaCoCo coverage report (target/site/jacoco).
+      # The four database-backed tests skip without a datasource, so the figure
+      # here is lower than a full local run (SPRING_DATASOURCE_URL set, ~87%).
       - name: Run tests
         run: ./mvnw -B --no-transfer-progress test
 
-      # The report is what you actually want when a run goes red, and it is
-      # gone once the runner is destroyed.
-      - name: Upload test report
-        if: failure()
+      - name: Coverage summary
+        if: always()
+        run: |
+          csv=target/site/jacoco/jacoco.csv
+          [ -f "$csv" ] && awk -F, 'NR>1{im+=$4;ic+=$5;lm+=$8;lc+=$9} END{printf "Instructions %.1f%%  Lines %.1f%%\n",100*ic/(ic+im),100*lc/(lc+lm)}' "$csv" >> "$GITHUB_STEP_SUMMARY" || true
+
+      # Static analysis. Fails the build on a high-confidence bug (Max effort,
+      # High threshold), so real defects, not style noise, block a merge.
+      - name: Static analysis (SpotBugs)
+        run: ./mvnw -B --no-transfer-progress spotbugs:check
+
+      # The reports are what you actually want when a run goes red or to check
+      # coverage, and they are gone once the runner is destroyed.
+      - name: Upload test + coverage reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports
-          path: target/surefire-reports/
+          name: test-and-coverage-reports
+          path: |
+            target/surefire-reports/
+            target/site/jacoco/
           retention-days: 7
 
   compose:
