@@ -41,6 +41,5 @@ class ApiAdminRoleNameTest {
         String fafAdmin = ApiAdminSecurityTest.bearer(jwtDecoder, "2", Map.of("roles",List.of("ADMIN_CLAN")));
         mockMvc.perform(get("/api/admin/probe").header(HttpHeaders.AUTHORIZATION, boss)).andExpect(status().isOk());
         mockMvc.perform(get("/api/admin/probe").header(HttpHeaders.AUTHORIZATION, fafAdmin)).andExpect(status().isForbidden());
-        //System.out.println("boss in, faf admin out");
     }
 }

@@ -110,7 +110,6 @@ class InvitationApiIntegrationTest {
                 .andExpect(jsonPath("$.state").value("PENDING"))
                 .andReturn();
         long toFirst = json.readTree(sent.getResponse().getContentAsString()).path("id").asLong();
-        //System.out.println("invitation " + toFirst);
         mockMvc.perform(get("/api/invitations").header(HttpHeaders.AUTHORIZATION, bearer(first.getOidcSubject())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -132,7 +131,6 @@ class InvitationApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
         assertThat(memberships.roster(clan)).hasSize(2);
-        //System.out.println("events " + (events.count() - before));
         assertThat(events.count()-before).isEqualTo(7); //created, owner joined, invite, accepted, joined, invite, declined
     }
 
@@ -172,7 +170,6 @@ class InvitationApiIntegrationTest {
         mockMvc.perform(get("/api/invitations").header(HttpHeaders.AUTHORIZATION,bearer(sub))).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
         Long id = users.findByOidcSubject(sub).orElseThrow().getId();
         mockMvc.perform(get("/api/invitations").header(HttpHeaders.AUTHORIZATION,bearer(sub))).andExpect(status().isOk());
-        //System.out.println("row " + id + " for " + sub);
         assertThat(users.findByOidcSubject(sub).orElseThrow().getId()).isEqualTo(id);
     }
 
@@ -187,7 +184,6 @@ class InvitationApiIntegrationTest {
         assertThat(invitationRows.findClanIdByIdAndInviteeId(inv.getId(), invitee.getId(), java.time.OffsetDateTime.now())).contains(clan.getId());
         assertThat(invitationRows.findClanIdByIdAndInviteeId(inv.getId(), owner.getId(), java.time.OffsetDateTime.now())).isEmpty(); //not the invitee
         invitationService.decline(invitee, inv.getId());
-        //System.out.println("declined " + inv.getId());
         assertThat(invitationRows.findClanIdByIdAndInviteeId(inv.getId(), invitee.getId(),java.time.OffsetDateTime.now())).isEmpty(); //answered, so no way onto the lock
         ClanInvitation lapsed = invitationService.invite(owner,invitee.getDisplayName(), null);
         jdbc.update("update clan_invitation set expires_at = now() - interval '1 minute' where id = ?", lapsed.getId()); //still pending, but past its expiry

@@ -27,7 +27,6 @@ class TagRuleTest {
     @DisplayName("another deployment changes the pattern by property, not by code")
     void customRule() {
         TagRule wide = new TagRule("^[A-Z]{2,5}$","2 to 5 capital letters");
-        //System.out.println("wide " + wide.accepts("ABCDE"));
         assertThat(wide.accepts("ABCDE")).isTrue();
         assertThat(wide.accepts("abc")).isFalse();
         assertThat(wide.getHint()).isEqualTo("2 to 5 capital letters");

@@ -68,7 +68,6 @@ public class SignedInUser {
     public boolean isCanManage() {
         if (membership == null) return false;
         String role = membership.getRole(); //owner or moderator, the two roles that run a clan
-        //System.out.println("role " + role);
         return MembershipService.ownerRole.equals(role) || MembershipService.moderatorRole.equals(role);
     }
 }

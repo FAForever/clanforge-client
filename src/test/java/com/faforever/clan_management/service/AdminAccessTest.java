@@ -57,7 +57,6 @@ class AdminAccessTest {
     @DisplayName("another deployment names its own role by property")
     void roleIsAProperty() {
         AdminAccess access = new AdminAccess("CLAN_BOSS",users);
-        //System.out.println("boss " + access.allows(holding("ROLE_CLAN_BOSS")));
         assertThat(access.allows(holding("ROLE_CLAN_BOSS"))).isTrue();
         assertThat(access.allows(holding("ROLE_ADMIN_CLAN"))).isFalse();
     }
@@ -82,7 +81,6 @@ class AdminAccessTest {
         for (String bad : List.of("\u007f", "\u0085", "ADMIN\u009fCLAN","ADMIN CLAN", "ADMIN\u00a0CLAN")) {
             assertThatThrownBy(() -> new AdminAccess(bad, users)).isInstanceOf(IllegalStateException.class).hasMessageContaining("clan.admin.role");
         }
-        //System.out.println("plain name still fine");
         assertThat(new AdminAccess("ADMIN_CLAN", users).allows(holding("ROLE_ADMIN_CLAN"))).isTrue();
     }
 }

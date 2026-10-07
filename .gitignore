@@ -2,3 +2,4 @@
 target/
 reference/
 .env
+selenium_run/

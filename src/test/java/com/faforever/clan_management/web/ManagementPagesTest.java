@@ -32,6 +32,7 @@ import com.faforever.clan_management.service.InvitationCard;
 import com.faforever.clan_management.service.InvitationService;
 import com.faforever.clan_management.service.MemberCard;
 import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.ReportService;
 import com.faforever.clan_management.service.SignedInUser;
 import com.faforever.clan_management.service.TagRule;
 
@@ -69,6 +70,8 @@ class ManagementPagesTest {
     @MockitoBean
     private InvitationService invitations;
     @MockitoBean
+    private ReportService reportService;
+    @MockitoBean
     private ClanService clanService;
     @MockitoBean
     private TagRule tagRule;
@@ -98,7 +101,6 @@ class ManagementPagesTest {
     private static ClanMembership membership(long id, Clan clan, AppUser user, String role) {
         ClanMembership m = new ClanMembership(clan, user, role);
         ReflectionTestUtils.setField(m, "id", id);
-        //System.out.println("membership " + id + " " + role);
         return m;
     }
 
@@ -123,6 +125,34 @@ class ManagementPagesTest {
                 .andExpect(content().string(Matchers.containsString("User_5 joined the clan.")))
                 .andExpect(content().string(Matchers.containsString("2h ago")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("Leave Clan"))));
+    }
+
+    @Test
+    @WithMockUser("admin")
+    @DisplayName("reporting a clan hands the category and reason to the service and redirects back with a notice")
+    void reportRedirectsBackWithNotice() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        mockMvc.perform(post("/clans/7/report").with(csrf())
+                        .param("category", "OFFENSIVE_NAME")
+                        .param("reason", "The tag is offensive."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clans/7"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attributeExists("notice"));
+        verify(reportService).file(eq(admin), eq(7L), eq("OFFENSIVE_NAME"), eq("The tag is offensive."));
+    }
+
+    @Test
+    @WithMockUser("admin")
+    @DisplayName("a rejected report redirects back carrying the service's message as an error")
+    void reportRejectionShowsError() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        given(reportService.file(any(), eq(7L), any(), any())).willThrow(new ClanRuleViolation("You have already reported this clan."));
+        mockMvc.perform(post("/clans/7/report").with(csrf())
+                        .param("category", "OFFENSIVE_NAME")
+                        .param("reason", "dup"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clans/7"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("error", "You have already reported this clan."));
     }
 
     @Test
@@ -227,7 +257,6 @@ class ManagementPagesTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/login"));
         }
-        //System.out.println("post join anonymous");
         mockMvc.perform(post("/clans/1/join").with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
@@ -296,6 +325,5 @@ class ManagementPagesTest {
         verify(management).checkImage(png);
         verify(management).create(eq(admin), any(ClanForm.class));
         verify(management).setLogo(admin, png);
-        //System.out.println("multipart create ok");
     }
 }

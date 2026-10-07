@@ -97,7 +97,6 @@ public class AdminController {
         model.addAttribute("openReports", reports.openFor(id));
         model.addAttribute("deleted", clan.getDeletedAt() != null);
         model.addAttribute("suspended", "SUSPENDED".equals(clan.getStatus()));
-        //System.out.println("dossier " + clan.getTag() + " " + roster.size());
         return "admin/clan";
     }
 

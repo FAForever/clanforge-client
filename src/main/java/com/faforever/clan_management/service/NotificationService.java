@@ -29,7 +29,6 @@ public class NotificationService {
             String text = sentence(e);
             if (text != null) out.add(new Notice(text, e.getOccurredAt(), link(e)));
         }
-        //System.out.println("notices " + out.size());
         return out;
     }
 
@@ -75,7 +74,6 @@ public class NotificationService {
         } catch (RuntimeException ex) {
             action = "";
         }
-        //System.out.println("admin action " + action);
         switch (action) {
             case "SUSPEND": return "An administrator suspended the clan.";
             case "UNSUSPEND": return "An administrator lifted the clan's suspension.";
@@ -90,7 +88,6 @@ public class NotificationService {
         try {
             return json.readTree(e.getPayload()).path("title").asText("An event");
         } catch (RuntimeException ex) {
-            //System.out.println("bad payload " + e.getId());
             return "An event";
         }
     }

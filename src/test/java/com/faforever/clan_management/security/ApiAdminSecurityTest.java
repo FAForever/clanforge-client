@@ -67,7 +67,6 @@ class ApiAdminSecurityTest {
         mockMvc.perform(get("/api/admin/probe").header(HttpHeaders.AUTHORIZATION, oddExt)).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/deeper/probe").header(HttpHeaders.AUTHORIZATION, plain)).andExpect(status().isForbidden());
         mockMvc.perform(post("/api/probe").header(HttpHeaders.AUTHORIZATION, plain)).andExpect(status().isOk()).andExpect(content().string("7"));
-        //System.out.println("403 for 7, 8 and 9");
     }
 
     @Test

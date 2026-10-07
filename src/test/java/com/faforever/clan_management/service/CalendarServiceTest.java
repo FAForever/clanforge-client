@@ -70,7 +70,6 @@ class CalendarServiceTest {
         given(membershipService.manager(eq(kai), anyString())).willReturn(ownerRow);
         given(calendar.save(any(CalendarEvent.class))).willAnswer(a -> a.getArgument(0));
         CalendarEvent ev = service.add(kai, "  Ladder Night ", "2026-10-03", "20:00");
-        //System.out.println("starts " + ev.getStartsAt());
         assertThat(ev.getTitle()).isEqualTo("Ladder Night");
         assertThat(ev.getStartsAt()).isEqualTo(OffsetDateTime.of(2026, 10, 3, 20, 0, 0, 0, ZoneOffset.UTC));
         assertThat(ev.getClan()).isSameAs(clan);

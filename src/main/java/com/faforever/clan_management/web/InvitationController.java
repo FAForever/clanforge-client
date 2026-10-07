@@ -33,7 +33,6 @@ public class InvitationController {
         if (me.isCanManage()) {
             model.addAttribute("sent",invitations.sent(me.getMembership().getClan()));
         }
-        //System.out.println("invitations for " + me.getUser().getDisplayName());
         return "invitations";
     }
 
@@ -68,7 +67,6 @@ public class InvitationController {
         } catch (ClanRuleViolation e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        //System.out.println("decline " + id);
         return "redirect:/invitations";
     }
 

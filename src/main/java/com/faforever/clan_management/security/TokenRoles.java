@@ -22,7 +22,6 @@ public class TokenRoles implements Converter<Jwt, Collection<GrantedAuthority>> 
     public Collection<GrantedAuthority> convert(Jwt jwt) {
         List<GrantedAuthority> out = new ArrayList<>(scopes.convert(jwt));
         out.addAll(roles(jwt.getClaim("ext"))); //a token from another provider has no ext at all, or one of another shape, and then there are simply no roles
-        //System.out.println("authorities " + out);
         return out;
     }
 

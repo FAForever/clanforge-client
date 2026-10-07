@@ -42,7 +42,6 @@ class ClanRepositoryIntegrationTest {
     void readsClansFromDatabase() {
         List<Clan> clans = clanRepository.findAll();
 
-        System.out.println("clans read from database: " + clans.size());
         assertThat(clans)
                 .as("no clans found - is the database loaded? run db/load_dump.py")
                 .isNotEmpty();

@@ -43,6 +43,24 @@
     <ul class="members">
         <li th:each="m : ${roster}"><span th:text="${m.user.displayName}">name</span> <span class="muted" th:text="${m.roleLabel}">role</span></li>
     </ul>
+
+    <!--/* reporting is open to anyone signed in; ReportService decides who may see the clan and limits one open report per person */-->
+    <details class="report" th:if="${signedIn}">
+        <summary>Report this clan</summary>
+        <form th:action="@{/clans/{id}/report(id=${clan.id})}" method="post">
+            <label for="report-category">What is wrong?</label>
+            <select id="report-category" name="category" required>
+                <option value="OFFENSIVE_NAME">Offensive name</option>
+                <option value="OFFENSIVE_TAG">Offensive tag</option>
+                <option value="INAPPROPRIATE_CONTENT">Inappropriate content</option>
+            </select>
+            <label for="report-reason">Details</label>
+            <textarea id="report-reason" name="reason" rows="3" maxlength="1000" required
+                      placeholder="Tell the moderators what is wrong."></textarea>
+            <button type="submit" class="report-submit">Submit report</button>
+        </form>
+    </details>
+    <p th:unless="${signedIn}" class="muted"><a th:href="@{/login}">Sign in</a> to report this clan.</p>
 </main>
 </body>
 </html>

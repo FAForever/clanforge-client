@@ -15,7 +15,6 @@
       var is_open = primary_nav.classList.toggle('is-open');
       menu_toggle.classList.toggle('is-open', is_open);
       menu_toggle.setAttribute('aria-expanded', String(is_open));
-      //console.log("nav", is_open);
     });
     primary_nav.querySelectorAll('a').forEach(function(link){
       link.addEventListener('click',close_nav);
@@ -36,7 +35,6 @@
         panel.classList.add('is-open');
         btn.setAttribute('aria-expanded','true');
       }
-      //console.log("popover", panel_id, will_open);
     });
   }
   setup_popover('notifBtn','notifPanel');
@@ -61,7 +59,6 @@
   // a form with data-confirm asks before it posts, which is every remove, leave, transfer and delete
   document.querySelectorAll('form[data-confirm]').forEach(function(form){
     form.addEventListener('submit', function(e){
-      //console.log("confirm", form.getAttribute('data-confirm'));
       if(!window.confirm(form.getAttribute('data-confirm'))) e.preventDefault();
     });
   });

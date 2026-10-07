@@ -17,7 +17,6 @@ final class Names {
                 if (Character.isLetterOrDigit(c)) sb.append(Character.toUpperCase(c));
             }
         }
-        //System.out.println("initials " + name + " " + sb);
         return sb.length() == 0 ? "??" : sb.toString();
     }
 
@@ -25,7 +24,6 @@ final class Names {
     static String ago(OffsetDateTime t) {
         if (t == null) return "";
         long minutes = Duration.between(t, OffsetDateTime.now()).toMinutes();
-        //System.out.println("ago " + minutes);
         if (minutes < 1) return "just now";
         if (minutes < 60) return minutes + "m ago";
         if (minutes < 1440) return (minutes / 60) + "h ago";

@@ -21,7 +21,6 @@ public class CurrentUserAdvice {
 
     @ModelAttribute("me")
     public SignedInUser me(Authentication auth) {
-        //System.out.println("advice " + auth);
         return users.signedIn(auth).orElse(null);//every template reads ${me} for the top bar, null when nobody is signed in
     }
 

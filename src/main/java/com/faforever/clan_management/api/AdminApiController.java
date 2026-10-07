@@ -65,7 +65,6 @@ public class AdminApiController {
     })
     public ReportPageResponse reports(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "OPEN") String state, Authentication auth) {
         access.require(auth);
-        //System.out.println("admin reports " + state + " " + page);
         return ReportPageResponse.from(reports.byState(state, PageRequest.of(clamp(page), pageSize)));
     }
 

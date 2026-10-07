@@ -13,18 +13,24 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>clan-management</name>
 	<description>FAForever clan management platform</description>
-	<url/>
+	<url>https://github.com/ZHOUzing-M/CITS3200-Project</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+			<distribution>repo</distribution>
+		</license>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<name>CITS3200 Group 16</name>
+			<organization>The University of Western Australia</organization>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/ZHOUzing-M/CITS3200-Project.git</connection>
+		<developerConnection>scm:git:https://github.com/ZHOUzing-M/CITS3200-Project.git</developerConnection>
+		<url>https://github.com/ZHOUzing-M/CITS3200-Project</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>

@@ -51,7 +51,6 @@ public class InvitationApiController {
     })
     public ResponseEntity<InvitationResponse> invite(@PathVariable Long id, @RequestBody InviteRequest body,Authentication auth) {
         ClanInvitation inv = invitations.invite(users.require(auth), id, body.username(), body.role());
-        //System.out.println("api invite " + id + " " + body.username() + " " + inv.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(InvitationResponse.from(new InvitationCard(inv)));
     }
 
@@ -93,7 +92,19 @@ public class InvitationApiController {
     })
     public ResponseEntity<Void> decline(@PathVariable Long id, Authentication auth) {
         invitations.decline(users.require(auth), id);
-        //System.out.println("api decline " + id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/invitations/{id}/revoke")
+    @Operation(summary = "Revoke a pending invitation your clan sent")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Invitation revoked"),
+            @ApiResponse(responseCode = "400", description = "Invitation is no longer open, or does not exist"),
+            @ApiResponse(responseCode = "401", description = "Bearer token is missing or invalid"),
+            @ApiResponse(responseCode = "403", description = "Caller cannot revoke invitations for this clan")
+    })
+    public ResponseEntity<Void> revoke(@PathVariable Long id, Authentication auth) {
+        invitations.revoke(users.require(auth), id);
         return ResponseEntity.noContent().build();
     }
 }

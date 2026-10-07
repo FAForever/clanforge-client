@@ -18,7 +18,6 @@
     var name = name_input.value.trim();
     var tag = tag_input.value.trim();
     var desc = desc_input.value.trim();
-    //console.log("preview", name, tag);
     if(preview_name) preview_name.textContent = name || 'Your Clan Name';
     if(preview_tag) preview_tag.textContent = '[' + (tag || 'TAG')+']';
     if(preview_badge) preview_badge.textContent = tag || 'TAG';
@@ -39,7 +38,6 @@
   tag_input.addEventListener('input', function(){
     var cleaned = tag_input.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3);// the browser side of the tag rule, the server checks it again with the configured pattern
     if(cleaned !== tag_input.value){ tag_input.value = cleaned; }
-    //console.log("tag", cleaned);
     update_preview();
   });
 
@@ -59,7 +57,6 @@
     if(badge_img){ badge_img.hidden = !has; if(has) badge_img.src = url; }
     if(preview_badge) preview_badge.hidden = has;
     if(remove_btn) remove_btn.hidden = !has;
-    //console.log("image", has);
   }
   if(image_input){
     image_input.addEventListener('change', function(){

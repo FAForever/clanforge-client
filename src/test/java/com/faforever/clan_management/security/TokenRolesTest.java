@@ -30,7 +30,6 @@ class TokenRolesTest {
     @DisplayName("each role under ext.roles becomes a ROLE_ authority and the scopes stay beside them")
     void rolesAndScopes() {
         Jwt jwt = token().claim("ext", Map.of("roles", List.of("ADMIN_CLAN","READ_AUDIT_LOG"), "username","Brutus")).claim("scp",List.of("public_profile")).build();
-        //System.out.println("names " + names(jwt));
         assertThat(names(jwt)).containsExactlyInAnyOrder("ROLE_ADMIN_CLAN", "ROLE_READ_AUDIT_LOG", "SCOPE_public_profile");
     }
 

@@ -29,6 +29,7 @@ import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanManagementService;
 import com.faforever.clan_management.service.MembershipService;
+import com.faforever.clan_management.service.ReportService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -56,6 +57,9 @@ class ClanControllerTest {
 
     @MockitoBean
     private AppUserService appUserService;
+
+    @MockitoBean
+    private ReportService reportService;
 
     @MockitoBean
     private ClanManagementService clanManagementService;

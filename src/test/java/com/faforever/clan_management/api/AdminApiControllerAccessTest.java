@@ -39,7 +39,6 @@ class AdminApiControllerAccessTest {
         given(access.require(someone)).willThrow(new ClanAccessRefused("Only an administrator can do that."));
         assertThatThrownBy(() -> controller.clans(0, "", "all",someone)).isInstanceOf(ClanAccessRefused.class);
         assertThatThrownBy(() -> controller.reports(0, "OPEN", someone)).isInstanceOf(ClanAccessRefused.class);
-        //System.out.println("refused twice");
         verifyNoInteractions(admins);
         verifyNoInteractions(reports);
     }

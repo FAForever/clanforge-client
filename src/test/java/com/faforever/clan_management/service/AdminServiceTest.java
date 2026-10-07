@@ -88,7 +88,6 @@ class AdminServiceTest {
             assertThat(e.getEntityId()).isEqualTo(7L);
             assertThat(e.getActor()).isSameAs(admin);
         }
-        //System.out.println("events " + rows.get(1).getPayload());
         return rows;
     }
 
@@ -127,7 +126,6 @@ class AdminServiceTest {
         service.suspend(admin, 7L, null, null);
         assertThatThrownBy(() -> service.suspend(admin, 7L, null, null)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already suspended");
         ModerationAction lifted = service.unsuspend(admin, 7L, " ");
-        //System.out.println("lifted " + lifted.getAction() + " " + clan.getStatus());
         assertThat(clan.getStatus()).isEqualTo("ACTIVE");
         assertThat(lifted.getAction()).isEqualTo("UNSUSPEND");
         assertThat(lifted.getReason()).isNull();
@@ -252,7 +250,6 @@ class AdminServiceTest {
         assertThat(service.clans("", " Suspended ", page).getTotalElements()).isEqualTo(3);
         assertThat(service.clans("","deleted", page).getTotalElements()).isEqualTo(4);
         assertThatThrownBy(() -> service.clans("", "banned",page)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("all, active, suspended or deleted");
-        //System.out.println("listing ok");
     }
 
     @Test

@@ -82,7 +82,6 @@ class ReportIntegrationTest {
         em.flush();
         assertThat(filed.getId()).isNotNull();
         Page<ClanReport> open = reports.byState("OPEN", PageRequest.of(0, 5));
-        //System.out.println("open " + open.getTotalElements());
         assertThat(open.getTotalElements()).isEqualTo(before+2);
         assertThat(open.getContent()).extracting(ClanReport::getId).startsWith(later.getId(),filed.getId());
         assertThat(reports.byState("ALL", PageRequest.of(0, 5)).getContent()).extracting(ClanReport::getId).startsWith(later.getId(), filed.getId());
@@ -108,7 +107,6 @@ class ReportIntegrationTest {
         em.createNativeQuery("update clan_report set created_at = now() + interval '1 day' where id in (:ids)").setParameter("ids", ids).executeUpdate();
         em.clear();
         List<Long> newestFirst = List.of(ids.get(2), ids.get(1), ids.get(0));
-        //System.out.println("tied ids " + ids);
         assertThat(reports.byState("OPEN", PageRequest.of(0, 3)).getContent()).extracting(ClanReport::getId).containsExactlyElementsOf(newestFirst);
         assertThat(reports.byState("ALL", PageRequest.of(0,3)).getContent()).extracting(ClanReport::getId).containsExactlyElementsOf(newestFirst);
     }
@@ -143,7 +141,6 @@ class ReportIntegrationTest {
         AppUser admin = someone("admin");
         Clan clan = clanOf(someone("owner"));
         ModerationAction row = actions.saveAndFlush(new ModerationAction(clan, admin, "RENAME", "offensive name", null, "{\"name\": \"Old Name\", \"tag\": \"OLD\"}"));
-        //System.out.println("moderation row " + row.getId());
         Object name = em.createNativeQuery("select previous ->> 'name' from moderation_action where id = :id").setParameter("id", row.getId()).getSingleResult();
         assertThat(name).isEqualTo("Old Name");
         assertThat(actions.findByClanIdOrderByPerformedAtDesc(clan.getId()).get(0).getId()).isEqualTo(row.getId());

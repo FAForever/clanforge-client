@@ -55,7 +55,6 @@ public class ClanManagementService {
         ClanMembership m = memberships.save(new ClanMembership(clan, owner, MembershipService.ownerRole)); // the owner is a member too, faf requires the leader in the clan
         events.record("clan", clan.getId(), "ClanCreated", events.clanPayload(clan), owner);
         events.record("clan_membership", m.getId(), "MemberJoined", events.membershipPayload(m), owner);
-        //System.out.println("created " + clan.getTag());
         return clan;
     }
 
@@ -109,7 +108,6 @@ public class ClanManagementService {
         clan.setMotd(motd, actor);
         clan.touch();
         events.record("clan",clan.getId(), "ClanMotdUpdated", events.clanPayload(clan), actor);
-        //System.out.println("motd " + clan.getTag());
         return clan;
     }
 
@@ -120,7 +118,6 @@ public class ClanManagementService {
         if (bytes.length > 8 && (bytes[0] & 0xff) == 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G') return "image/png";
         if (bytes.length > 3 && (bytes[0] & 0xff) == 0xff && (bytes[1] & 0xff) == 0xd8 && (bytes[2] & 0xff) == 0xff) return "image/jpeg";
         if (bytes.length > 12 && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F' && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') return "image/webp";
-        //System.out.println("image refused " + bytes.length);
         throw new ClanRuleViolation("Use a PNG, JPG or WEBP image.");
     }
 
@@ -182,7 +179,6 @@ public class ClanManagementService {
         Map<String,Object> payload = events.clanPayload(clan);
         payload.put("membersRemoved",gone);
         events.record("clan", clan.getId(),"ClanDeleted", payload, actor);
-        //System.out.println("deleted " + clan.getTag() + " " + gone);
     }
 
     //what deleting does to the rows, shared by the owner deleting their clan and an administrator deleting any clan
@@ -234,7 +230,6 @@ public class ClanManagementService {
         if (!regions.accepts(form.getRegion())) throw new ClanRuleViolation("Pick a region from the list.");
         nameFree(name, self);
         tagFree(tag, self);
-        //System.out.println("checked " + name + " " + tag);
     }
 
     //the name rules on their own, for an administrator renaming a clan that is not theirs

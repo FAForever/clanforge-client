@@ -41,7 +41,6 @@ class NotificationServiceTest {
         assertThat(s.sentence(new ClanEvent("clan", 7L, "ClanMotdUpdated","{}",sam))).isEqualTo("Sam posted a new message of the day.");
         assertThat(s.sentence(new ClanEvent("clan_calendar_event", 9L,"CalendarEventAdded","{\"title\": \"Clan Ladder Night\", \"clanId\": 7}", sam))).isEqualTo("Clan Ladder Night was added to the events calendar.");
         assertThat(s.sentence(new ClanEvent("clan",7L,"ClanFounderRecorded","{}", null))).isNull();
-        //System.out.println("sentences ok");
     }
 
     @Test
@@ -57,7 +56,6 @@ class NotificationServiceTest {
         assertThat(s.sentence(new ClanEvent("clan", 7L, "ModerationActionPerformed", "{\"action\": \"RETAG\"}", admin))).isEqualTo("An administrator changed the clan tag.");
         assertThat(s.sentence(new ClanEvent("clan", 7L, "ModerationActionPerformed", "{\"action\": \"RESTORE\"}", admin))).isNull();
         assertThat(s.sentence(new ClanEvent("clan", 7L,"ModerationActionPerformed", "not json", admin))).isNull();
-        //System.out.println("admin sentences ok");
     }
 
     @Test

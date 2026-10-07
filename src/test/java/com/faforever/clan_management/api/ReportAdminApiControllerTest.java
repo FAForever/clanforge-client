@@ -147,7 +147,6 @@ class ReportAdminApiControllerTest {
         mockMvc.perform(get("/api/admin/reports").header(HttpHeaders.AUTHORIZATION, plain)).andExpect(status().isForbidden());
         verifyNoInteractions(admins);
         verifyNoInteractions(reports);
-        //System.out.println("403 for sub-2");
     }
 
     @Test
@@ -188,7 +187,6 @@ class ReportAdminApiControllerTest {
         mockMvc.perform(get("/api/admin/reports").param("page", "-4").header(HttpHeaders.AUTHORIZATION, token)).andExpect(status().isOk()).andExpect(jsonPath("$.page").value(0));
         ArgumentCaptor<Pageable> asked = ArgumentCaptor.forClass(Pageable.class);
         verify(admins).clans(eq(""), eq("all"), asked.capture());
-        //System.out.println("asked " + asked.getValue());
         assertThat(asked.getValue().getPageSize()).isEqualTo(20);
         assertThat(asked.getValue().getSort().isSorted()).isFalse();
         given(admins.clans(eq(""),eq("banned"), any(Pageable.class))).willThrow(new ClanRuleViolation("Clans are listed as all, active, suspended or deleted."));
@@ -229,7 +227,6 @@ class ReportAdminApiControllerTest {
         mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_NAME\",\"reason\":\"raced\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("That could not be saved.")));
-        //System.out.println("409 ok");
         given(reports.file(sam, 7L,"OFFENSIVE_TAG", "raced")).willThrow(new DataIntegrityViolationException("could not execute statement", new SQLException("duplicate key value violates unique constraint", "23505")));
         mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION,bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_TAG\",\"reason\":\"raced\"}"))
                 .andExpect(status().isConflict());
@@ -257,7 +254,6 @@ class ReportAdminApiControllerTest {
     @Test
     @DisplayName("no filter reads a put, patch or delete form body in full before the api size cap has run")
     void formBodiesAreNotReadAhead() {
-        //System.out.println("form filters " + context.getBeansOfType(FormContentFilter.class).keySet());
         assertThat(context.getBeansOfType(FormContentFilter.class)).isEmpty();
     }
 

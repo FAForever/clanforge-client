@@ -106,7 +106,6 @@ class ReportAdminApiIntegrationTest {
         long id = json.readTree(filed.getResponse().getContentAsString()).path("id").asLong();
         em.flush();
         assertThat(em.createNativeQuery("select state || ':' || category || ':' || reporter_id from clan_report where id = :id").setParameter("id", id).getSingleResult()).isEqualTo("OPEN:OFFENSIVE_TAG:" + reporter.getId());
-        //System.out.println("report " + id);
         mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, reporterToken).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":" + clan.getId() + ",\"category\":\"OFFENSIVE_TAG\",\"reason\":\"again\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("You have already reported this clan."));
@@ -152,7 +151,6 @@ class ReportAdminApiIntegrationTest {
                 .andExpect(jsonPath("$.clans[0].status").value("SUSPENDED"));
         mockMvc.perform(get("/api/admin/clans").param("q","hidden clan " + stamp).param("filter","active").header(HttpHeaders.AUTHORIZATION, adminToken)).andExpect(jsonPath("$.totalElements").value(0));
         admins.delete(admin, clan.getId(), null,null);
-        //System.out.println("deleted " + clan.getId());
         mockMvc.perform(get("/api/admin/clans").param("q", "hidden clan " + stamp).param("filter", "deleted").header(HttpHeaders.AUTHORIZATION, adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.clans[0].deleted").value(true))

@@ -97,7 +97,6 @@ class ClanWriteIntegrationTest {
         memberships.leave(guest);
         assertThat(memberships.roster(clan)).hasSize(1);
         assertThat(events.count() - before).isEqualTo(6);
-        //System.out.println("events " + (events.count() - before));
         List<ClanEvent> mine = events.findAll().stream().filter(e -> e.getId() != null && e.getActor() != null && e.getActor().getId().equals(owner.getId())).toList();
         assertThat(mine).extracting(ClanEvent::getEventType).contains("ClanCreated","MemberJoined", "InvitationCreated");
         ClanEvent created = mine.stream().filter(e -> "ClanCreated".equals(e.getEventType())).findFirst().orElseThrow();
@@ -123,7 +122,6 @@ class ClanWriteIntegrationTest {
         Page<ClanCard> open = clanService.searchPublicClanCards("","open", "members", PageRequest.of(0, 5));
         assertThat(open.getContent()).extracting(c -> c.getClan().getTag()).contains(form.getTag());
         Page<ClanCard> wildcard = clanService.searchPublicClanCards("%", "all", "name", PageRequest.of(0, 20, Sort.by("name")));
-        //System.out.println("wildcard hits " + wildcard.getTotalElements());
         assertThat(wildcard.getTotalElements()).isLessThan(byMembers.getTotalElements());
     }
 
@@ -153,7 +151,6 @@ class ClanWriteIntegrationTest {
         assertThat(memberships.roster(clan)).extracting(m -> m.getUser().getId() + ":" + m.getRole()).containsExactly(first.getId() + ":OWNER", owner.getId() + ":MODERATOR");
         memberships.removeMember(first, owner.getId());
         assertThat(memberships.roster(clan)).hasSize(1);
-        //System.out.println("events " + (events.count() - before));
         assertThat(events.count() - before).isEqualTo(10);
         List<String> types = events.findAll().stream().filter(e -> e.getActor() != null && (e.getActor().getId().equals(owner.getId()) || e.getActor().getId().equals(first.getId()) || e.getActor().getId().equals(second.getId()))).map(ClanEvent::getEventType).toList();
         assertThat(types).contains("InvitationDeclined", "MemberRoleChanged", "OwnershipTransferred", "MemberRemoved");
@@ -196,7 +193,6 @@ class ClanWriteIntegrationTest {
         assertThat(calendar.upcoming(clan, 5)).extracting(e -> e.getTitle()).containsExactly("Clan Ladder Night");
         assertThat(calendar.upcoming(clan, 5).get(0).getStartsAtUtc().getHour()).isEqualTo(20);
         List<Notice> bell = notifications.forClan(clan, 5);
-        //System.out.println("bell " + bell.size());
         assertThat(bell).extracting(Notice::getText).contains("Clan Ladder Night was added to the events calendar.", owner.getDisplayName() + " posted a new message of the day.", owner.getDisplayName() + " changed the clan image.");
         calendar.remove(owner, calendar.upcoming(clan, 5).get(0).getId());
         assertThat(calendar.upcoming(clan, 5)).isEmpty();

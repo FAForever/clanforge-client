@@ -85,7 +85,6 @@ class InvitationApiControllerTest {
         Instant now = Instant.now();
         Jwt jwt = Jwt.withTokenValue("token-"+sub).header("alg", "RS256").subject(sub).issuedAt(now).expiresAt(now.plusSeconds(300)).build();
         given(jwtDecoder.decode("token-" + sub)).willReturn(jwt);
-        //System.out.println("bearer " + sub);
         return "Bearer token-" + sub;
     }
 
@@ -96,6 +95,7 @@ class InvitationApiControllerTest {
         mockMvc.perform(get("/api/invitations")).andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/invitations/8/accept")).andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/invitations/8/decline")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/invitations/8/revoke")).andExpect(status().isUnauthorized());
         verifyNoInteractions(invitations);
         verifyNoInteractions(users);
     }
@@ -122,7 +122,6 @@ class InvitationApiControllerTest {
                 .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.startsWith(java.time.LocalDate.now().toString())));
         ArgumentCaptor<Authentication> who = ArgumentCaptor.forClass(Authentication.class);
         verify(users).require(who.capture());
-        //System.out.println("caller " + who.getValue().getName());
         assertThat(who.getValue().getName()).isEqualTo("sub-1"); //the tokens sub is the name the user lookup keys on
     }
 
@@ -199,6 +198,15 @@ class InvitationApiControllerTest {
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
         verify(invitations).decline(sam,8L);
-        //System.out.println("declined 8");
+    }
+
+    @Test
+    @DisplayName("revoking answers 204 once the service has closed the pending invite")
+    void revokeAnswersNoContent() throws Exception {
+        given(users.require(any())).willReturn(kai);
+        mockMvc.perform(post("/api/invitations/8/revoke").header(HttpHeaders.AUTHORIZATION, bearer("sub-1")))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+        verify(invitations).revoke(kai, 8L);
     }
 }

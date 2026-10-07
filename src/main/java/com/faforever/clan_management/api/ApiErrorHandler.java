@@ -21,7 +21,6 @@ public class ApiErrorHandler {
 
     @ExceptionHandler(ClanAccessRefused.class)
     public ResponseEntity<ApiError> refused(ClanAccessRefused e) {
-        //System.out.println("403 " + e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(e.getMessage()));
     }
 
@@ -33,7 +32,6 @@ public class ApiErrorHandler {
     //a database constraint turned the write down, mostly two requests racing for the same unique row, so 409 and no stack trace
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> clashed(DataIntegrityViolationException e) {
-        //System.out.println("409 " + e.getMostSpecificCause().getMessage());
         if (e.getMostSpecificCause() instanceof SQLException sql && sql.getSQLState() != null && sql.getSQLState().startsWith("22")) return ResponseEntity.badRequest().body(new ApiError("That request holds a value the database cannot store, such as a nul character.")); //sql state class 22 is bad data sent by the caller, a read can raise it too, so 400 and not a clash
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError("That could not be saved. It clashed with another change made at the same time, or held a value the database refuses."));
     }
@@ -44,7 +42,6 @@ public class ApiErrorHandler {
         for (Throwable t = e; t != null; t = t.getCause()) {
             if (t instanceof ApiBodyLimit.TooLarge big) return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(new ApiError(big.getMessage()));
         }
-        //System.out.println("unreadable " + e.getMessage());
         return ResponseEntity.badRequest().body(new ApiError("The request body could not be read as the JSON this route takes."));
     }
 }

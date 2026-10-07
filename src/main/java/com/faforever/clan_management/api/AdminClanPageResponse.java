@@ -15,7 +15,6 @@ public record AdminClanPageResponse(List<AdminClanResponse> clans, int page, int
         for (ClanCard c : page.getContent()) {
             rows.add(AdminClanResponse.from(c));
         }
-        //System.out.println("admin page " + page.getNumber() + " " + rows.size());
         return new AdminClanPageResponse(rows, page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages(), page.hasPrevious(), page.hasNext());
     }
 }

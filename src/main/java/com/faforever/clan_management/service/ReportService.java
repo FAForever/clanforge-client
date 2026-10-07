@@ -47,7 +47,6 @@ public class ReportService {
         Clan clan = clans.lockLive(clanId).orElse(null); //locked, so a report cannot land on a clan an administrator is deleting
         boolean hidden = clan != null && !"PUBLIC".equals(clan.getVisibility()) && memberships.findActiveByClanIdAndUserId(clan.getId(),reporter.getId()).isEmpty();
         if (clan == null || hidden) throw new ClanRuleViolation("That clan does not exist."); // a private clan reads the same as a missing one to an outsider
-        //System.out.println("report " + clan.getTag() + " " + kind + " " + text.length());
         if (reports.existsByClanIdAndReporterIdAndState(clan.getId(), reporter.getId(), "OPEN")) throw new ClanRuleViolation("You have already reported this clan.");
         return reports.save(new ClanReport(clan,reporter, kind, text));
     }
@@ -71,7 +70,6 @@ public class ReportService {
         ClanReport report = reports.lockById(reportId).orElseThrow(() -> new ClanRuleViolation("That report does not exist."));
         if (!"OPEN".equals(report.getState())) throw new ClanRuleViolation("That report is already closed.");
         report.close(dismissed ? "DISMISSED" : "RESOLVED", admin);
-        //System.out.println("report " + reportId + " " + report.getState());
         return report;
     }
 }
