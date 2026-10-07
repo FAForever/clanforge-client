@@ -69,7 +69,6 @@ class MembershipRepairMigrationTest {
         Clan live = clanOf(someone("other"));
         String sql = new String(getClass().getResourceAsStream("/db/migration/V4__close_memberships_of_deleted_clans.sql").readAllBytes(), StandardCharsets.UTF_8);
         jdbc.execute(sql);
-        //System.out.println("repaired " + gone.getId());
         assertThat(jdbc.queryForObject("select count(*) from clan_membership where clan_id = ? and left_at is null", Integer.class, gone.getId())).isZero();
         assertThat(jdbc.queryForObject("select count(*) from clan_membership m join clan c on c.id = m.clan_id where m.clan_id = ? and m.user_id in (?, ?) and m.left_at = c.deleted_at", Integer.class,gone.getId(), owner.getId(), stranded.getId())).isEqualTo(2); //closed at the delete, which came after they joined
         assertThat(jdbc.queryForObject("select count(*) from clan_membership where clan_id = ? and user_id = ? and left_at = now() - interval '2 days'", Integer.class, gone.getId(), closedBefore.getId())).isEqualTo(1); //the row that was already closed keeps its time

@@ -52,7 +52,6 @@ public class CalendarService {
         }
         CalendarEvent ev = calendar.save(new CalendarEvent(me.getClan(), name, startsAt, actor));
         events.record("clan_calendar_event", ev.getId(), "CalendarEventAdded", events.calendarPayload(ev), actor);
-        //System.out.println("event " + name + " " + startsAt);
         return ev;
     }
 

@@ -30,7 +30,6 @@ public class ClanEventService {
     //one row per state change, saved in the same transaction as the change so a consumer never sees one without the other
     public ClanEvent record(String entityType, Long entityId, String eventType, Map<String,Object> payload, AppUser actor) {
         String text = json.writeValueAsString(payload); //jackson 3 throws unchecked, so no try here
-        //System.out.println("event " + eventType + " " + text);
         return events.save(new ClanEvent(entityType,entityId, eventType,text, actor));
     }
 
@@ -62,7 +61,6 @@ public class ClanEventService {
         p.put("role",m.getRole());
         p.put("joinedAt", text(m.getJoinedAt()));
         p.put("leftAt", text(m.getLeftAt()));
-        //System.out.println("membership payload " + p);
         return p;
     }
 
@@ -87,7 +85,6 @@ public class ClanEventService {
         p.put("title", e.getTitle());
         p.put("startsAt", text(e.getStartsAt()));
         p.put("createdBy", e.getCreatedBy() == null ? null : e.getCreatedBy().getId());
-        //System.out.println("calendar payload " + p);
         return p;
     }
 

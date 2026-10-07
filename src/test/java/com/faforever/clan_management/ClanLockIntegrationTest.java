@@ -197,7 +197,6 @@ class ClanLockIntegrationTest {
         } finally {
             pool.shutdown();
         }
-        //System.out.println("report after the sweep " + report.getId());
         assertThat(jdbc.queryForObject("select state from clan_report where id = ?", String.class,report.getId())).isEqualTo("DISMISSED");
     }
 }

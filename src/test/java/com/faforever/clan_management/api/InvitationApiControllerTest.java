@@ -85,7 +85,6 @@ class InvitationApiControllerTest {
         Instant now = Instant.now();
         Jwt jwt = Jwt.withTokenValue("token-"+sub).header("alg", "RS256").subject(sub).issuedAt(now).expiresAt(now.plusSeconds(300)).build();
         given(jwtDecoder.decode("token-" + sub)).willReturn(jwt);
-        //System.out.println("bearer " + sub);
         return "Bearer token-" + sub;
     }
 
@@ -123,7 +122,6 @@ class InvitationApiControllerTest {
                 .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.startsWith(java.time.LocalDate.now().toString())));
         ArgumentCaptor<Authentication> who = ArgumentCaptor.forClass(Authentication.class);
         verify(users).require(who.capture());
-        //System.out.println("caller " + who.getValue().getName());
         assertThat(who.getValue().getName()).isEqualTo("sub-1"); //the tokens sub is the name the user lookup keys on
     }
 
@@ -200,7 +198,6 @@ class InvitationApiControllerTest {
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
         verify(invitations).decline(sam,8L);
-        //System.out.println("declined 8");
     }
 
     @Test

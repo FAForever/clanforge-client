@@ -63,7 +63,6 @@ public class CreateClanController {
         }
         model.addAttribute("tagHint", tagRule.getHint());
         model.addAttribute("regions", regions.getNames());
-        //System.out.println("create refused " + form.getTag());
         return "create-clan";
     }
 }

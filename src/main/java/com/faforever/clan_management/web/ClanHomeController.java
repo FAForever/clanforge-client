@@ -42,7 +42,6 @@ public class ClanHomeController {
         model.addAttribute("roster", roster);
         model.addAttribute("memberCount", roster.size());
         model.addAttribute("upcoming", calendar.upcoming(clan, 5));
-        //System.out.println("home " + clan.getTag() + " " + roster.size());
         return "clanhome";
     }
 
@@ -66,7 +65,6 @@ public class ClanHomeController {
         } catch (ClanRuleViolation e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        //System.out.println("remove " + userId);
         return "redirect:/clanhome";
     }
 

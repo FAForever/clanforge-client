@@ -16,7 +16,6 @@ public class Regions {
         for (String n : csv.split(",")) {
             if (!n.isBlank()) names.add(n.trim()); // the regions a clan can pick, a property so another game lists its own
         }
-        //System.out.println("regions " + names);
     }
 
     public List<String> getNames() {

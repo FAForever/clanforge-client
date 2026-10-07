@@ -53,7 +53,6 @@ public class InvitationService {
     @Transactional
     public ClanInvitation invite(AppUser actor, Long clanId,String inviteeName, String role) {
         ClanMembership me = membershipService.manager(actor, "Only the owner and moderators can send invites.");
-        //System.out.println("invite path " + clanId + " mine " + me.getClan().getId());
         if (!me.getClan().getId().equals(clanId)) throw new ClanAccessRefused("You can only invite players to your own clan.");
         return send(me, actor, inviteeName, role);
     }
@@ -76,7 +75,6 @@ public class InvitationService {
         }
         ClanInvitation inv = invitations.save(new ClanInvitation(clan, invitee, actor, OffsetDateTime.now().plusDays(expiryDays), offered)); //expires_at is set here, the effective view derives expired from it
         events.record("clan_invitation", inv.getId(), "InvitationCreated", events.invitationPayload(inv), actor);
-        //System.out.println("invited " + invitee.getDisplayName() + " to " + clan.getTag());
         return inv;
     }
 
@@ -97,7 +95,6 @@ public class InvitationService {
         ClanMembership m = memberships.save(new ClanMembership(clan, user, inv.getRole())); //the role the invite offered, member unless the owner said moderator
         events.record("clan_invitation", inv.getId(), "InvitationAccepted", events.invitationPayload(inv),user);
         events.record("clan_membership", m.getId(), "MemberJoined",events.membershipPayload(m), user);
-        //System.out.println("accepted " + id);
         return m;
     }
 
@@ -118,7 +115,6 @@ public class InvitationService {
         if (!"PENDING".equals(inv.getState())) throw new ClanRuleViolation("That invitation is no longer open.");
         inv.setState("REVOKED");
         inv.setRespondedAt(OffsetDateTime.now());
-        //System.out.println("revoked " + id);
         events.record("clan_invitation", inv.getId(), "InvitationRevoked", events.invitationPayload(inv), actor);
     }
 
@@ -135,7 +131,6 @@ public class InvitationService {
         for (ClanInvitation i : rows) {
             out.add(new InvitationCard(i));
         }
-        //System.out.println("cards " + out.size());
         return out;
     }
 }

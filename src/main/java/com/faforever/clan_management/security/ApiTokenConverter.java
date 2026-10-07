@@ -19,7 +19,6 @@ public class ApiTokenConverter implements Converter<Jwt, AbstractAuthenticationT
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         String sub = jwt.getSubject();
-        //System.out.println("sub " + sub);
         if (sub == null || sub.isBlank()) throw new InvalidBearerTokenException("The token names no subject."); // every token without one would otherwise be the same shared user
         return delegate.convert(jwt);
     }

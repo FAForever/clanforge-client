@@ -58,7 +58,6 @@ class ApiBodyLimitTest {
         HttpServletRequest passed = (HttpServletRequest) chain.getRequest();
         InputStream in = passed.getInputStream();
         assertThat(in.readNBytes(new byte[10], 0, 10)).isEqualTo(10);
-        //System.out.println("ten read, the eleventh fails");
         assertThatThrownBy(in::read).isInstanceOf(ApiBodyLimit.TooLarge.class).hasMessage("Request bodies are 10 bytes at most.");
     }
 
@@ -77,7 +76,6 @@ class ApiBodyLimitTest {
         limit.doFilter(request, new MockHttpServletResponse(), chain);
         ServletServerHttpRequest passed = new ServletServerHttpRequest((HttpServletRequest) chain.getRequest());
         HttpMessageNotReadableException thrown = catchThrowableOfType(HttpMessageNotReadableException.class, () -> new JacksonJsonHttpMessageConverter().read(Map.class,passed));
-        //System.out.println("reader threw " + thrown);
         ResponseEntity<ApiError> answer = new ApiErrorHandler().unreadable(thrown);
         assertThat(answer.getStatusCode().value()).isEqualTo(413);
         assertThat(answer.getBody().message()).isEqualTo("Request bodies are 10 bytes at most.");

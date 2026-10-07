@@ -20,7 +20,6 @@ public class ClanForm {
         f.setRegion(clan.getRegion() == null ? "" : clan.getRegion());
         f.setPublicClan("PUBLIC".equals(clan.getVisibility()));
         f.setRequiresInvitation(clan.isRequiresInvitation());
-        //System.out.println("form " + f.getTag());
         return f;
     }
 

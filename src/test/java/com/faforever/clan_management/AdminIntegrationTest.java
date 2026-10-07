@@ -92,7 +92,6 @@ class AdminIntegrationTest {
         assertThat(one("select action || ':' || (previous ->> 'status') || ':' || report_id from moderation_action where id = :id", row.getId())).isEqualTo("SUSPEND:ACTIVE:" + report.getId());
         assertThat(one("select state || ':' || resolved_by from clan_report where id = :id", report.getId())).isEqualTo("RESOLVED:" + admin.getId());
         assertThat(one("select (payload ->> 'action') || ':' || (payload ->> 'status') || ':' || actor_id from clan_event where event_type = 'ModerationActionPerformed' and entity_id = :id", clan.getId())).isEqualTo("SUSPEND:SUSPENDED:" + admin.getId());
-        //System.out.println("moderation row " + row.getId());
         assertThatThrownBy(() -> memberships.join(clan.getId(), reporter)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("suspended");
         admins.unsuspend(admin, clan.getId(), null);
         assertThat(memberships.join(clan.getId(), reporter).getRole()).isEqualTo("MEMBER");
@@ -141,7 +140,6 @@ class AdminIntegrationTest {
         assertThat(admins.clans(q, "all",PageRequest.of(0, 20)).getTotalElements()).isEqualTo(1);
         assertThat(admins.clan(clan.getId())).isPresent();
         assertThatThrownBy(() -> admins.suspend(admin, clan.getId(), null, null)).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
-        //System.out.println("deleted " + clan.getId());
     }
 
     @Test
@@ -154,7 +152,6 @@ class AdminIntegrationTest {
         ClanReport second = reports.file(someone("reporter"), clan.getId(),"OFFENSIVE_TAG", "second report");
         admins.suspend(admin,clan.getId(),null, null);
         admins.delete(admin, clan.getId(),"abandoned", first.getId());
-        //System.out.println("history for " + clan.getId());
         assertThat(one("select string_agg(event_type, ',' order by id) from clan_event where entity_type = 'clan' and entity_id = :id", clan.getId())).isEqualTo("ClanCreated,ClanUpdated,ModerationActionPerformed,ClanDeleted,ModerationActionPerformed");
         assertThat(one("select (payload ->> 'membersRemoved') || ':' || actor_id from clan_event where event_type = 'ClanDeleted' and entity_id = :id", clan.getId())).isEqualTo("1:" + admin.getId());
         assertThat(one("select string_agg(state || ':' || resolved_by, ',' order by id) from clan_report where clan_id = :id", clan.getId())).isEqualTo("RESOLVED:" + admin.getId() + ",RESOLVED:" + admin.getId());

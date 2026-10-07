@@ -38,7 +38,6 @@ public class AppUserService {
         }
         String subject = auth.getName(); //what hydra will send as sub
         if (subject == null || subject.isBlank()) return Optional.empty();
-        //System.out.println("subject " + subject);
         return Optional.of(users.findByOidcSubject(subject).orElseGet(() -> users.save(new AppUser(subject, subject, "local", null))));
     }
 
@@ -54,7 +53,6 @@ public class AppUserService {
         AppUser u = user.get();  // everything the top bar shows, three small queries
         ClanMembership m = memberships.findActiveByUserId(u.getId()).orElse(null);
         long pending = invitations.countOpenForInvitee(u.getId(), OffsetDateTime.now());
-        //System.out.println("me " + u.getDisplayName() + " " + pending);
         List<Notice> notices = m == null ? List.of() : notifications.forClan(m.getClan(), 5); //the bell, five latest happenings in their clan
         return Optional.of(new SignedInUser(u, m, pending, notices));
     }

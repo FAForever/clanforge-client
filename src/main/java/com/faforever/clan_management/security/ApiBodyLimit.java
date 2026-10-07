@@ -26,7 +26,6 @@ public class ApiBodyLimit extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         long declared = request.getContentLengthLong();
-        //System.out.println("body " + declared + " of " + max);
         if (declared > max) {
             response.setStatus(HttpStatus.CONTENT_TOO_LARGE.value());
             response.setContentType("application/json");

@@ -41,7 +41,6 @@ public class MembershipService {
         for (ClanMembership m : memberships.findRoster(clan.getId())) {
             cards.add(new MemberCard(m)); //one card per active row, owner first
         }
-        //System.out.println("roster " + clan.getTag() + " " + cards.size());
         return cards;
     }
 
@@ -59,7 +58,6 @@ public class MembershipService {
         if (memberships.findActiveByUserId(user.getId()).isPresent()) throw new ClanRuleViolation("Leave your current clan before joining another.");
         ClanMembership m = memberships.save(new ClanMembership(clan, user, memberRole));
         events.record("clan_membership", m.getId(), "MemberJoined", events.membershipPayload(m), user);
-        //System.out.println("joined " + clan.getTag() + " " + user.getDisplayName());
         return m;
     }
 
@@ -112,7 +110,6 @@ private void leave(ClanMembership membership, AppUser user) {
         if (ownerRole.equals(target.getRole())) throw new ClanRuleViolation("The owner cannot be removed.");
         if (moderatorRole.equals(me.getRole()) && moderatorRole.equals(target.getRole())) throw new ClanAccessRefused("A moderator cannot remove another moderator.");
         target.setLeftAt(OffsetDateTime.now());
-        //System.out.println("removed " + target.getUser().getDisplayName());
         events.record("clan_membership",target.getId(), "MemberRemoved", events.membershipPayload(target), actor);
     }
 
@@ -145,7 +142,6 @@ private void leave(ClanMembership membership, AppUser user) {
         ClanMembership me = lockedMembership(actor).orElseThrow(() -> new ClanAccessRefused("You are not in a clan."));
         if (!ownerRole.equals(me.getRole()) && !moderatorRole.equals(me.getRole())) throw new ClanAccessRefused(refusal);
         requireActive(me.getClan()); // the one gate every owner/mod change passes through, so a suspended clan is frozen here
-        //System.out.println("manager " + me.getRole());
         return me;
     }
 
@@ -160,7 +156,6 @@ private void leave(ClanMembership membership, AppUser user) {
     public Optional<ClanMembership> lockedMembership(AppUser user) {
         Long clanId = memberships.findActiveClanIdByUserId(user.getId()).orElse(null);
         if (clanId == null || lockClan(clanId).isEmpty()) return Optional.empty();
-        //System.out.println("locked clan " + clanId + " for " + user.getId());
         return memberships.findActiveByUserId(user.getId()).filter(m -> m.getClan().getId().equals(clanId)); //empty if they were removed, or moved to another clan, while this waited
     }
 }

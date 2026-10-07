@@ -49,7 +49,6 @@ public class AdminService {
     public Page<ClanCard> clans(String q, String filter, Pageable pageable) {
         String pattern = "%"+ClanService.escapeLike(q == null ? "" : q.trim().toLowerCase(Locale.ROOT))+"%";
         String wanted = filter == null || filter.isBlank() ? "all" : filter.trim().toLowerCase(Locale.ROOT);
-        //System.out.println("admin list " + pattern + " " + wanted);
         if ("all".equals(wanted)) return clanService.withCounts(clans.searchEvery(pattern, pageable));
         if ("active".equals(wanted)) return clanService.withCounts(clans.searchLiveByStatus(pattern, "ACTIVE",pageable));
         if ("suspended".equals(wanted)) return clanService.withCounts(clans.searchLiveByStatus(pattern, "SUSPENDED", pageable));
@@ -104,7 +103,6 @@ public class AdminService {
         String why = why(reason);
         Map<String, Object> before = events.clanPayload(clan);
         clan.setName(fresh);
-        //System.out.println("renamed " + before.get("name") + " to " + fresh);
         return finish(admin, clan, "RENAME", why, report,before, "ClanUpdated", null);
     }
 
@@ -132,7 +130,6 @@ public class AdminService {
         for (ClanReport other : reports.lockOpenForClan(clan.getId())) {
             if (other != report) other.close("RESOLVED", admin); // nothing is left to act on once the clan is gone
         }
-        //System.out.println("admin deleted " + clan.getTag() + " " + gone);
         return finish(admin,clan, "DELETE", why, report, before,"ClanDeleted", gone);
     }
 
@@ -171,7 +168,6 @@ public class AdminService {
         changed.put("moderationAction", action); // tells the bell this change was an administrator's, so it is not read out as the members own edit
         events.record("clan",clan.getId(), clanEvent,changed, admin);
         events.record("clan",clan.getId(), "ModerationActionPerformed", payload, admin);
-        //System.out.println("moderation " + action + " " + clan.getId() + " row " + row.getId());
         return row;
     }
 }

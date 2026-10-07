@@ -108,7 +108,6 @@ class InvitationServiceTest {
         given(invitations.findByClanIdAndInviteeIdAndState(7L,2L,"PENDING")).willReturn(Optional.empty());
         given(invitations.save(any(ClanInvitation.class))).willAnswer(a -> a.getArgument(0));
         ClanInvitation inv = service.invite(kai, "sam", "MEMBER");
-        //System.out.println("expires " + inv.getExpiresAt());
         assertThat(inv.getState()).isEqualTo("PENDING");
         assertThat(inv.getInvitee()).isSameAs(sam);
         assertThat(inv.getInviter()).isSameAs(kai);
@@ -170,7 +169,6 @@ class InvitationServiceTest {
         ClanInvitation inv = Fixtures.invitation(8L, clan,sam, kai,OffsetDateTime.now().plusDays(1));
         given(invitations.findById(8L)).willReturn(Optional.of(inv));
         service.decline(sam, 8L);
-        //System.out.println("state " + inv.getState());
         assertThat(inv.getState()).isEqualTo("DECLINED");
         verify(memberships,never()).save(any());
         verify(events).record(eq("clan_invitation"), eq(8L), eq("InvitationDeclined"), any(), eq(sam));
@@ -220,7 +218,6 @@ class InvitationServiceTest {
         given(memberships.findActiveByUserId(2L)).willReturn(Optional.empty());
         given(memberships.save(any(ClanMembership.class))).willAnswer(a -> a.getArgument(0));
         ClanMembership m = service.accept(sam, 8L);
-        //System.out.println("role " + m.getRole());
         assertThat(m.getRole()).isEqualTo("MODERATOR");
     }
 
@@ -234,7 +231,6 @@ class InvitationServiceTest {
         given(invitations.findByClanIdAndInviteeIdAndState(7L, 2L, "PENDING")).willReturn(Optional.of(lapsed));
         given(invitations.save(any(ClanInvitation.class))).willAnswer(a -> a.getArgument(0));
         ClanInvitation fresh = service.invite(kai, "sam", null);
-        //System.out.println("lapsed " + lapsed.getState());
         assertThat(lapsed.getState()).isEqualTo("EXPIRED");
         assertThat(fresh.getState()).isEqualTo("PENDING");
         verify(invitations).saveAndFlush(lapsed);
@@ -261,7 +257,6 @@ class InvitationServiceTest {
         given(invitations.findByClanIdAndInviteeIdAndState(1000L,2L, "PENDING")).willReturn(Optional.empty());
         given(invitations.save(any(ClanInvitation.class))).willAnswer(a -> a.getArgument(0));
         ClanInvitation inv = service.invite(kai,Long.valueOf(1000L), "sam", "MEMBER");
-        //System.out.println("sent to " + inv.getInvitee().getDisplayName());
         assertThat(inv.getState()).isEqualTo("PENDING");
         assertThat(inv.getClan()).isSameAs(big);
         verify(events).record(eq("clan_invitation"), any(), eq("InvitationCreated"), any(),eq(kai));
@@ -286,7 +281,6 @@ class InvitationServiceTest {
         order.verify(invitations).findById(8L);
         order.verify(membershipService).lockClan(7L);
         order.verify(invitations).findById(9L);
-        //System.out.println("states " + first.getState() + " " + second.getState());
         assertThat(first.getState()).isEqualTo("ACCEPTED");
         assertThat(second.getState()).isEqualTo("DECLINED");
     }
@@ -338,7 +332,6 @@ class InvitationServiceTest {
         given(invitations.existsByIdAndClanStatusAndClanDeletedAtIsNull(9L,"ACTIVE")).willReturn(true);
         given(memberships.existsByUserIdAndLeftAtIsNull(2L)).willReturn(true); //already in a clan
         assertThatThrownBy(() -> service.accept(sam, 9L)).isInstanceOf(ClanRuleViolation.class).hasMessage("Leave your current clan before accepting an invite.");
-        //System.out.println("no lock for either accept");
         verify(membershipService, never()).lockClan(any());
         verify(invitations, never()).findById(any());
     }

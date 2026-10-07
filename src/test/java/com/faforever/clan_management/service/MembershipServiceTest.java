@@ -81,7 +81,6 @@ class MembershipServiceTest {
         given(memberships.findActiveByUserId(1L)).willReturn(Optional.empty());
         given(memberships.save(any(ClanMembership.class))).willAnswer(a -> a.getArgument(0));
         ClanMembership m = service.join(7L, kai);
-        //System.out.println("joined as " + m.getRole());
         assertThat(m.getRole()).isEqualTo("MEMBER");
         assertThat(m.getClan()).isSameAs(clan);
         verify(events).record(eq("clan_membership"), any(), eq("MemberJoined"), any(), eq(kai));
@@ -173,7 +172,6 @@ class MembershipServiceTest {
         ClanMembership target = Fixtures.membership(6L, clan, sam, "MEMBER");
         given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.of(target));
         service.setRole(kai, 2L, "MODERATOR");
-        //System.out.println("role now " + target.getRole());
         assertThat(target.getRole()).isEqualTo("MODERATOR");
         verify(events).record(eq("clan_membership"), eq(6L), eq("MemberRoleChanged"),any(), eq(kai));
     }
@@ -202,7 +200,6 @@ class MembershipServiceTest {
         ClanMembership owner = Fixtures.membership(4L, clan, lee,"OWNER");
         given(memberships.findActiveByClanIdAndUserId(7L, 3L)).willReturn(Optional.of(owner));
         assertThatThrownBy(() -> service.removeMember(kai, 3L)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessageContaining("owner cannot be removed");
-        //System.out.println("owner still in " + owner.getLeftAt());
         assertThat(owner.getLeftAt()).isNull();
     }
 
@@ -217,7 +214,6 @@ class MembershipServiceTest {
         given(memberships.findActiveClanIdByUserId(3L)).willReturn(Optional.empty());
         assertThatThrownBy(() -> service.manager(lee, "unused")).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
         holds(sam, Fixtures.membership(6L,clan, sam,"OWNER"));
-        //System.out.println("owner row " + service.manager(sam, "unused").getRole());
         assertThat(service.manager(sam,"unused").getRole()).isEqualTo("OWNER");
         holds(kai, Fixtures.membership(5L,clan, kai, "MODERATOR"));
         assertThat(service.manager(kai, "unused").getRole()).isEqualTo("MODERATOR");
@@ -233,7 +229,6 @@ class MembershipServiceTest {
         assertThatThrownBy(() -> service.setRole(kai, 2L, "MODERATOR")).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
         assertThatThrownBy(() -> service.removeMember(kai, 2L)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
         assertThatThrownBy(() -> service.leave(sam)).isInstanceOf(ClanRuleViolation.class).isNotInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
-        //System.out.println("no row read once the lock came back empty");
         verify(memberships, never()).findActiveByUserId(any());
         verify(memberships, never()).findActiveByClanIdAndUserId(any(),any());
         verify(events,never()).record(any(), any(), any(),any(), any());
@@ -302,7 +297,6 @@ class MembershipServiceTest {
         given(clans.existsByIdAndVisibilityAndStatusAndRequiresInvitationFalseAndDeletedAtIsNull(8L, "PUBLIC", "ACTIVE")).willReturn(true);
         given(memberships.existsByUserIdAndLeftAtIsNull(1L)).willReturn(true);
         assertThatThrownBy(() -> service.join(8L,kai)).isInstanceOf(ClanRuleViolation.class).hasMessage("Leave your current clan before joining another.");
-        //System.out.println("no lock for either");
         verify(clans, never()).lockLive(any());
     }
 
@@ -314,7 +308,6 @@ class MembershipServiceTest {
         given(clans.existsByIdAndDeletedAtIsNull(99L)).willReturn(false);
         assertThatThrownBy(() -> service.join(7L,kai)).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan only takes new members by invitation.");
         assertThatThrownBy(() -> service.join(99L, kai)).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
-        //System.out.println("no lock for a refused join");
         verify(clans, never()).lockLive(any());
     }
 }

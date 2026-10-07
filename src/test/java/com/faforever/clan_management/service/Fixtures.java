@@ -25,7 +25,6 @@ final class Fixtures {
     static Clan clan(long id,String name,String tag, AppUser owner,boolean requiresInvitation) {
         Clan c = new Clan(name, tag,null, owner, "PUBLIC", requiresInvitation);
         ReflectionTestUtils.setField(c, "id", id);
-        //System.out.println("clan " + id + " " + tag);
         return c;
     }
 

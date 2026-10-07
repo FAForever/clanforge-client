@@ -60,7 +60,6 @@ class ReportServiceTest {
         given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(false);
         given(reports.save(any(ClanReport.class))).willAnswer(a -> a.getArgument(0));
         ClanReport r = service.file(sam, 7L, " offensive_name ", "  the name is a slur  ");
-        //System.out.println("report " + r.getCategory() + " " + r.getState());
         assertThat(r.getState()).isEqualTo("OPEN");
         assertThat(r.getCategory()).isEqualTo("OFFENSIVE_NAME");
         assertThat(r.getReason()).isEqualTo("the name is a slur");
@@ -162,7 +161,6 @@ class ReportServiceTest {
         given(reports.lockById(5L)).willReturn(Optional.empty());
         service.close(kai, 3L,false);
         service.close(kai, 4L, true);
-        //System.out.println("closed " + first.getState() + " " + second.getState());
         assertThat(first.getState()).isEqualTo("RESOLVED");
         assertThat(first.getResolvedBy()).isSameAs(kai);
         assertThat(first.getResolvedAt()).isNotNull();
@@ -182,7 +180,6 @@ class ReportServiceTest {
         Locale was = Locale.getDefault();
         Locale.setDefault(Locale.forLanguageTag("tr-TR"));
         try {
-            //System.out.println("tr " + "offensive_name".toUpperCase());
             assertThat(service.file(sam, 7L, "inappropriate_content","the description").getCategory()).isEqualTo("INAPPROPRIATE_CONTENT");
             given(reports.findByStateNewestFirst("DISMISSED", PageRequest.of(0, 5))).willReturn(new PageImpl<>(List.of(), PageRequest.of(0, 5), 0));
             assertThat(service.byState("dismissed", PageRequest.of(0, 5)).getTotalElements()).isZero();

@@ -9,7 +9,6 @@ public record InvitationResponse(Long id, Long clanId,String clanName, String cl
 
     // built from the card the pages already use, so both read an invitation the same way
     public static InvitationResponse from(InvitationCard c) {
-        //System.out.println("invitation " + c.getId() + " " + c.getState());
         return new InvitationResponse(c.getId(), c.getClan().getId(), c.getClan().getName(), c.getClan().getTag(), c.getInvitee().getId(), c.getInvitee().getDisplayName(),c.getInviter().getId(),c.getInviter().getDisplayName(), c.getRole(), c.getState(),c.getCreatedAt(), c.getExpiresAt());
     }
 }

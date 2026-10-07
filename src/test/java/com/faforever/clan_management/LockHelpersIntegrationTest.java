@@ -27,7 +27,6 @@ class LockHelpersIntegrationTest {
         AppUser nobody = new AppUser("lock-helper-test", "lock_helper_test","local", null); //never saved, nothing reaches the database
         assertThatThrownBy(() -> members.lockClan(1L)).isInstanceOf(IllegalTransactionStateException.class);
         assertThatThrownBy(() -> members.lockedMembership(nobody)).isInstanceOf(IllegalTransactionStateException.class);
-        //System.out.println("refused outside a transaction");
         assertThatThrownBy(() -> members.manager(nobody, "unused")).isInstanceOf(IllegalTransactionStateException.class);
     }
 }

@@ -140,7 +140,6 @@ class EntityColumnsExistInMigrationTest {
                 all.append(new String(in.readAllBytes(), StandardCharsets.UTF_8)).append('\n');
             }
         }
-        //System.out.println("migrations " + ordered.size());
         return all.toString();
     }
 

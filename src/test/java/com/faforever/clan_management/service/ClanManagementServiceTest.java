@@ -64,7 +64,6 @@ class ClanManagementServiceTest {
         f.setName(name);
         f.setTag(tag);
         f.setPublicClan(false);
-        //System.out.println("form " + name + " " + tag);
         return f;
     }
 
@@ -245,7 +244,6 @@ class ClanManagementServiceTest {
         given(membershipService.lockedMembership(kai)).willReturn(Optional.empty()); //the clan went while the lock was awaited
         assertThatThrownBy(() -> service.delete(kai)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
         assertThatThrownBy(() -> service.transferOwnership(kai, 2L)).isInstanceOf(ClanAccessRefused.class).hasMessage("You are not in a clan.");
-        //System.out.println("owner row left " + mine.getLeftAt());
         assertThat(clan.getDeletedAt()).isNull();
         assertThat(clan.getOwner()).isSameAs(kai);
         verify(memberships,never()).findRoster(any());
@@ -275,7 +273,6 @@ class ClanManagementServiceTest {
         given(memberships.findActiveByClanIdAndUserId(7L, 2L)).willReturn(Optional.of(theirs));
         given(events.clanPayload(clan)).willReturn(new LinkedHashMap<>());
         service.transferOwnership(kai, 2L);
-        //System.out.println("owner now " + clan.getOwner().getDisplayName());
         assertThat(clan.getOwner()).isSameAs(sam);
         assertThat(theirs.getRole()).isEqualTo("OWNER");
         assertThat(mine.getRole()).isEqualTo("MODERATOR");
@@ -296,7 +293,6 @@ class ClanManagementServiceTest {
         assertThatThrownBy(() -> service.checkImage(gif)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("PNG, JPG or WEBP");
         assertThatThrownBy(() -> service.checkImage(huge)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("512 KB");
         assertThatThrownBy(() -> service.checkImage(new byte[0])).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("Choose an image");
-        //System.out.println("sniffed");
     }
 
     @Test
@@ -339,6 +335,5 @@ class ClanManagementServiceTest {
         assertThatThrownBy(() -> service.checkTag("TOOLONG", mine)).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("1 to 3");
         service.checkName("bad company",mine);
         service.checkTag("bc", mine);
-        //System.out.println("own name and tag pass");
     }
 }

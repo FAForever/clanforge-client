@@ -101,7 +101,6 @@ class ManagementPagesTest {
     private static ClanMembership membership(long id, Clan clan, AppUser user, String role) {
         ClanMembership m = new ClanMembership(clan, user, role);
         ReflectionTestUtils.setField(m, "id", id);
-        //System.out.println("membership " + id + " " + role);
         return m;
     }
 
@@ -258,7 +257,6 @@ class ManagementPagesTest {
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/login"));
         }
-        //System.out.println("post join anonymous");
         mockMvc.perform(post("/clans/1/join").with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
@@ -327,6 +325,5 @@ class ManagementPagesTest {
         verify(management).checkImage(png);
         verify(management).create(eq(admin), any(ClanForm.class));
         verify(management).setLogo(admin, png);
-        //System.out.println("multipart create ok");
     }
 }

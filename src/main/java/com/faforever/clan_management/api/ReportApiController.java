@@ -43,7 +43,6 @@ public class ReportApiController {
     })
     public ResponseEntity<ReportResponse> file(@RequestBody ReportRequest body, Authentication auth) {
         ClanReport report = reports.file(users.require(auth),body.clanId(), body.category(),body.reason());
-        //System.out.println("api report " + body.clanId() + " " + report.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(ReportResponse.from(report));
     }
 }

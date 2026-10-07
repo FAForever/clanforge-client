@@ -28,7 +28,6 @@ public class AdminAccess {
         for (GrantedAuthority a : auth.getAuthorities()) {
             if (authority.equals(a.getAuthority())) return true;
         }
-        //System.out.println("not an admin " + auth.getName());
         return false;
     }
 

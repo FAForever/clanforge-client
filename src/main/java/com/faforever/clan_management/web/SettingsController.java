@@ -53,7 +53,6 @@ public class SettingsController {
         }
         model.addAttribute("tagHint",tagRule.getHint());
         model.addAttribute("regions", regions.getNames());
-        //System.out.println("settings " + me.getUser().getDisplayName());
         return "settings";
     }
 
@@ -108,7 +107,6 @@ public class SettingsController {
         } catch (ClanRuleViolation e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        //System.out.println("motd saved");
         return "redirect:/settings#motd-section";
     }
 
