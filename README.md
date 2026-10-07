@@ -102,6 +102,18 @@ from the ID token, and from the access token when that is a JWT the application 
 verify. Locally, the `dev` profile's `admin` account holds the role. Hydra's reference
 login app hands out no roles, so `foo@bar.com` is not an administrator.
 
+### The REST API
+
+The REST API is documented with OpenAPI and browsable in Swagger UI, both reachable
+without a login:
+
+- Swagger UI: <http://localhost:8080/swagger-ui.html>
+- OpenAPI document: <http://localhost:8080/v3/api-docs>
+
+It covers clan browsing and management, membership, invitations, reports and
+administration. Public reads need no token; write and admin calls authenticate with a
+bearer JWT from the OIDC provider (the same `ext.roles` claim the admin console reads).
+
 ### Running the application in Docker
 
 To run both PostgreSQL and the application in containers:
@@ -144,6 +156,26 @@ Every connection value is read from an environment variable. With the `dev` prof
 each has a default matching `docker-compose.yml`, so nothing above needs configuring.
 Without the profile, as in a deployed build, all three must be set or the application
 refuses to start. `.env` is gitignored; `.env.example` lists what exists.
+
+### Deploying
+
+A production deployment runs with **OIDC only** — never the `dev` profile, whose
+in-memory `admin/admin` account and form login must not be exposed. Run with the
+`oidc` profile (not the `dev,oidc` used for local demos) and supply every secret from
+the environment:
+
+```bash
+SPRING_PROFILES_ACTIVE=oidc \
+SPRING_DATASOURCE_URL=... SPRING_DATASOURCE_USERNAME=... SPRING_DATASOURCE_PASSWORD=... \
+OIDC_ISSUER_URI=... OIDC_CLIENT_ID=... OIDC_CLIENT_SECRET=... \
+SESSION_COOKIE_SECURE=true \
+java -jar target/clan-management-*.jar
+```
+
+Without the `oidc` profile the REST write and admin endpoints have no JWT to validate
+against, so the provider must be configured before the app is exposed.
+`docker compose --profile app` defaults to the `dev` profile for local demos; override
+`SPRING_PROFILES_ACTIVE` for a real deployment.
 
 ---
 
@@ -194,10 +226,11 @@ passes it with none.
 ## The schema belongs to Flyway
 
 The files under `src/main/resources/db/migration/` are the schema:
-`V1__initial_schema.sql` and `V2__design_extras.sql`. Flyway applies them in version
-order on startup and records what it has applied in `flyway_schema_history`.
+`V1__initial_schema.sql`, `V2__design_extras.sql`, `V3__one_open_report.sql` and
+`V4__close_memberships_of_deleted_clans.sql`. Flyway applies them in version order on
+startup and records what it has applied in `flyway_schema_history`.
 
-Adding a column means adding the next file, `V3__add_whatever.sql`, beside them. It
+Adding a column means adding the next file, `V5__add_whatever.sql`, beside them. It
 does not mean editing a migration that has already been applied: Flyway checksums
 every migration it has run and refuses to start if one changes underneath it. A
 database that already had V1 applied by hand is handled by `baseline-on-migrate`, so
