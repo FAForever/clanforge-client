@@ -6,6 +6,8 @@ invitations, and administer a clan.
 
 Java 21 · Spring Boot 4.1 · Spring Security · Thymeleaf · PostgreSQL 16 · Flyway · Docker
 
+**Want to _use_ the app?** See the **[User Guide](docs/user-guide.md)** — a screenshot walkthrough of signing in, finding and joining clans, running your own clan, invitations and moderation. This README covers building, running and deploying it.
+
 The initial target environment is the FAForever ecosystem, but the solution should be
 designed as a generic and reusable platform. Game-specific rules should be isolated
 where possible so that the application can be adapted for other communities. The
