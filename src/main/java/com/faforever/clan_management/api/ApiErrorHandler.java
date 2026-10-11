@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.faforever.clan_management.security.ApiBodyLimit;
 
 import com.faforever.clan_management.service.ClanAccessRefused;
+import com.faforever.clan_management.service.ClanNotFound;
 import com.faforever.clan_management.service.ClanRuleViolation;
 
 // the services refusals as json for every controller in this package, the pages keep their own flash messages
@@ -22,6 +23,12 @@ public class ApiErrorHandler {
     @ExceptionHandler(ClanAccessRefused.class)
     public ResponseEntity<ApiError> refused(ClanAccessRefused e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(e.getMessage()));
+    }
+
+    //the clan named by the path id does not exist or has been deleted, so 404 rather than a refusal
+    @ExceptionHandler(ClanNotFound.class)
+    public ResponseEntity<ApiError> missing(ClanNotFound e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(e.getMessage()));
     }
 
     @ExceptionHandler(ClanRuleViolation.class)
