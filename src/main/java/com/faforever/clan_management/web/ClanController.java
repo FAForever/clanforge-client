@@ -131,6 +131,19 @@ public class ClanController {
         }
     }
 
+    // The report form lives on its own page. Signed-in only; an anonymous visitor
+    // is sent to sign in first.
+    @GetMapping("/clans/{id}/report")
+    public String reportForm(@PathVariable Long id, Authentication auth, Model model) {
+        Clan clan = clanService.findVisibleClan(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (userService.signedIn(auth).isEmpty()) {
+            return "redirect:/login";
+        }
+        model.addAttribute("clan", clan);
+        return "clans/report";
+    }
+
     // A signed-in user flags a clan for the moderators. ReportService enforces who may
     // report, the three categories, and one open report per person per clan.
     @PostMapping("/clans/{id}/report")
@@ -141,9 +154,11 @@ public class ClanController {
         try {
             reportService.file(userService.require(auth), id, category, reason);
             flash.addFlashAttribute("notice", "Thanks — your report has been sent to the moderators.");
+            return "redirect:/clans/" + id;
         } catch (ClanRuleViolation e) {
+            // Keep the person on the report page so they can correct and resubmit.
             flash.addFlashAttribute("error", e.getMessage());
+            return "redirect:/clans/" + id + "/report";
         }
-        return "redirect:/clans/" + id;
     }
 }
