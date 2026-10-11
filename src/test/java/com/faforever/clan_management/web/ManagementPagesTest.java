@@ -143,7 +143,7 @@ class ManagementPagesTest {
 
     @Test
     @WithMockUser("admin")
-    @DisplayName("a rejected report redirects back carrying the service's message as an error")
+    @DisplayName("a rejected report stays on the report page carrying the service's message as an error")
     void reportRejectionShowsError() throws Exception {
         given(users.require(any())).willReturn(admin);
         given(reportService.file(any(), eq(7L), any(), any())).willThrow(new ClanRuleViolation("You have already reported this clan."));
@@ -151,7 +151,9 @@ class ManagementPagesTest {
                         .param("category", "OFFENSIVE_NAME")
                         .param("reason", "dup"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/clans/7"))
+                // the report form lives on its own page now, so a rejected submit returns
+                // there (not to the clan page) with the error, ready to correct and resend
+                .andExpect(redirectedUrl("/clans/7/report"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("error", "You have already reported this clan."));
     }
 

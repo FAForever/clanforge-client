@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<title th:text="'Report ' + ${clan.name} + ' · Clanforge'">Report clan · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/clanforge.css}">
+</head>
+<body>
+
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('browse')}"></header>
+
+<main class="detail-main report-page">
+  <a class="back-link" th:href="@{/clans/{id}(id=${clan.id})}">
+    <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+    Back to <span th:text="${clan.name}">clan</span>
+  </a>
+
+  <div th:replace="~{fragments/topbar :: flash}"></div>
+
+  <section class="panel">
+    <h1 class="panel-title">
+      <svg class="icon" aria-hidden="true"><use href="#icon-flag"></use></svg>
+      Report
+    </h1>
+    <p class="report-lead">Flag this clan for the moderators. Pick what is wrong and add a short note — they review every report.</p>
+
+    <form class="report-form" th:action="@{/clans/{id}/report(id=${clan.id})}" method="post">
+      <div>
+        <label class="field-label" for="report-category">What is wrong?</label>
+        <select class="report-select" id="report-category" name="category" required>
+          <option value="OFFENSIVE_NAME">Offensive name</option>
+          <option value="OFFENSIVE_TAG">Offensive tag</option>
+          <option value="INAPPROPRIATE_CONTENT">Inappropriate content</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="report-reason">Details</label>
+        <textarea class="report-textarea" id="report-reason" name="reason" rows="4" maxlength="1000" required
+                  placeholder="Tell the moderators what is wrong."></textarea>
+      </div>
+      <div class="report-actions">
+        <button type="submit" class="btn btn-primary">Submit report</button>
+        <a class="btn btn-secondary" th:href="@{/clans/{id}(id=${clan.id})}">Cancel</a>
+      </div>
+    </form>
+  </section>
+</main>
+
+<script th:src="@{/js/site.js}"></script>
+</body>
+</html>
