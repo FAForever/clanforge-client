@@ -29,7 +29,7 @@
       <p class="panel-title"><svg class="icon" aria-hidden="true"><use href="#icon-gear"></use></svg>Account</p>
       <p class="panel-subtitle-text">Who the platform knows you as. Your name comes from your sign-in and changes there, not here.</p>
       <div class="form-field"><label>Display name</label><p th:text="${me.user.displayName}">name</p></div>
-      <div class="form-field"><label>Sign-in id</label><p th:text="${me.user.oidcSubject}">id</p></div>
+      <div class="form-field"><label>Sign-in ID</label><p th:text="${me.user.oidcSubject}">id</p></div>
       <div class="form-field"><label>Member since</label><p th:text="${#temporals.format(me.user.createdAt, 'd MMMM yyyy')}">date</p></div>
       <div class="form-field"><label>Clan</label><p th:text="${me.inClan} ? ${me.roleLabel + ' of ' + me.clanName + ' [' + me.clanTag + ']'} : 'None'">clan</p></div>
     </section>
@@ -182,7 +182,7 @@
       <div class="danger-item">
         <div>
           <p class="danger-item-title">Delete Clan</p>
-          <p class="danger-item-desc" th:text="'Delete ' + ${clan.name} + ' and remove all ' + ${#lists.size(roster)} + ' members. The name and tag become free again.'">delete</p>
+          <p class="danger-item-desc" th:text="'Delete ' + ${clan.name} + ' and remove all ' + ${#lists.size(roster)} + (${#lists.size(roster) == 1} ? ' member' : ' members') + '. The name and tag become free again.'">delete</p>
         </div>
         <form th:action="@{/settings/delete}" method="post" th:attr="data-confirm=${'Delete ' + clan.name + ' and remove every member? This cannot be undone.'}">
           <button type="submit" class="btn btn-danger" id="disbandBtn">Delete Clan</button>

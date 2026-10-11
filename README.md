@@ -53,7 +53,7 @@ administrator, so it can open the admin console at <http://localhost:8080/admin>
 
 Because those passwords are public, a `dev` run listens on this machine only
 (`127.0.0.1`), and every port the compose files publish is bound to `127.0.0.1` as
-well. Nobody else on the same network, a campus wifi for instance, can reach the app,
+well. Nobody else on the same network, a campus Wi-Fi for instance, can reach the app,
 the database or Hydra. To show the app on another device on purpose, start it with
 `SERVER_ADDRESS=0.0.0.0`, and only on a network you trust.
 

@@ -5,22 +5,26 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0d12">
   <title>Clanforge</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="stylesheet" href="/css/login.css" th:href="@{/css/login.css}">
 </head>
 
 <body>
 
   <!-- =========================
-       HEADER
+       HEADER — labels match the app's top bar (Browse Clans / My Clan /
+       Invitations / Sign In). My Clan and Invitations need a sign-in, so an
+       anonymous visitor clicking them is sent to log in, same as elsewhere.
        ========================= -->
   <header>
     <h2 class="logo">CLANFORGE</h2>
     <nav class="navigation">
-      <a th:href="@{/}">Home</a>
-      <a th:href="@{/clans}">Explore</a>
-      <a href="#">Inbox</a>
-      <button type="button" class="btn-login">Login</button>
+      <a th:href="@{/clans}">Browse Clans</a>
+      <a th:href="@{/clanhome}">My Clan</a>
+      <a th:href="@{/invitations}">Invitations</a>
+      <button type="button" class="btn-login">Sign In</button>
     </nav>
   </header>
 
@@ -41,7 +45,7 @@
          ========================= -->
     <div class="form-box login">
 
-      <h2>Login</h2>
+      <h2>Sign in</h2>
 
       <!--/* One message block, shown whichever sign-in is on the page */-->
       <p class="form-message form-message-error" th:if="${param.error}">Sign-in failed. Please check your details and try again.</p>
@@ -78,14 +82,8 @@
           <label>Password</label>
         </div>
 
-        <!-- REMEMBER / FORGOT -->
-        <div class="remember-forgot">
-          <label><input type="checkbox"> Remember me</label>
-          <a href="#">Forgot Password?</a>
-        </div>
-
-        <!-- LOGIN BUTTON -->
-        <button type="submit" class="btn">Login</button>
+        <!-- SIGN IN BUTTON -->
+        <button type="submit" class="btn">Sign in</button>
 
       </form>
 

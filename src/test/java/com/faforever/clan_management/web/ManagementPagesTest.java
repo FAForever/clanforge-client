@@ -218,7 +218,7 @@ class ManagementPagesTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("Eloreem&#39;s Guard [EGD]")))
                 .andExpect(content().string(Matchers.containsString("/invitations/11/accept")))
-                .andExpect(content().string(Matchers.containsString("Invites Sent")))
+                .andExpect(content().string(Matchers.containsString("Sent")))
                 .andExpect(content().string(Matchers.containsString("/invitations/12/revoke")));
     }
 

@@ -25,7 +25,7 @@ web interface.
 ## 1. Signing in
 
 Clanforge uses your existing **Forged Alliance Forever** account — there is no separate Clanforge
-password to create or remember. From any page, choose **Login**, then **Sign in with FAForever**.
+password to create or remember. From any page, choose **Sign In**, then **Sign in with FAForever**.
 You'll be taken to the FAForever sign-in page and returned to Clanforge once you're authenticated.
 
 ![The Clanforge login screen](images/user-guide/02-login.jpg)
