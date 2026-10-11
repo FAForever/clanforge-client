@@ -55,6 +55,8 @@ commanders and recruiting clans there are right now.
 Opening a clan shows its details — tag, name, description, owner, when it was created, its
 membership type (open or invite-only) and its current members.
 
+![A clan's detail page](images/user-guide/03-clan-detail.jpg)
+
 **How you join depends on the clan's visibility:**
 
 | Clan type | How to join |
@@ -145,9 +147,13 @@ and an expiry date, after which they can no longer be accepted.
 
 ## 8. Reporting a clan
 
-If a clan has an **offensive name or tag**, or **inappropriate content**, you can report it from the
-clan's page (you'll need to be signed in). Choose the category and add a short reason. Your report
-goes to the administrators' moderation queue for review — see the next section.
+If a clan has an **offensive name or tag**, or **inappropriate content**, you can report it (you'll
+need to be signed in). On the clan's page, click **Report this clan** — this opens a short report
+page where you choose the category and add a reason.
+
+![The report-a-clan page](images/user-guide/08-report-clan.jpg)
+
+Your report goes to the administrators' moderation queue for review — see the next section.
 
 ---
 
