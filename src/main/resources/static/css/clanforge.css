@@ -410,3 +410,106 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .nav-link-admin{ display:inline-flex; align-items:center; gap:6px; }
 .nav-link-admin .icon{ width:15px; height:15px; color:var(--accent); }
 .popover-link-admin{ color:var(--accent-bright); }
+
+/* ============================================================
+   CLAN DETAIL PAGE
+   A single clan's public page, reached from Browse. Uses the same
+   panel chassis, badge, stats and buttons as the rest of the app.
+   ============================================================ */
+.detail-main{
+  position:relative; z-index:1;
+  max-width:1000px; margin:0 auto;
+  padding:28px 24px 64px;
+}
+.back-link{
+  display:inline-flex; align-items:center; gap:7px;
+  color:var(--text-secondary); text-decoration:none;
+  font-family:var(--font-display); font-size:.85rem; letter-spacing:.02em;
+  margin-bottom:18px;
+}
+.back-link:hover{ color:var(--text-primary); }
+.back-link .icon{ width:16px; height:16px; }
+
+.detail-hero{ margin-bottom:20px; }
+.detail-hero-head{ display:flex; align-items:flex-start; gap:18px; margin-bottom:16px; }
+.detail-badge{ width:72px; height:72px; font-size:1rem; }
+.detail-heading{ flex:1; min-width:0; }
+.detail-name{
+  font-family:var(--font-display); font-size:1.7rem; font-weight:700; letter-spacing:.02em;
+  line-height:1.12; margin-bottom:4px; word-break:break-word;
+}
+.detail-tag{ color:var(--text-tertiary); font-family:var(--font-mono); font-size:.82rem; }
+.detail-hero-head .recruit-badge{ margin-top:5px; flex-shrink:0; }
+
+.detail-desc{ color:var(--text-secondary); font-size:.95rem; line-height:1.65; margin-bottom:20px; white-space:pre-line; }
+.detail-desc.is-empty{ color:var(--text-tertiary); font-style:italic; }
+
+.detail-stats{
+  display:flex; flex-wrap:wrap; gap:16px 40px;
+  padding:18px 0; margin-bottom:20px;
+  border-top:1px solid var(--border-steel-soft);
+  border-bottom:1px solid var(--border-steel-soft);
+}
+.detail-stats .stat-value{ display:block; font-family:var(--font-mono); font-weight:600; font-size:1.05rem; margin-bottom:3px; }
+.detail-stats .stat-label{ font-size:.66rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; }
+
+.detail-actions{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.detail-actions form{ margin:0; }
+.muted-note{ color:var(--text-tertiary); font-size:.85rem; }
+.muted-note a{ color:var(--accent-bright); }
+
+.detail-cols{ display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+
+.panel-title{
+  font-family:var(--font-display); text-transform:uppercase; letter-spacing:.05em;
+  font-size:.82rem; color:var(--text-secondary); margin-bottom:14px;
+  display:flex; align-items:center; gap:8px;
+}
+.panel-title .icon{ width:16px; height:16px; color:var(--accent); }
+.panel-title .count{ color:var(--text-tertiary); font-family:var(--font-mono); }
+
+.roster{ display:flex; flex-direction:column; }
+.roster-row{ display:flex; align-items:center; gap:12px; padding:10px 2px; border-top:1px solid var(--border-steel-soft); }
+.roster-row:first-child{ border-top:none; }
+.roster-name{ flex:1; font-size:.9rem; min-width:0; overflow-wrap:anywhere; }
+.roster-role{
+  font-family:var(--font-mono); font-size:.64rem; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--text-tertiary); border:1px solid var(--border-steel); padding:3px 9px; flex-shrink:0;
+}
+.roster-role.is-owner{ color:var(--accent-bright); border-color:var(--accent-dim); }
+
+.report summary{
+  cursor:pointer; list-style:none;
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:.88rem; color:var(--text-secondary);
+}
+.report summary::-webkit-details-marker{ display:none; }
+.report summary:hover{ color:var(--text-primary); }
+.report summary .icon{ width:16px; height:16px; color:var(--accent); }
+.report[open] summary{ margin-bottom:16px; }
+.report-form{ display:flex; flex-direction:column; gap:14px; }
+.report-form > div{ display:flex; flex-direction:column; }
+.field-label{ font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-tertiary); margin-bottom:6px; }
+.report-select{
+  width:100%;
+  background-color:var(--bg-inset); border:1px solid var(--border-steel); color:var(--text-primary);
+  font-size:.85rem; padding:10px 32px 10px 12px;
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23838c98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+.report-textarea{
+  width:100%; resize:vertical; min-height:86px;
+  background:var(--bg-inset); border:1px solid var(--border-steel); color:var(--text-primary);
+  font-family:var(--font-body); font-size:.85rem; padding:10px 12px; line-height:1.5;
+}
+.report-textarea::placeholder{ color:var(--text-tertiary); }
+.report-form .btn{ align-self:flex-start; }
+
+@media (max-width:760px){
+  .detail-main{ padding:22px 16px 48px; }
+  .detail-cols{ grid-template-columns:1fr; }
+  .detail-name{ font-size:1.45rem; }
+  .detail-hero-head{ flex-wrap:wrap; }
+  .detail-stats{ gap:14px 28px; }
+}

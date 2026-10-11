@@ -364,15 +364,15 @@ def test_view_clan_opens_the_matching_detail_page(driver, base_url, demo_clans):
     wait(d).until(lambda _: re.search(r"/clans/\d+$", path_of(d)))
     assert d.current_url == card["href"]
 
-    assert d.title == "Iron Vanguard"
-    assert text_of(d.find_element(By.TAG_NAME, "h1")) == "IVG Iron Vanguard"
-    facts = dict(zip(
-        [text_of(e) for e in d.find_elements(By.CSS_SELECTOR, "dl.facts dt")],
-        [text_of(e) for e in d.find_elements(By.CSS_SELECTOR, "dl.facts dd")],
+    assert d.title == "Iron Vanguard · Clanforge"
+    assert text_of(d.find_element(By.TAG_NAME, "h1")) == "Iron Vanguard"
+    stats = dict(zip(
+        [text_of(e) for e in d.find_elements(By.CSS_SELECTOR, ".detail-stats .stat-label")],
+        [text_of(e) for e in d.find_elements(By.CSS_SELECTOR, ".detail-stats .stat-value")],
     ))
-    assert facts["Members"] == str(card["members"])  # same count as the card
-    assert facts["Region"] == "EU"
-    assert facts["Membership"] == "Open"
+    assert stats["Members"] == str(card["members"])  # same count as the card
+    assert stats["Region"] == "EU"
+    assert stats["Joining"] == "Open"
     # Anonymous visitors are pointed at sign-in rather than offered Join.
     assert not d.find_elements(By.CSS_SELECTOR, "form[action$='/join']")
     assert "Sign in to join this clan." in text_of(d.find_element(By.TAG_NAME, "main"))

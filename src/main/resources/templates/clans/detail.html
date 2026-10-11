@@ -1,66 +1,134 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title th:text="${clan.name}">Clan</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0d12">
+<title th:text="${clan.name} + ' · Clanforge'">Clan · Clanforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/clanforge.css}">
 </head>
 <body>
-<main class="page">
-    <p><a th:href="@{/clans}">Back to clans</a></p>
-    <p class="flash flash-notice" th:if="${notice}" th:text="${notice}">notice</p>
-    <p class="flash flash-error" th:if="${error}" th:text="${error}">error</p>
 
-    <img class="logo" th:if="${clan.hasLogo}" th:src="@{/clans/{id}/logo(id=${clan.id},v=${clan.logoUpdatedAt.toEpochSecond()})}" alt="">
-    <h1>
-        <span class="tag" th:text="${clan.tag}">TAG</span>
-        <span th:text="${clan.name}">Clan name</span>
-    </h1>
+<svg th:replace="~{fragments/topbar :: icons}"></svg>
+<header th:replace="~{fragments/topbar :: topbar('browse')}"></header>
 
-    <p class="description" th:if="${clan.description}" th:text="${clan.description}">Description</p>
-    <p th:unless="${clan.description}" class="muted">No description.</p>
+<main class="detail-main">
+  <a class="back-link" th:href="@{/clans}">
+    <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left"></use></svg>
+    Back to clans
+  </a>
 
-    <dl class="facts">
-        <dt>Owner</dt>
-        <dd th:text="${clan.owner != null ? clan.owner.displayName : 'unknown'}">owner</dd>
-        <dt>Created</dt>
-        <dd th:text="${#temporals.format(clan.createdAt, 'd MMMM yyyy')}">date</dd>
-        <dt>Membership</dt>
-        <dd th:text="${clan.requiresInvitation} ? 'Invitation only' : 'Open'">Open</dd>
-        <dt>Members</dt>
-        <dd th:text="${memberCount}">0</dd>
-        <dt>Region</dt>
-        <dd th:text="${clan.region != null} ? ${clan.region} : 'Not set'">region</dd>
-    </dl>
+  <div th:replace="~{fragments/topbar :: flash}"></div>
 
-    <!--/* join is a post, so it needs a signed-in person with no clan and a clan that is open */-->
-    <form th:if="${canJoin}" th:action="@{/clans/{id}/join(id=${clan.id})}" method="post">
-        <button type="submit" class="join">Join this clan</button>
-    </form>
-    <p th:if="${!signedIn and !clan.requiresInvitation}" class="muted"><a th:href="@{/login}">Sign in</a> to join this clan.</p>
+  <!-- ============================================================
+       CLAN HEADER
+       ============================================================ -->
+  <section class="panel detail-hero">
+    <div class="detail-hero-head">
+      <div class="clan-badge detail-badge">
+        <img th:if="${clan.hasLogo}" th:src="@{/clans/{id}/logo(id=${clan.id},v=${clan.logoUpdatedAt.toEpochSecond()})}" alt="">
+        <span th:unless="${clan.hasLogo}" th:text="${clan.tag}">TAG</span>
+      </div>
+      <div class="detail-heading">
+        <h1 class="detail-name" th:text="${clan.name}">Clan name</h1>
+        <p class="detail-tag"
+           th:text="'[' + ${clan.tag} + '] · ' + (${clan.region != null} ? ${clan.region} : 'Forged Alliance Forever')">[TAG]</p>
+      </div>
+      <span class="recruit-badge"
+            th:classappend="${clan.requiresInvitation} ? 'is-closed' : 'is-open'"
+            th:text="${clan.requiresInvitation} ? 'Invite Only' : 'Recruiting'">Recruiting</span>
+    </div>
 
-    <h2>Members</h2>
-    <ul class="members">
-        <li th:each="m : ${roster}"><span th:text="${m.user.displayName}">name</span> <span class="muted" th:text="${m.roleLabel}">role</span></li>
-    </ul>
+    <p class="detail-desc" th:if="${clan.description}" th:text="${clan.description}">Description</p>
+    <p class="detail-desc is-empty" th:unless="${clan.description}">No description provided.</p>
 
-    <!--/* reporting is open to anyone signed in; ReportService decides who may see the clan and limits one open report per person */-->
-    <details class="report" th:if="${signedIn}">
-        <summary>Report this clan</summary>
-        <form th:action="@{/clans/{id}/report(id=${clan.id})}" method="post">
-            <label for="report-category">What is wrong?</label>
-            <select id="report-category" name="category" required>
-                <option value="OFFENSIVE_NAME">Offensive name</option>
-                <option value="OFFENSIVE_TAG">Offensive tag</option>
-                <option value="INAPPROPRIATE_CONTENT">Inappropriate content</option>
+    <div class="detail-stats">
+      <div class="stat">
+        <span class="stat-value" th:text="${memberCount}">0</span>
+        <span class="stat-label">Members</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" th:text="${#temporals.format(clan.createdAt, 'yyyy')}">2014</span>
+        <span class="stat-label">Founded</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" th:text="${clan.requiresInvitation} ? 'Invite' : 'Open'">Open</span>
+        <span class="stat-label">Joining</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" th:text="${clan.region != null} ? ${clan.region} : '—'">Region</span>
+        <span class="stat-label">Region</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" th:text="${clan.owner != null ? clan.owner.displayName : 'Unknown'}">Owner</span>
+        <span class="stat-label">Owner</span>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <!--/* join is a post: a signed-in person, in no clan, on a clan that takes members without an invitation */-->
+      <form th:if="${canJoin}" th:action="@{/clans/{id}/join(id=${clan.id})}" method="post">
+        <button type="submit" class="btn btn-primary">Join this clan</button>
+      </form>
+      <p class="muted-note" th:if="${clan.requiresInvitation}">Invitation only — an owner or moderator must invite you to join.</p>
+      <p class="muted-note" th:if="${!signedIn and !clan.requiresInvitation}"><a th:href="@{/login}">Sign in</a> to join this clan.</p>
+      <p class="muted-note" th:if="${signedIn and !canJoin and !clan.requiresInvitation and me != null and me.inClan}">You're already in a clan — leave it first to join another.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       MEMBERS + REPORT
+       ============================================================ -->
+  <div class="detail-cols">
+    <section class="panel">
+      <h2 class="panel-title">
+        <svg class="icon" aria-hidden="true"><use href="#icon-users"></use></svg>
+        Members <span class="count" th:text="'· ' + ${memberCount}">· 0</span>
+      </h2>
+      <ul class="roster">
+        <li class="roster-row" th:each="m : ${roster}">
+          <span class="roster-name" th:text="${m.user.displayName}">name</span>
+          <span class="roster-role" th:classappend="${m.roleLabel == 'Owner'} ? 'is-owner'" th:text="${m.roleLabel}">role</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">
+        <svg class="icon" aria-hidden="true"><use href="#icon-flag"></use></svg>
+        Report this clan
+      </h2>
+      <!--/* reporting is open to anyone signed in; ReportService limits one open report per person */-->
+      <details class="report" th:if="${signedIn}">
+        <summary>
+          <svg class="icon" aria-hidden="true"><use href="#icon-warning"></use></svg>
+          Flag an offensive name, tag or content
+        </summary>
+        <form class="report-form" th:action="@{/clans/{id}/report(id=${clan.id})}" method="post">
+          <div>
+            <label class="field-label" for="report-category">What is wrong?</label>
+            <select class="report-select" id="report-category" name="category" required>
+              <option value="OFFENSIVE_NAME">Offensive name</option>
+              <option value="OFFENSIVE_TAG">Offensive tag</option>
+              <option value="INAPPROPRIATE_CONTENT">Inappropriate content</option>
             </select>
-            <label for="report-reason">Details</label>
-            <textarea id="report-reason" name="reason" rows="3" maxlength="1000" required
+          </div>
+          <div>
+            <label class="field-label" for="report-reason">Details</label>
+            <textarea class="report-textarea" id="report-reason" name="reason" rows="3" maxlength="1000" required
                       placeholder="Tell the moderators what is wrong."></textarea>
-            <button type="submit" class="report-submit">Submit report</button>
+          </div>
+          <button type="submit" class="btn btn-secondary">Submit report</button>
         </form>
-    </details>
-    <p th:unless="${signedIn}" class="muted"><a th:href="@{/login}">Sign in</a> to report this clan.</p>
+      </details>
+      <p class="muted-note" th:unless="${signedIn}"><a th:href="@{/login}">Sign in</a> to report this clan.</p>
+    </section>
+  </div>
 </main>
+
+<script th:src="@{/js/site.js}"></script>
 </body>
 </html>
