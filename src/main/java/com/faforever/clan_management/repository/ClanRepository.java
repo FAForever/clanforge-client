@@ -68,8 +68,11 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
     // Search by name or tag. The pattern arrives lower-cased and wildcarded from
     // the service, with ! as the escape so a typed % or _ matches itself. A null
     // requiresInvitation means both open and invite-only clans.
+    // owner is join-fetched here even though the card does not show it: owner is an
+    // eager @ManyToOne, so without the fetch a page of clans issues one owner lookup
+    // per row (an N+1). Keep the join fetch.
     @Query(value = """
-           select c from Clan c
+           select c from Clan c join fetch c.owner
            where c.visibility = :visibility and c.deletedAt is null and c.status = 'ACTIVE'
              and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
              and (:requiresInvitation is null or c.requiresInvitation = :requiresInvitation)
@@ -86,7 +89,7 @@ public interface ClanRepository extends JpaRepository<Clan, Long> {
     // The same search ordered by active member count, which a Sort on a
     // property cannot express. Pass an unsorted Pageable.
     @Query(value = """
-           select c from Clan c
+           select c from Clan c join fetch c.owner
            where c.visibility = :visibility and c.deletedAt is null and c.status = 'ACTIVE'
              and (lower(c.name) like :pattern escape '!' or lower(c.tag) like :pattern escape '!')
              and (:requiresInvitation is null or c.requiresInvitation = :requiresInvitation)
