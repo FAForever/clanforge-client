@@ -159,6 +159,7 @@ class ClanManagementServiceTest {
         );
         ReflectionTestUtils.setField(clan, "id", 7L);
         clan.setRegion("Oceania");
+        given(clans.existsByIdAndDeletedAtIsNull(7L)).willReturn(true); // the clan being patched exists
         given(membershipService.manager(eq(testOwner), anyString()))
                 .willReturn(Fixtures.membership(5L, clan, testOwner, "OWNER"));
 
@@ -202,6 +203,7 @@ class ClanManagementServiceTest {
         given(membershipService.lockedMembership(testOwner)).willReturn(Optional.of(
                 Fixtures.membership(5L, clan, testOwner, "OWNER")
         ));
+        given(clans.existsByIdAndDeletedAtIsNull(9L)).willReturn(true); // clan 9L exists but belongs to someone else, so the refusal is about ownership, not existence
 
         assertThatThrownBy(() -> service.delete(testOwner, 9L))
                 .isInstanceOf(ClanAccessRefused.class)

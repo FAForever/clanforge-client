@@ -75,6 +75,7 @@ public class ClanManagementService {
 
     @Transactional
     public Clan patch(AppUser actor, Long clanId, ClanPatch patch) {
+        if (!clans.existsByIdAndDeletedAtIsNull(clanId)) throw new ClanNotFound("Clan is deleted or missing."); // 404 for a missing clan, before the ownership check, as the API contract documents
         ClanMembership me = membershipService.manager(actor,"Only the owner and moderators can edit the clan.");
         if (!me.getClan().getId().equals(clanId)) {
             throw new ClanAccessRefused("You can only edit your own clan.");
@@ -166,6 +167,7 @@ public class ClanManagementService {
 
     @Transactional
     public void delete(AppUser actor, Long clanId) {
+        if (!clans.existsByIdAndDeletedAtIsNull(clanId)) throw new ClanNotFound("Clan is deleted or missing."); // 404 for a missing clan, before the ownership check, as the API contract documents
         ClanMembership me = owner(actor, "Only the owner can delete the clan.");
         if (!me.getClan().getId().equals(clanId)) {
             throw new ClanAccessRefused("You can only delete your own clan.");

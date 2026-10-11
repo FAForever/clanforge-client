@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -530,16 +529,12 @@ class ClanRestApiAcceptanceIntegrationTest {
         assertThat(call("GET /api/clans/{id} (404)", get("/api/clans/" + id)).getResponse().getStatus()).isEqualTo(404); // F6
     }
 
-    // ------------------------------------------------------------ known deviation from the documentation
+    // ------------------------------------------------------------ the documented 404 for a missing clan
 
-    // The OpenAPI annotations on PATCH and DELETE /api/clans/{id} promise
-    // 404 "Clan is deleted or missing", but ClanManagementService checks the caller's own
-    // membership first, so a missing or already-deleted clan is answered 403
-    // ("You are not in a clan." / "You can only edit your own clan.") and the 404 never happens.
-    // Test F says such a mismatch is logged and corrected before the next client demo; this test
-    // is the record. Remove @Disabled once either the code returns 404 or the docs drop it.
+    // PATCH and DELETE /api/clans/{id} document 404 "Clan is deleted or missing". ClanManagementService
+    // now checks the clan exists before the ownership check (defect D2 fix), so a missing or already-deleted
+    // clan is answered with the documented 404 rather than 403.
     @Test
-    @Disabled("Known mismatch: PATCH/DELETE on a deleted or missing clan answer 403, the docs say 404")
     @DisplayName("F (contract): PATCH and DELETE on a deleted or missing clan answer the documented 404")
     void patchAndDeleteMissingClanAre404AsDocumented() throws Exception {
         String stamp = Long.toString(System.nanoTime());
