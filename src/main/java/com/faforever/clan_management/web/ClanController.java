@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -128,6 +129,12 @@ public class ClanController {
             return "redirect:/clanhome";
         } catch (ClanRuleViolation e) {
             flash.addFlashAttribute("error", e.getMessage());
+            return "redirect:/clans/" + id;
+        } catch (DataIntegrityViolationException e) {
+            // A concurrent join won the one-active-membership race: the DB unique index held
+            // the invariant, so turn the raw constraint error into the sentence the service
+            // would have given instead of letting it surface as a 500.
+            flash.addFlashAttribute("error", "You are already in a clan.");
             return "redirect:/clans/" + id;
         }
     }

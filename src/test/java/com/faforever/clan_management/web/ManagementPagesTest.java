@@ -174,6 +174,18 @@ class ManagementPagesTest {
 
     @Test
     @WithMockUser("admin")
+    @DisplayName("a join that loses the one-membership race surfaces a clean message, not a 500")
+    void joinRaceSurfacesCleanly() throws Exception {
+        given(users.require(any())).willReturn(sam);
+        given(memberships.join(eq(7L), any())).willThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key violates membership_one_active_per_user"));
+        mockMvc.perform(post("/clans/7/join").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clans/7"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("error", "You are already in a clan."));
+    }
+
+    @Test
+    @WithMockUser("admin")
     @DisplayName("someone in no clan sees the empty state instead of a roster")
     void noClanShowsEmptyState() throws Exception {
         signedInAs(null, 2);
