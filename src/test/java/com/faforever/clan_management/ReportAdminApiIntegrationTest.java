@@ -107,7 +107,7 @@ class ReportAdminApiIntegrationTest {
         em.flush();
         assertThat(em.createNativeQuery("select state || ':' || category || ':' || reporter_id from clan_report where id = :id").setParameter("id", id).getSingleResult()).isEqualTo("OPEN:OFFENSIVE_TAG:" + reporter.getId());
         mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, reporterToken).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":" + clan.getId() + ",\"category\":\"OFFENSIVE_TAG\",\"reason\":\"again\"}"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict()) //a second open report is 409, as the API contract documents
                 .andExpect(jsonPath("$.message").value("You have already reported this clan."));
         AppUser another = someone("another", stamp);
         MvcResult newer = mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer(another.getOidcSubject(), false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":" + clan.getId() + ",\"category\":\"OFFENSIVE_NAME\",\"reason\":\"a later report\"}"))
