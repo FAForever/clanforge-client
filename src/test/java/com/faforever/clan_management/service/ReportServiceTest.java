@@ -73,11 +73,11 @@ class ReportServiceTest {
     @DisplayName("a missing clan, no clan at all and a private one seen from outside all read as not existing")
     void fileHidesWhatTheReporterCannotSee() {
         given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(99L, "PUBLIC")).willReturn(false);
-        assertThatThrownBy(() -> service.file(sam, 99L, "OFFENSIVE_TAG","bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
-        assertThatThrownBy(() -> service.file(sam,null,"OFFENSIVE_TAG", "bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
+        assertThatThrownBy(() -> service.file(sam, 99L, "OFFENSIVE_TAG","bad tag")).isInstanceOf(ClanNotFound.class).hasMessage("That clan does not exist.");
+        assertThatThrownBy(() -> service.file(sam,null,"OFFENSIVE_TAG", "bad tag")).isInstanceOf(ClanNotFound.class).hasMessage("That clan does not exist.");
         given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(8L, "PUBLIC")).willReturn(false);
         given(memberships.existsByClanIdAndUserIdAndLeftAtIsNull(8L,2L)).willReturn(false);
-        assertThatThrownBy(() -> service.file(sam,8L, "OFFENSIVE_TAG", "bad tag")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
+        assertThatThrownBy(() -> service.file(sam,8L, "OFFENSIVE_TAG", "bad tag")).isInstanceOf(ClanNotFound.class).hasMessage("That clan does not exist.");
         verify(reports,never()).save(any());
         verify(clans,never()).lockLive(any()); //turned away before the lock, so an outsider never waits on a clan it cannot see
     }
@@ -102,7 +102,7 @@ class ReportServiceTest {
         given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(8L, "PUBLIC")).willReturn(true); //still public when it was asked
         given(clans.lockLive(8L)).willReturn(Optional.of(quiet));
         given(memberships.findActiveByClanIdAndUserId(8L, 2L)).willReturn(Optional.empty());
-        assertThatThrownBy(() -> service.file(sam, 8L, "OFFENSIVE_NAME", "too late")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
+        assertThatThrownBy(() -> service.file(sam, 8L, "OFFENSIVE_NAME", "too late")).isInstanceOf(ClanNotFound.class).hasMessage("That clan does not exist.");
         verify(reports, never()).save(any());
     }
 
@@ -112,7 +112,7 @@ class ReportServiceTest {
         given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(7L, "PUBLIC")).willReturn(true);
         given(clans.lockLive(7L)).willReturn(Optional.of(clan));
         given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(false, true); //none before the lock, one after it
-        assertThatThrownBy(() -> service.file(sam, 7L, "OFFENSIVE_NAME","sent twice")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already reported");
+        assertThatThrownBy(() -> service.file(sam, 7L, "OFFENSIVE_NAME","sent twice")).isInstanceOf(DuplicateReport.class).hasMessageContaining("already reported");
         verify(reports, never()).save(any());
     }
 
@@ -132,7 +132,7 @@ class ReportServiceTest {
     void fileRefusesASecondOpenReport() {
         given(clans.existsByIdAndVisibilityAndDeletedAtIsNull(7L, "PUBLIC")).willReturn(true);
         given(reports.existsByClanIdAndReporterIdAndState(7L, 2L, "OPEN")).willReturn(true);
-        assertThatThrownBy(() -> service.file(sam, 7L, "OFFENSIVE_NAME", "still there")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already reported");
+        assertThatThrownBy(() -> service.file(sam, 7L, "OFFENSIVE_NAME", "still there")).isInstanceOf(DuplicateReport.class).hasMessageContaining("already reported");
         verify(reports, never()).save(any());
         verify(clans, never()).lockLive(any());
     }

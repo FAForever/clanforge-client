@@ -26,6 +26,7 @@ import com.faforever.clan_management.service.CalendarService;
 import com.faforever.clan_management.service.Regions;
 import com.faforever.clan_management.service.ClanForm;
 import com.faforever.clan_management.service.ClanManagementService;
+import com.faforever.clan_management.service.ClanNotFound;
 import com.faforever.clan_management.service.ClanRuleViolation;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.InvitationCard;
@@ -155,6 +156,20 @@ class ManagementPagesTest {
                 // there (not to the clan page) with the error, ready to correct and resend
                 .andExpect(redirectedUrl("/clans/7/report"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("error", "You have already reported this clan."));
+    }
+
+    @Test
+    @WithMockUser("admin")
+    @DisplayName("reporting a clan that was deleted meanwhile redirects to Browse with an error")
+    void reportOnAGoneClanRedirectsToBrowse() throws Exception {
+        given(users.require(any())).willReturn(admin);
+        given(reportService.file(any(), eq(7L), any(), any())).willThrow(new ClanNotFound("That clan does not exist."));
+        mockMvc.perform(post("/clans/7/report").with(csrf())
+                        .param("category", "OFFENSIVE_NAME")
+                        .param("reason", "gone"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clans"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attributeExists("error"));
     }
 
     @Test

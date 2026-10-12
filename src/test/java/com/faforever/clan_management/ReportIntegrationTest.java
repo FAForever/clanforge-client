@@ -21,7 +21,9 @@ import com.faforever.clan_management.repository.ClanRepository;
 import com.faforever.clan_management.repository.ModerationActionRepository;
 import com.faforever.clan_management.service.ClanForm;
 import com.faforever.clan_management.service.ClanManagementService;
+import com.faforever.clan_management.service.ClanNotFound;
 import com.faforever.clan_management.service.ClanRuleViolation;
+import com.faforever.clan_management.service.DuplicateReport;
 import com.faforever.clan_management.service.ReportService;
 
 import jakarta.persistence.EntityManager;
@@ -86,7 +88,7 @@ class ReportIntegrationTest {
         assertThat(open.getContent()).extracting(ClanReport::getId).startsWith(later.getId(),filed.getId());
         assertThat(reports.byState("ALL", PageRequest.of(0, 5)).getContent()).extracting(ClanReport::getId).startsWith(later.getId(), filed.getId());
         assertThat(em.createNativeQuery("select state || ':' || category from clan_report where id = :id").setParameter("id", filed.getId()).getSingleResult()).isEqualTo("OPEN:OFFENSIVE_NAME");
-        assertThatThrownBy(() -> reports.file(reporter, clan.getId(), "OFFENSIVE_TAG", "again")).isInstanceOf(ClanRuleViolation.class).hasMessageContaining("already reported");
+        assertThatThrownBy(() -> reports.file(reporter, clan.getId(), "OFFENSIVE_TAG", "again")).isInstanceOf(DuplicateReport.class).hasMessageContaining("already reported");
         reports.close(admin,filed.getId(), false);
         em.flush();
         assertThat(reports.byState("OPEN", PageRequest.of(0,5)).getContent()).extracting(ClanReport::getId).doesNotContain(filed.getId());
@@ -132,7 +134,7 @@ class ReportIntegrationTest {
         Clan clan = clanOf(owner);
         management.delete(owner);
         em.flush();
-        assertThatThrownBy(() -> reports.file(someone("reporter"), clan.getId(), "OFFENSIVE_NAME", "too late")).isInstanceOf(ClanRuleViolation.class).hasMessage("That clan does not exist.");
+        assertThatThrownBy(() -> reports.file(someone("reporter"), clan.getId(), "OFFENSIVE_NAME", "too late")).isInstanceOf(ClanNotFound.class).hasMessage("That clan does not exist.");
     }
 
     @Test
