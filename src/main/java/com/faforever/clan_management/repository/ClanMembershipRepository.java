@@ -31,6 +31,9 @@ public interface ClanMembershipRepository extends JpaRepository<ClanMembership, 
         long getMemberCount();
     }
 
+    // players currently in a clan (active memberships), for the browse "Commanders" stat
+    long countByLeftAtIsNull();
+
     /**
      * The one membership a user currently holds, with its clan loaded, since
      * open-in-view is off and the caller will read the clan after the query.

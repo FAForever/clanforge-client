@@ -27,12 +27,12 @@ jobs:
           # instead of re-downloading every dependency
           cache: maven
 
-      # No database on the runner, and that is deliberate. The four
-      # database-backed tests skip themselves when SPRING_DATASOURCE_URL is
-      # unset, so this needs no services and cannot fail for environment
-      # reasons. Add a postgres service here when we want those four to run.
+      # No database on the runner, and that is deliberate. The database-backed
+      # integration tests skip themselves when SPRING_DATASOURCE_URL is unset,
+      # so this needs no services and cannot fail for environment reasons. Add
+      # a postgres service here when we want those tests to run in CI.
       # The test phase also writes the JaCoCo coverage report (target/site/jacoco).
-      # The four database-backed tests skip without a datasource, so the figure
+      # Because the database-backed tests skip without a datasource, the figure
       # here is lower than a full local run (SPRING_DATASOURCE_URL set, ~87%).
       - name: Run tests
         run: ./mvnw -B --no-transfer-progress test

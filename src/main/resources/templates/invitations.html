@@ -20,8 +20,8 @@
   <h1 class="invites-title">Invitations</h1>
   <p class="invites-subtitle">Invitations waiting for you, and if you run a clan, the invites it has sent out.</p>
   <div class="invites-stats">
-    <div class="stat"><span class="stat-value" th:text="${#lists.size(inbox)}">0</span><span class="stat-label">Waiting for you</span></div>
-    <div class="stat" th:if="${sent != null}"><span class="stat-value" th:text="${#lists.size(sent)}">0</span><span class="stat-label">Invites Sent</span></div>
+    <div class="stat"><span class="stat-value" th:text="${#lists.size(inbox)}">0</span><span class="stat-label">Received</span></div>
+    <div class="stat" th:if="${sent != null}"><span class="stat-value" th:text="${#lists.size(sent)}">0</span><span class="stat-label">Sent</span></div>
   </div>
 </section>
 

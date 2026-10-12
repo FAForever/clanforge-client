@@ -25,7 +25,7 @@ web interface.
 ## 1. Signing in
 
 Clanforge uses your existing **Forged Alliance Forever** account — there is no separate Clanforge
-password to create or remember. From any page, choose **Login**, then **Sign in with FAForever**.
+password to create or remember. From any page, choose **Sign In**, then **Sign in with FAForever**.
 You'll be taken to the FAForever sign-in page and returned to Clanforge once you're authenticated.
 
 ![The Clanforge login screen](images/user-guide/02-login.jpg)
@@ -43,7 +43,7 @@ commanders and recruiting clans there are right now.
 ![Browse Clans listing](images/user-guide/01-browse-clans.jpg)
 
 - **Search** by clan name or tag — matching is case-insensitive.
-- **Filter** by recruiting status (all clans, or only those open to join).
+- **Filter** by recruiting status — All Clans, Recruiting, or Not Recruiting.
 - **Sort** the results (for example, name A–Z, or by number of members).
 - Each clan card shows its **tag**, **name**, **description**, **member count** and founding year,
   with a **View Clan** button to open its page.
@@ -57,12 +57,17 @@ membership type (open or invite-only) and its current members.
 
 ![A clan's detail page](images/user-guide/03-clan-detail.jpg)
 
-**How you join depends on the clan's visibility:**
+A clan has two separate settings: whether it is **listed** (Public shows in Browse; Private is hidden)
+and how you **join** it (open to join, or invite only). So a clan can even be *Public but invite-only* —
+listed in Browse, yet joinable only by invitation.
 
-| Clan type | How to join |
+**How you join:**
+
+| Clan | How to join |
 |---|---|
-| **Public** | Join directly from the clan's page — no invitation needed. |
-| **Private** (invite-only) | You can only join if an owner or moderator **invites** you. A private clan isn't shown in Browse. |
+| **Public, open to join** | Join directly from the clan's page — no invitation needed. |
+| **Invite only** (public or private) | You can only join if an owner or moderator **invites** you. |
+| **Private** | Invitation only, and not shown in Browse at all. |
 
 > **One clan at a time.** You can be an active member of **only one clan**. To join a different
 > clan, leave your current one first.
@@ -79,8 +84,10 @@ right shows how your clan card will look as you type.
 - **Clan name** — your clan's full name.
 - **Clan tag** — 1 to 3 letters or numbers, shown in brackets like `[IVG]`. Tags are unique
   (case-insensitive), so no two clans can share one.
-- **Description** — tell players what your clan is about: playstyle, activity level, region.
-- **Visibility** — public (anyone can join from your page) or invite-only.
+- **Description** — tell players what your clan is about: playstyle and activity level.
+- **Region** — your clan's main region (optional).
+- **Visibility** — **Public** (listed in Browse) or **Private** (hidden from Browse).
+- **Invitation only** — if on, players can join only by invitation (even a Public clan).
 - **Clan image** — optional; a tag badge is used until you add one.
 
 When you create a clan you become its **owner** and its first member.
@@ -95,12 +102,12 @@ management, the message of the day, upcoming events and your own membership.
 
 ![The My Clan dashboard](images/user-guide/03-my-clan.jpg)
 
-**Managing members (owners and moderators):**
-- **Search and filter** the roster by name or role.
-- **Make moderator / demote** a member.
-- **Remove** a member from the clan.
-- **Transfer ownership** to another member (from Settings) — the previous owner stays on as a
-  moderator.
+**Managing members:**
+- **Search and filter** the roster by name or role (owners and moderators).
+- **Remove** a member (owners and moderators; a moderator can't remove another moderator).
+- **Make moderator / Make member** — promote or demote a member (**owner only**).
+- **Transfer ownership** to another member (from Settings; **owner only**) — the previous owner stays
+  on as a moderator.
 
 **Roles:** every member is an **Owner**, **Moderator** or **Member**. Owners and moderators can
 manage the clan; owners additionally can transfer ownership and delete the clan.
@@ -116,9 +123,10 @@ from your FAForever sign-in and can't be changed here.
 
 From here you can update:
 - **Clan identity** — name, tag and description (a live preview shows the result).
-- **Preferences** — region, and whether the clan is **public** or **invite-only**.
+- **Preferences** — region, visibility (**Public**/**Private**), and whether the clan is **invitation only**.
 - **Clan image** — upload a PNG, JPG or WEBP (512 KB max; square images work best).
 - **Message of the day** — a note shown on the dashboard to every member.
+- **Clan events** — add upcoming events (title, date and time in **UTC**) or remove them; they appear on the dashboard.
 
 Click **Save Changes** to apply. The same validation that applies when creating a clan applies here
 (for example, the tag rules and name/tag uniqueness).
@@ -181,12 +189,12 @@ moderation actions on the right.
 ![A clan's admin dossier](images/user-guide/07-admin-dossier.jpg)
 
 Administrators can:
-- **Suspend** a clan (with a reason) — a suspended clan stays visible but takes no new members or
-  invitations and drops out of Browse, until an admin **lifts** the suspension.
+- **Suspend** a clan (with a reason) — a suspended clan keeps its members but takes no new members or
+  invitations, drops out of Browse, and its public page is hidden, until an admin **lifts** the suspension.
 - **Rename** a clan or **change its tag** — for example, to fix an offensive or invalid one. The same
   name and tag rules an owner must meet apply.
-- **Delete** a clan — a *soft* delete: the clan is removed from use but its record is kept and can be
-  restored.
+- **Delete** a clan — a *soft* delete: the clan is removed from use, but its record and moderation
+  history are kept for the audit trail.
 - **Review reports** and the clan's **moderation history**.
 
 Every administrator action is written to an **append-only moderation history** that records who did

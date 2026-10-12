@@ -43,6 +43,16 @@ else
     echo "PASS: No prohibited AGPL dependencies detected."
 fi
 
+# Plain GPL (not LGPL, not AGPL, and not the Classpath/CPE exception) is
+# incompatible with redistributing under MIT, so it is prohibited, not just reviewed.
+if grep -Ei 'GPL|General Public License' "$LICENSE_FILE" | grep -viE 'LGPL|Lesser|AGPL|Affero|Classpath|CPE' >/dev/null; then
+    echo "FAIL: Plain GPL dependency detected (incompatible with MIT):"
+    grep -Ei 'GPL|General Public License' "$LICENSE_FILE" | grep -viE 'LGPL|Lesser|AGPL|Affero|Classpath|CPE'
+    FAIL=1
+else
+    echo "PASS: No plain GPL dependencies detected."
+fi
+
 echo ""
 echo "Checking licences requiring review..."
 

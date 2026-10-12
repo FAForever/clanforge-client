@@ -58,7 +58,7 @@
     <p class="id-label">Region</p>
     <p class="clan-desc" th:text="${clan.region != null} ? ${clan.region} : 'Not set'">region</p>
     <p class="id-label">Visibility</p>
-    <p class="clan-desc" th:text="${clan.visibility == 'PUBLIC'} ? (${clan.requiresInvitation} ? 'Public, joins by invitation' : 'Public, open to join') : 'Private, invitation only'">visibility</p>
+    <p class="clan-desc" th:text="${clan.visibility == 'PUBLIC'} ? (${clan.requiresInvitation} ? 'Public, invite only' : 'Public, open to join') : 'Private, invitation only'">visibility</p>
 
     <a th:if="${me.canManage}" th:href="@{/invitations}" class="btn btn-secondary btn-block">
       <svg class="icon" aria-hidden="true"><use href="#icon-mail"></use></svg>
@@ -153,7 +153,7 @@
       <form th:unless="${me.owner}" th:action="@{/clanhome/leave}" method="post" data-confirm="Leave this clan?">
         <button type="submit" class="btn btn-danger">Leave Clan</button>
       </form>
-      <p class="motd-meta" th:if="${me.owner}">As owner you transfer ownership or delete the clan from Settings before leaving.</p>
+      <p class="motd-meta" th:if="${me.owner}">As owner, you must transfer ownership or delete the clan from Settings before you can leave.</p>
     </div>
   </aside>
 

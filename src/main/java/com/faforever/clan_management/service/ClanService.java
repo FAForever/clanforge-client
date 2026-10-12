@@ -106,7 +106,9 @@ public class ClanService {
     }
 
     public long countCommanders() {
-        return membershipRepository.count();
+        // players currently in a clan (active memberships), not every membership row ever —
+        // memberships are soft-closed (left_at set) on leave/remove, so count() would never go down
+        return membershipRepository.countByLeftAtIsNull();
     }
 
     public long countActiveMembers(Long clanId) {
