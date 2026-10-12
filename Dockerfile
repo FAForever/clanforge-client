@@ -19,6 +19,10 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
+# Run as an unprivileged user rather than root.
+RUN useradd -r -u 10001 appuser
+USER appuser
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
