@@ -15,6 +15,7 @@ import com.faforever.clan_management.security.ApiBodyLimit;
 import com.faforever.clan_management.service.ClanAccessRefused;
 import com.faforever.clan_management.service.ClanNotFound;
 import com.faforever.clan_management.service.ClanRuleViolation;
+import com.faforever.clan_management.service.DuplicateReport;
 
 // the services refusals as json for every controller in this package, the pages keep their own flash messages
 @RestControllerAdvice(basePackages = "com.faforever.clan_management.api")
@@ -34,6 +35,12 @@ public class ApiErrorHandler {
     @ExceptionHandler(ClanRuleViolation.class)
     public ResponseEntity<ApiError> violated(ClanRuleViolation e) {
         return ResponseEntity.badRequest().body(new ApiError(e.getMessage()));//400, the request itself broke a clan rule
+    }
+
+    //a second open report by the same person on the same clan; more specific than the 400 above, so 409 as the contract documents
+    @ExceptionHandler(DuplicateReport.class)
+    public ResponseEntity<ApiError> duplicate(DuplicateReport e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError(e.getMessage()));
     }
 
     //a database constraint turned the write down, mostly two requests racing for the same unique row, so 409 and no stack trace

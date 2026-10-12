@@ -35,7 +35,9 @@ import com.faforever.clan_management.service.AdminAccess;
 import com.faforever.clan_management.service.AdminService;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanCard;
+import com.faforever.clan_management.service.ClanNotFound;
 import com.faforever.clan_management.service.ClanRuleViolation;
+import com.faforever.clan_management.service.DuplicateReport;
 import com.faforever.clan_management.service.ReportService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,6 +139,26 @@ class ReportAdminApiControllerTest {
         mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"RUDE\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Say what the report is about: an offensive name, an offensive tag or inappropriate content."));
+    }
+
+    @Test
+    @DisplayName("reporting a clan that is missing or hidden is 404, as the contract documents")
+    void missingClanIsNotFound() throws Exception {
+        given(users.require(any())).willReturn(sam);
+        given(reports.file(sam, 7L, "OFFENSIVE_NAME", "gone")).willThrow(new ClanNotFound("That clan does not exist."));
+        mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_NAME\",\"reason\":\"gone\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("That clan does not exist."));
+    }
+
+    @Test
+    @DisplayName("a second open report by the same person is 409, as the contract documents")
+    void duplicateReportIsConflict() throws Exception {
+        given(users.require(any())).willReturn(sam);
+        given(reports.file(sam, 7L, "OFFENSIVE_NAME", "again")).willThrow(new DuplicateReport("You have already reported this clan."));
+        mockMvc.perform(post("/api/reports").header(HttpHeaders.AUTHORIZATION, bearer("sub-2", false)).contentType(MediaType.APPLICATION_JSON).content("{\"clanId\":7,\"category\":\"OFFENSIVE_NAME\",\"reason\":\"again\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("You have already reported this clan."));
     }
 
     @Test

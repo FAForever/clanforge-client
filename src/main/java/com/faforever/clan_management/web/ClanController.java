@@ -27,6 +27,7 @@ import com.faforever.clan_management.entity.ClanLogo;
 import com.faforever.clan_management.service.AppUserService;
 import com.faforever.clan_management.service.ClanCard;
 import com.faforever.clan_management.service.ClanManagementService;
+import com.faforever.clan_management.service.ClanNotFound;
 import com.faforever.clan_management.service.ClanRuleViolation;
 import com.faforever.clan_management.service.ClanService;
 import com.faforever.clan_management.service.MemberCard;
@@ -155,6 +156,10 @@ public class ClanController {
             reportService.file(userService.require(auth), id, category, reason);
             flash.addFlashAttribute("notice", "Thanks — your report has been sent to the moderators.");
             return "redirect:/clans/" + id;
+        } catch (ClanNotFound e) {
+            // the clan was deleted between opening the report page and submitting it
+            flash.addFlashAttribute("error", "That clan no longer exists.");
+            return "redirect:/clans";
         } catch (ClanRuleViolation e) {
             // Keep the person on the report page so they can correct and resubmit.
             flash.addFlashAttribute("error", e.getMessage());

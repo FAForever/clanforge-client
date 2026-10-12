@@ -42,12 +42,12 @@ public class ReportService {
         if (text.isEmpty()) throw new ClanRuleViolation("Say what is wrong with the clan.");
         if (text.length() > reasonMax) throw new ClanRuleViolation("Reports are " + reasonMax + " characters at most.");
         boolean seen = clanId != null && (clans.existsByIdAndVisibilityAndDeletedAtIsNull(clanId, "PUBLIC") || memberships.existsByClanIdAndUserIdAndLeftAtIsNull(clanId, reporter.getId()));
-        if (!seen) throw new ClanRuleViolation("That clan does not exist."); //an outsider is turned away here, before the lock, and hears the same sentence as below
-        if (reports.existsByClanIdAndReporterIdAndState(clanId, reporter.getId(),"OPEN")) throw new ClanRuleViolation("You have already reported this clan."); //asked again under the lock, this one only spares the wait
+        if (!seen) throw new ClanNotFound("That clan does not exist."); //an outsider is turned away here, before the lock, and hears the same sentence as below
+        if (reports.existsByClanIdAndReporterIdAndState(clanId, reporter.getId(),"OPEN")) throw new DuplicateReport("You have already reported this clan."); //asked again under the lock, this one only spares the wait
         Clan clan = clans.lockLive(clanId).orElse(null); //locked, so a report cannot land on a clan an administrator is deleting
         boolean hidden = clan != null && !"PUBLIC".equals(clan.getVisibility()) && memberships.findActiveByClanIdAndUserId(clan.getId(),reporter.getId()).isEmpty();
-        if (clan == null || hidden) throw new ClanRuleViolation("That clan does not exist."); // a private clan reads the same as a missing one to an outsider
-        if (reports.existsByClanIdAndReporterIdAndState(clan.getId(), reporter.getId(), "OPEN")) throw new ClanRuleViolation("You have already reported this clan.");
+        if (clan == null || hidden) throw new ClanNotFound("That clan does not exist."); // a private clan reads the same as a missing one to an outsider
+        if (reports.existsByClanIdAndReporterIdAndState(clan.getId(), reporter.getId(), "OPEN")) throw new DuplicateReport("You have already reported this clan.");
         return reports.save(new ClanReport(clan,reporter, kind, text));
     }
 
